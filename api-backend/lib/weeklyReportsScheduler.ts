@@ -1,34 +1,35 @@
 import { generateWeeklyReports } from './weeklyReports';
 
-// Démarrer le scheduler pour les rapports quotidiens
+// Démarrer le scheduler pour les rapports hebdomadaires
 export function scheduleWeeklyReports(): void {
-    console.log('📅 Démarrage du scheduler de rapports quotidiens...');
+    console.log('📅 Démarrage du scheduler de rapports hebdomadaires...');
 
-    // Calculer le temps jusqu'à minuit
+    // Calculer le temps jusqu'au prochain lundi à minuit
     const now = new Date();
-    const tomorrow = new Date(now);
-    tomorrow.setDate(now.getDate() + 1);
-    tomorrow.setHours(0, 0, 0, 0); // Minuit
+    const nextMonday = new Date(now);
+    const daysUntilMonday = (8 - now.getDay()) % 7 || 7; // 0=dimanche, 1=lundi...
+    nextMonday.setDate(now.getDate() + daysUntilMonday);
+    nextMonday.setHours(0, 0, 0, 0);
 
-    const timeUntilMidnight = tomorrow.getTime() - now.getTime();
-    console.log(`📅 Prochaine exécution des rapports: ${tomorrow.toLocaleString('fr-FR')}`);
-    console.log(`⏰ Temps d'attente: ${Math.round(timeUntilMidnight / (1000 * 60 * 60))} heures`);
+    const timeUntilNextMonday = nextMonday.getTime() - now.getTime();
+    console.log(`📅 Prochaine exécution des rapports: ${nextMonday.toLocaleString('fr-FR')}`);
+    console.log(`⏰ Temps d'attente: ${Math.round(timeUntilNextMonday / (1000 * 60 * 60))} heures`);
 
-    // Programmer l'exécution pour minuit
+    // Programmer l'exécution pour le prochain lundi
     setTimeout(() => {
-        console.log('📊 Exécution planifiée des rapports quotidiens');
+        console.log('📊 Exécution planifiée des rapports hebdomadaires');
         generateWeeklyReports();
 
-        // Programmer la prochaine exécution (chaque jour)
+        // Programmer la prochaine exécution (chaque semaine)
         setInterval(() => {
-            console.log('📊 Exécution quotidienne des rapports');
+            console.log('📊 Exécution hebdomadaire des rapports');
             generateWeeklyReports();
-        }, 24 * 60 * 60 * 1000); // Chaque jour
+        }, 7 * 24 * 60 * 60 * 1000); // Chaque semaine
 
-    }, timeUntilMidnight);
+    }, timeUntilNextMonday);
 }
 
 // Fonction pour arrêter le scheduler (optionnel)
 export function stopWeeklyReportsScheduler(): void {
-    console.log('🛑 Arrêt du scheduler de rapports quotidiens');
+    console.log('🛑 Arrêt du scheduler de rapports hebdomadaires');
 }
