@@ -21,6 +21,27 @@ export default function ActivityPage() {
     const [activities, setActivities] = useState<ActivityLog[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('');
+    const isAdmin = user?.role === 'admin';
+
+    const deleteActivity = async (id: string) => {
+        if (!confirm('Supprimer ce log ?')) return;
+        try {
+            await activityLogsAPI.delete(id);
+            setActivities(prev => prev.filter(a => a.id !== id));
+        } catch (error) {
+            console.error('Error deleting activity:', error);
+        }
+    };
+
+    const deleteAllActivities = async () => {
+        if (!confirm('Supprimer tous les logs ? Cette action est irréversible.')) return;
+        try {
+            await activityLogsAPI.deleteAll();
+            setActivities([]);
+        } catch (error) {
+            console.error('Error deleting all activities:', error);
+        }
+    };
 
     useEffect(() => {
         if (user) {
@@ -91,6 +112,14 @@ export default function ActivityPage() {
                         <h1 className="text-2xl font-bold text-gray-900">Journal d'activité</h1>
                         <p className="text-gray-600 mt-1">Consultez toutes les activités récentes</p>
                     </div>
+                    {isAdmin && activities.length > 0 && (
+                        <button
+                            onClick={deleteAllActivities}
+                            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+                        >
+                            Tout supprimer
+                        </button>
+                    )}
                 </div>
                 {/* Filters */}
                 <div className="mt-6 flex space-x-4">
@@ -143,6 +172,17 @@ export default function ActivityPage() {
                                         {new Date(activity.created_at).toLocaleString()}
                                     </p>
                                 </div>
+                                {isAdmin && (
+                                    <button
+                                        onClick={() => deleteActivity(activity.id)}
+                                        className="flex-shrink-0 text-gray-400 hover:text-red-600 transition-colors"
+                                        title="Supprimer ce log"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                        </svg>
+                                    </button>
+                                )}
                             </div>
                         </div>
                     ))}

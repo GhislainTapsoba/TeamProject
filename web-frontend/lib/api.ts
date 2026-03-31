@@ -123,6 +123,8 @@ export const commentsAPI = {
 export const activityLogsAPI = {
     getAll: (params?: any) => api.get('/activity-logs', { params }),
     create: (data: any) => api.post('/activity-logs', data),
+    delete: (id: string) => api.delete(`/activity-logs?id=${id}`),
+    deleteAll: () => api.delete('/activity-logs'),
 };
 
 // Settings API

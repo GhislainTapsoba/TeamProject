@@ -63,6 +63,35 @@ export async function GET(request: NextRequest) {
     }
 }
 
+// DELETE /api/activity-logs - Delete one or all activity logs (admin only)
+export async function DELETE(request: NextRequest) {
+    try {
+        const user = await verifyAuth(request);
+        if (!user) {
+            return corsResponse({ error: 'Non autorisé' }, request, { status: 401 });
+        }
+
+        const userRole = mapDbRoleToUserRole(user.role);
+        if (userRole !== 'admin') {
+            return corsResponse({ error: 'Accès refusé' }, request, { status: 403 });
+        }
+
+        const { searchParams } = new URL(request.url);
+        const id = searchParams.get('id');
+
+        if (id) {
+            await db.query('DELETE FROM activity_logs WHERE id = $1', [id]);
+            return corsResponse({ message: 'Log supprimé' }, request);
+        } else {
+            await db.query('DELETE FROM activity_logs');
+            return corsResponse({ message: 'Tous les logs supprimés' }, request);
+        }
+    } catch (error) {
+        console.error('DELETE /api/activity-logs error:', error);
+        return corsResponse({ error: 'Erreur serveur' }, request, { status: 500 });
+    }
+}
+
 // POST /api/activity-logs - Create activity log
 export async function POST(request: NextRequest) {
     try {
