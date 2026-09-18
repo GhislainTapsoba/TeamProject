@@ -170,6 +170,54 @@ docker compose ps postgres
 docker compose restart postgres
 ```
 
+### Migrations Django-Tenants
+
+Django-tenants nécessite une procédure de migration spécifique :
+
+#### 1. Configuration locale (.env)
+```bash
+cd backend
+echo "POSTGRES_HOST=localhost" > .env
+echo "POSTGRES_PORT=5432" >> .env
+echo "POSTGRES_USER=postgres" >> .env
+echo "POSTGRES_PASSWORD=postgres" >> .env
+echo "POSTGRES_DB=teamproject" >> .env
+```
+
+#### 2. Lancer PostgreSQL avec Docker
+```bash
+docker compose up -d postgres redis
+```
+
+#### 3. Nettoyer la base de données (si nécessaire)
+```bash
+docker compose exec postgres psql -U postgres -c "DROP DATABASE IF EXISTS teamproject;"
+docker compose exec postgres psql -U postgres -c "CREATE DATABASE teamproject;"
+```
+
+#### 4. Créer les migrations
+```bash
+cd backend
+python manage.py makemigrations
+```
+
+#### 5. Appliquer les migrations schéma public (SHARED_APPS)
+```bash
+python manage.py migrate_schemas --shared
+```
+
+#### 6. Appliquer les migrations tenants (TENANT_APPS)
+```bash
+python manage.py migrate_schemas
+```
+
+#### 7. Lancer les tests
+```bash
+python -m pytest
+```
+
+Note : Les tests multi-tenant nécessitent que le schéma public soit migré avant de créer des tenants.
+
 ### Erreur "Module not found" dans frontend
 ```bash
 cd web-frontend
