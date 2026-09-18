@@ -2,17 +2,14 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
 import { AuthProvider } from '@/contexts/AuthContext';
-import MainLayout from '@/components/MainLayout';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-    title: 'Team Project - Gestion de Projet',
-    description: 'Plateforme de gestion et suivi de projets',
+    title: 'Team Project — SaaS Multi-Tenant',
+    description: 'Plateforme de gestion de projets collaborative inspirée de Plane',
     icons: {
-        icon: '/logo.png',
-        shortcut: '/logo.png',
-        apple: '/logo.png',
+        icon: '/favicon.ico',
     },
 };
 
@@ -22,12 +19,10 @@ export default function RootLayout({
     children: React.ReactNode;
 }) {
     return (
-        <html lang="fr">
-            <body className={inter.className}>
+        <html lang="fr" className="dark">
+            <body className={`${inter.className} bg-slate-950 text-slate-100 min-h-screen antialiased`}>
                 <AuthProvider>
-                    <MainLayout>
-                        {children}
-                    </MainLayout>
+                    {children}
                 </AuthProvider>
             </body>
         </html>

@@ -1,0 +1,23 @@
+# Copy this file to terraform.tfvars and fill in your actual values
+# DO NOT commit terraform.tfvars to version control
+
+# Cloudflare Configuration
+cloudflare_zone_id = "your_cloudflare_zone_id_here"
+cloudflare_api_token = "your_cloudflare_api_token_here"
+
+# VPS Configuration
+# If using existing VPS:
+create_new_vps = false
+vps_ip_address = "your_existing_vps_ip_address"
+
+# If creating new DigitalOcean droplet:
+# create_new_vps = true
+# digitalocean_token = "your_digitalocean_api_token"
+# do_region = "ams3"
+# do_size = "s-4vcpu-8gb"
+# do_image = "ubuntu-22-04-x64"
+# do_ssh_key_fingerprint = "your_ssh_key_fingerprint"
+
+# Domain Configuration
+domain_name = "deep-technologies.com"
+subdomain = "teamproject"

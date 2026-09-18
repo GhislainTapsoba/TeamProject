@@ -1,76 +1,127 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { authAPI } from '@/lib/api';
+import { authAPI, tenantsAPI } from '@/lib/api';
 
-interface User {
-    id: string;
+export interface User {
+    id: number | string;
+    username: string;
     email: string;
-    name?: string;
+    first_name?: string;
+    last_name?: string;
+    full_name: string;
+    role: 'admin' | 'manager' | 'employee';
     phone?: string;
-    role: string;
+    avatar_url?: string;
+}
+
+export interface Tenant {
+    name: string;
+    schema_name: string;
+    plan: string;
 }
 
 interface AuthContextType {
     user: User | null;
+    tenant: Tenant | null;
     token: string | null;
-    login: (email: string, password: string) => Promise<void>;
-    register: (email: string, name: string, password: string, phone: string) => Promise<void>;
-    logout: () => void;
     isLoading: boolean;
+    login: (email: string, password: string) => Promise<void>;
+    logout: () => void;
+    refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
+    const [tenant, setTenant] = useState<Tenant | null>(null);
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Load user from sessionStorage on mount
-        const storedToken = sessionStorage.getItem('token');
-        const storedUser = sessionStorage.getItem('user');
+        const initAuth = async () => {
+            const storedAccess = localStorage.getItem('access_token');
+            const storedUser = localStorage.getItem('user');
+            const storedTenant = localStorage.getItem('tenant');
 
-        if (storedToken && storedUser) {
-            setToken(storedToken);
-            setUser(JSON.parse(storedUser));
-        }
+            if (storedAccess && storedUser) {
+                setToken(storedAccess);
+                setUser(JSON.parse(storedUser));
+                if (storedTenant) {
+                    setTenant(JSON.parse(storedTenant));
+                }
+                // Also verify fresh profile in background
+                try {
+                    const meRes = await authAPI.me();
+                    setUser(meRes.data);
+                    localStorage.setItem('user', JSON.stringify(meRes.data));
+                } catch (e) {
+                    // Handled by axios interceptor
+                }
+            }
 
-        setIsLoading(false);
+            // Also check active tenant info from backend
+            try {
+                const tenantRes = await tenantsAPI.getCurrent();
+                if (tenantRes.data?.name) {
+                    setTenant(tenantRes.data);
+                    localStorage.setItem('tenant', JSON.stringify(tenantRes.data));
+                }
+            } catch (e) {
+                // Tenant may be public schema
+            }
+
+            setIsLoading(false);
+        };
+
+        initAuth();
     }, []);
 
     const login = async (email: string, password: string) => {
-        const response = await authAPI.login(email, password);
-        const { token, user } = response.data;
+        const response = await authAPI.login({ email, password });
+        const { access, refresh, user: loggedUser, tenant: loggedTenant } = response.data;
 
-        sessionStorage.setItem('token', token);
-        sessionStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('access_token', access);
+        localStorage.setItem('refresh_token', refresh);
+        localStorage.setItem('user', JSON.stringify(loggedUser));
+        
+        if (loggedTenant) {
+            localStorage.setItem('tenant', JSON.stringify(loggedTenant));
+            setTenant(loggedTenant);
+        }
 
-        setToken(token);
-        setUser(user);
-    };
+        // Set auth cookie for middleware & SSR
+        document.cookie = `access_token=${access}; path=/; max-age=604800; SameSite=Lax`;
 
-    const register = async (email: string, name: string, password: string, phone: string) => {
-        const response = await authAPI.register(email, name, password, phone);
-        const { token, user } = response.data;
-
-        sessionStorage.setItem('token', token);
-        sessionStorage.setItem('user', JSON.stringify(user));
-
-        setToken(token);
-        setUser(user);
+        setToken(access);
+        setUser(loggedUser);
     };
 
     const logout = () => {
-        sessionStorage.removeItem('token');
-        sessionStorage.removeItem('user');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
+        localStorage.removeItem('tenant');
+        document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         setToken(null);
         setUser(null);
+        setTenant(null);
+        window.location.href = '/login';
+    };
+
+    const refreshProfile = async () => {
+        try {
+            const res = await authAPI.me();
+            setUser(res.data);
+            localStorage.setItem('user', JSON.stringify(res.data));
+        } catch (e) {
+            console.error('Error refreshing profile:', e);
+        }
     };
 
     return (
-        <AuthContext.Provider value={{ user, token, login, register, logout, isLoading }}>
+        <AuthContext.Provider value={{ user, tenant, token, isLoading, login, logout, refreshProfile }}>
             {children}
         </AuthContext.Provider>
     );
@@ -78,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
     const context = useContext(AuthContext);
-    if (context === undefined) {
+    if (!context) {
         throw new Error('useAuth must be used within an AuthProvider');
     }
     return context;
