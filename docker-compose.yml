@@ -41,7 +41,11 @@ services:
       sh -c "
         echo 'Attente de la base de données PostgreSQL...' &&
         while ! nc -z postgres 5432; do sleep 1; done &&
+        echo 'Migration du schéma public (SHARED_APPS)...' &&
+        python manage.py migrate_schemas --shared &&
+        echo 'Migration des schémas tenants (TENANT_APPS)...' &&
         python manage.py migrate_schemas &&
+        echo 'Démarrage de Gunicorn...' &&
         gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120
       "
     environment:
