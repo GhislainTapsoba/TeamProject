@@ -37,6 +37,9 @@ RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/__tests__ ./__tests__
+COPY --from=builder /app/jest.config.js ./jest.config.js
+COPY --from=builder /app/jest.setup.js ./jest.setup.js
 
 # Set the correct permission for prerender cache
 RUN mkdir .next
