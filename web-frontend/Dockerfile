@@ -5,7 +5,7 @@ FROM base AS deps
 WORKDIR /app
 
 COPY package.json package-lock.json* ./
-RUN npm ci --include=dev
+RUN npm install
 
 # Rebuild the source code only when needed
 FROM base AS builder
