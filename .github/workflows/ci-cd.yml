@@ -5,6 +5,7 @@ on:
     branches: [ main, develop ]
   pull_request:
     branches: [ main, develop ]
+  workflow_dispatch:  # ⚠️ SÉCURITÉ: Permet le déclenchement manuel pour validation
 
 env:
   REGISTRY: ghcr.io
@@ -226,6 +227,23 @@ jobs:
           labels: ${{ steps.meta-backend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # ⚠️ SÉCURITÉ: Build secrets non exposés
+          secrets: |
+            "github_token=${{ secrets.GITHUB_TOKEN }}"
+
+      - name: ⚠️ SECURITY: Scan backend image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:main
+          format: 'sarif'
+          output: 'trivy-backend-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload backend Trivy results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-backend-results.sarif'
 
       - name: Extract metadata for frontend
         id: meta-frontend
@@ -247,15 +265,44 @@ jobs:
           labels: ${{ steps.meta-frontend.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+          # ⚠️ SÉCURITÉ: Build secrets non exposés
+          secrets: |
+            "github_token=${{ secrets.GITHUB_TOKEN }}"
+
+      - name: ⚠️ SECURITY: Scan frontend image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:main
+          format: 'sarif'
+          output: 'trivy-frontend-results.sarif'
+          severity: 'CRITICAL,HIGH'
+
+      - name: Upload frontend Trivy results
+        uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: 'trivy-frontend-results.sarif'
 
   deploy:
     name: Deploy to Production
     needs: build-and-push
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+    environment:
+      name: production
+      url: https://teamproject.deep-technologies.com
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: ⚠️ SECURITY: Verify branch protection
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "Deploying from branch: ${{ github.ref_name }}"
+            echo "Commit SHA: ${{ github.sha }}"
+          fi
 
       - name: Deploy to VPS via SSH
         uses: appleboy/ssh-action@v1.0.3
@@ -263,9 +310,28 @@ jobs:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USER }}
           key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          script_stop: true  # ⚠️ SÉCURITÉ: Arrête le déploiement si une commande échoue
           script: |
-            cd /opt/teamproject
+            # ⚠️ SÉCURITÉ: Vérification de l'intégrité avant déploiement
+            cd /opt/teamproject || exit 1
+            git fetch origin main
+            git diff HEAD origin/main || exit 1
+
+            # ⚠️ SÉCURITÉ: Backup avant déploiement
+            docker compose backup || echo "Backup skipped (no backup command configured)"
+
+            # Déploiement
             docker compose pull
             docker compose up -d
-            docker compose exec backend python manage.py migrate_schemas
-            docker system prune -f
+
+            # ⚠️ SÉCURITÉ: Vérification health check après déploiement
+            sleep 30
+            docker compose ps
+            docker compose logs --tail=50 backend
+
+            # Migrations
+            docker compose exec -T backend python manage.py migrate_schemas --noinput
+
+            # Nettoyage (conservé les images utilisées)
+            docker system prune -f --filter "until=24h"

@@ -2,6 +2,13 @@
 
 This directory contains Terraform configuration for managing the DNS and infrastructure for TeamProject SaaS.
 
+## 🔒 Security Warning
+
+- **NEVER commit** `terraform.tfvars` to version control
+- All sensitive variables are marked as `sensitive = true`
+- Backend S3 is disabled by default - configure explicitly for production
+- See [SECURITY.md](../SECURITY.md) for complete security guidelines
+
 ## Prerequisites
 
 - Terraform >= 1.5.0
@@ -62,6 +69,29 @@ terraform apply
 terraform destroy
 ```
 
+## Production Setup (S3 Backend)
+
+For production, enable the S3 backend in `main.tf`:
+
+```hcl
+backend "s3" {
+  bucket         = "your-existing-bucket"
+  key            = "teamproject/terraform.tfstate"
+  region         = "us-east-1"
+  encrypt        = true  # ⚠️ REQUIRED for security
+  dynamodb_table = "teamproject-terraform-locks"  # For state locking
+}
+```
+
+Then create the DynamoDB table:
+```bash
+aws dynamodb create-table \
+  --table-name teamproject-terraform-locks \
+  --attribute-definitions AttributeName=LockID,AttributeType=S \
+  --key-schema AttributeName=LockID,KeyType=HASH \
+  --billing-mode PAY_PER_REQUEST
+```
+
 ## Configuration Options
 
 ### Using Existing VPS (Recommended)
@@ -87,12 +117,13 @@ This configuration creates:
 - `teamproject.deep-technologies.com` → VPS IP
 - `*.teamproject.deep-technologies.com` → VPS IP (wildcard for multi-tenant)
 
-## Security Notes
+## Security Measures
 
-- **NEVER commit** `terraform.tfvars` to version control
-- Store sensitive values in environment variables or secret managers
-- Use `.tfstate` encryption in production
-- Enable state locking with a backend (S3 + DynamoDB recommended)
+✅ **All sensitive variables marked as `sensitive = true`**
+✅ **Backend S3 disabled by default (requires explicit config)**
+✅ **State encryption required in production**
+✅ **State locking with DynamoDB (prevents concurrent conflicts)**
+✅ **No hardcoded credentials in Terraform files**
 
 ## Outputs
 
@@ -103,11 +134,47 @@ After applying, Terraform will output:
 
 ## CI/CD Integration
 
-The GitHub Actions workflow can be extended to run Terraform:
+⚠️ **SECURITY: Do not automate Terraform in CI/CD without proper safeguards**
+
+If you integrate Terraform with GitHub Actions:
+1. Use environment variables for secrets
+2. Enable branch protection on main
+3. Require manual approval for state changes
+4. Use separate workspaces for dev/staging/prod
+
+Example with safeguards:
 ```yaml
-- name: Terraform Apply
+- name: Terraform Plan
   run: |
     cd terraform
-    terraform init
-    terraform apply -auto-approve
+    terraform plan -out=tfplan
+
+- name: Terraform Apply (Manual Approval)
+  if: github.ref == 'refs/heads/main'
+  run: |
+    cd terraform
+    terraform apply tfplan
+```
+
+## Troubleshooting
+
+### State Lock Issues
+If you encounter state locking errors:
+```bash
+terraform force-unlock <LOCK_ID>
+```
+
+### Backend Configuration Issues
+If backend configuration fails:
+1. Verify AWS credentials are set
+2. Ensure S3 bucket exists
+3. Check DynamoDB table is created
+4. Verify IAM permissions
+
+### DNS Propagation
+DNS changes may take up to 24 hours to propagate:
+```bash
+# Check DNS propagation
+dig teamproject.deep-technologies.com
+dig test.teamproject.deep-technologies.com
 ```

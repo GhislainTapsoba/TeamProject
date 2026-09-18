@@ -1,6 +1,7 @@
 variable "cloudflare_zone_id" {
   description = "Cloudflare Zone ID for the domain (find in Cloudflare dashboard > Your domain > Overview > Zone ID)"
   type        = string
+  sensitive   = true  # ⚠️ SÉCURITÉ: Zone ID peut révéler des infos sur votre domaine
 }
 
 variable "cloudflare_api_token" {
@@ -12,6 +13,7 @@ variable "cloudflare_api_token" {
 variable "vps_ip_address" {
   description = "IP address of the existing VPS (if create_new_vps = false)"
   type        = string
+  sensitive   = true  # ⚠️ SÉCURITÉ: Empêche l'exposition de l'IP du VPS
 }
 
 variable "create_new_vps" {
@@ -48,6 +50,7 @@ variable "do_image" {
 variable "do_ssh_key_fingerprint" {
   description = "SSH key fingerprint for DigitalOcean (required if create_new_vps = true)"
   type        = string
+  sensitive   = true  # ⚠️ SÉCURITÉ: Empêche l'exposition de l'empreinte de clé
   default     = null
 }
 

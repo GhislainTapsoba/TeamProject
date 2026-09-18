@@ -11,11 +11,21 @@ terraform {
     }
   }
 
-  backend "s3" {
-    bucket = "teamproject-terraform-state"
-    key    = "teamproject/terraform.tfstate"
-    region = "us-east-1"
-  }
+  # ⚠️ SÉCURITÉ: Configurez le backend S3 pour la production
+  # Décommentez et configurez avec:
+  # - bucket: Votre bucket S3 existant
+  # - key: Chemin du state file
+  # - region: Région AWS
+  # - encrypt: true (OBLIGATOIRE pour la sécurité)
+  # - dynamodb_table: Table DynamoDB pour le locking (empêche les conflits)
+  #
+  # backend "s3" {
+  #   bucket         = "teamproject-terraform-state"
+  #   key            = "teamproject/terraform.tfstate"
+  #   region         = "us-east-1"
+  #   encrypt        = true
+  #   dynamodb_table = "teamproject-terraform-locks"
+  # }
 }
 
 provider "cloudflare" {
@@ -24,37 +34,6 @@ provider "cloudflare" {
 
 provider "digitalocean" {
   token = var.digitalocean_token
-}
-
-# Variables
-variable "domain_name" {
-  description = "Domain name for the application"
-  type        = string
-  default     = "deep-technologies.com"
-}
-
-variable "subdomain" {
-  description = "Subdomain for TeamProject"
-  type        = string
-  default     = "teamproject"
-}
-
-variable "vps_ip_address" {
-  description = "IP address of the existing VPS"
-  type        = string
-}
-
-variable "cloudflare_api_token" {
-  description = "Cloudflare API token"
-  type        = string
-  sensitive   = true
-}
-
-variable "digitalocean_token" {
-  description = "DigitalOcean API token (if using DO)"
-  type        = string
-  sensitive   = true
-  default     = null
 }
 
 # Cloudflare DNS Configuration
@@ -79,6 +58,7 @@ resource "cloudflare_record" "teamproject_wildcard" {
 variable "cloudflare_zone_id" {
   description = "Cloudflare Zone ID for the domain"
   type        = string
+  sensitive   = true  # ⚠️ SÉCURITÉ: Zone ID peut révéler des infos sur votre domaine
 }
 
 # DigitalOcean Droplet (optional - if creating new VPS)
@@ -126,6 +106,7 @@ variable "do_image" {
 variable "do_ssh_key_fingerprint" {
   description = "SSH key fingerprint for DigitalOcean"
   type        = string
+  sensitive   = true  # ⚠️ SÉCURITÉ: Empêche l'exposition de l'empreinte de clé
   default     = null
 }
 
