@@ -125,3 +125,13 @@ terraform/override.tf.json
 terraform/*_override.tf
 terraform/*_override.tf.json
 
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.coverage
+.coverage
+htmlcov/
+

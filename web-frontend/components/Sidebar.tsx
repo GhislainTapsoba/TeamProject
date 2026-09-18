@@ -148,7 +148,7 @@ export function Sidebar() {
       {/* User info & logout */}
       <div className="p-4 border-t border-gray-200">
         <div className="mb-3 p-3 bg-gray-50 rounded-lg">
-          <p className="text-sm font-medium text-gray-900 truncate">{user?.name || 'Utilisateur'}</p>
+          <p className="text-sm font-medium text-gray-900 truncate">{user?.full_name || user?.username || 'Utilisateur'}</p>
           <p className="text-xs text-gray-500 truncate">{user?.email}</p>
           <p className="text-xs text-gray-400 capitalize mt-1">{user?.role}</p>
         </div>
