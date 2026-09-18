@@ -41,9 +41,9 @@ services:
       sh -c "
         echo 'Attente de la base de données PostgreSQL...' &&
         while ! nc -z postgres 5432; do sleep 1; done &&
-        echo 'Création des migrations initiales...' &&
-        python manage.py makemigrations &&
-        echo 'Migration du schéma public (SHARED_APPS)...' &&
+        echo 'Initialisation de la base de données...' &&
+        python manage.py migrate_schemas --shared --run-syncdb ||
+        echo 'Migration du schéma public...' &&
         python manage.py migrate_schemas --shared &&
         echo 'Migration des schémas tenants (TENANT_APPS)...' &&
         python manage.py migrate_schemas &&
