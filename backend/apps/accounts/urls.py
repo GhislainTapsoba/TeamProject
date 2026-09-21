@@ -5,7 +5,8 @@ from .views import (
     CustomTokenObtainPairView,
     UserViewSet,
     CurrentUserProfileView,
-    ChangePasswordView
+    ChangePasswordView,
+    LogoutView,
 )
 
 router = DefaultRouter()
@@ -13,6 +14,7 @@ router.register(r'users', UserViewSet, basename='user')
 
 urlpatterns = [
     path('login/', CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('logout/', LogoutView.as_view(), name='logout'),
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('me/', CurrentUserProfileView.as_view(), name='current_user'),
     path('change-password/', ChangePasswordView.as_view(), name='change_password'),

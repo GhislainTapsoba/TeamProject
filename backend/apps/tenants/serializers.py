@@ -1,6 +1,8 @@
 import re
 from rest_framework import serializers
 from django.conf import settings
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
 from .models import Client, Domain
 
 class ClientSerializer(serializers.ModelSerializer):
@@ -15,6 +17,13 @@ class TenantRegistrationSerializer(serializers.Serializer):
     admin_email = serializers.EmailField()
     admin_name = serializers.CharField(max_length=150)
     admin_password = serializers.CharField(write_only=True, min_length=8)
+
+    def validate_admin_password(self, value):
+        try:
+            validate_password(value)
+        except DjangoValidationError as e:
+            raise serializers.ValidationError(list(e.messages))
+        return value
 
     def validate_subdomain(self, value):
         subdomain = value.lower().strip()

@@ -3,6 +3,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
 from .models import User
 from .serializers import (
     CustomTokenObtainPairSerializer,
@@ -12,9 +13,11 @@ from .serializers import (
     ChangePasswordSerializer
 )
 from apps.core.permissions import IsTenantAdmin, IsTenantManager
+from apps.core.throttling import AuthRateThrottle
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
+    throttle_classes = [AuthRateThrottle]
 
 class UserViewSet(viewsets.ModelViewSet):
     """
@@ -57,9 +60,10 @@ class CurrentUserProfileView(generics.RetrieveUpdateAPIView):
 
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
+    throttle_classes = [AuthRateThrottle]
 
     def post(self, request):
-        serializer = ChangePasswordSerializer(data=request.data)
+        serializer = ChangePasswordSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         user = request.user
         if not user.check_password(serializer.validated_data['old_password']):
@@ -67,3 +71,16 @@ class ChangePasswordView(APIView):
         user.set_password(serializer.validated_data['new_password'])
         user.save()
         return Response({'detail': 'Mot de passe mis à jour avec succès.'})
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        refresh_token = request.data.get('refresh')
+        if refresh_token:
+            try:
+                token = RefreshToken(refresh_token)
+                token.blacklist()
+            except Exception:
+                pass
+        return Response({'detail': 'Déconnexion réussie.'}, status=status.HTTP_200_OK)

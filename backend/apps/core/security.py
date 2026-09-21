@@ -6,9 +6,7 @@ from django.conf import settings
 def get_fernet_cipher():
     raw_key = getattr(settings, 'ENCRYPTION_KEY', None)
     if not raw_key:
-        # Fallback predictable key for development
-        raw_key = "v1rZk5g7qHk_7D4B6T9u8-v2h1j3k4l5m6n7o8p9q0r="
-    # Ensure it's valid base64 32 bytes
+        raise ValueError('ENCRYPTION_KEY is not configured')
     if isinstance(raw_key, str):
         key_bytes = raw_key.encode('utf-8')
     else:

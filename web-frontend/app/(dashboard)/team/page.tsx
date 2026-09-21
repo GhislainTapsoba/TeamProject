@@ -26,7 +26,7 @@ export default function TeamPage() {
     const [lastName, setLastName] = useState('');
     const [role, setRole] = useState<'admin' | 'manager' | 'employee'>('employee');
     const [phone, setPhone] = useState('');
-    const [password, setPassword] = useState('Password123!');
+    const [password, setPassword] = useState('');
     const [submitting, setSubmitting] = useState(false);
 
     useEffect(() => {

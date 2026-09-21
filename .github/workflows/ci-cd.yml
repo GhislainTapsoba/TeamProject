@@ -140,6 +140,7 @@ jobs:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
           SECRET_KEY: test-secret-key
+          ENCRYPTION_KEY: v1rZk5g7qHk_7D4B6T9u8-v2h1j3k4l5m6n7o8p9q0r=
         run: |
           python manage.py migrate_schemas --shared
 
@@ -152,6 +153,7 @@ jobs:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: 5432
           SECRET_KEY: test-secret-key
+          ENCRYPTION_KEY: v1rZk5g7qHk_7D4B6T9u8-v2h1j3k4l5m6n7o8p9q0r=
           CELERY_BROKER_URL: redis://localhost:6379/0
           CELERY_RESULT_BACKEND: redis://localhost:6379/0
         run: |

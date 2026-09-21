@@ -91,9 +91,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             setTenant(loggedTenant);
         }
 
-        // Set auth cookie for middleware & SSR
-        document.cookie = `access_token=${access}; path=/; max-age=604800; SameSite=Lax`;
-
         setToken(access);
         setUser(loggedUser);
     };
@@ -103,7 +100,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         localStorage.removeItem('refresh_token');
         localStorage.removeItem('user');
         localStorage.removeItem('tenant');
-        document.cookie = "access_token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
         setToken(null);
         setUser(null);
         setTenant(null);

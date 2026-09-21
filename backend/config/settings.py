@@ -7,34 +7,44 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load .env file if it exists
 dotenv.load_dotenv(BASE_DIR / '.env')
+dotenv.load_dotenv(BASE_DIR.parent / '.env')
 
-SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-teamproject-saas-secret-key-replace-in-prod')
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 't')
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+SECRET_KEY = os.getenv('SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-dev-teamproject-local-secret-key-32chars'
+    else:
+        raise ValueError('SECRET_KEY environment variable is required in production')
+
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', '*').split(',') if h.strip()]
 
 # Multi-Tenancy Applications
 SHARED_APPS = [
     'django_tenants',
     'apps.tenants',
     'apps.billing',
+    'apps.accounts',
     'django.contrib.contenttypes',
     'django.contrib.staticfiles',
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.sessions',
+    'django.contrib.messages',
 ]
 
 TENANT_APPS = [
-    'django.contrib.auth',
-    'django.contrib.admin',
-    'django.contrib.sessions',
-    'django.contrib.messages',
+    'django.contrib.contenttypes',
     'rest_framework',
     'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
     'corsheaders',
-    'apps.accounts',
     'apps.projects',
     'apps.notifications',
     'apps.core',
 ]
+
 
 INSTALLED_APPS = list(SHARED_APPS) + [a for a in TENANT_APPS if a not in SHARED_APPS]
 
@@ -53,6 +63,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'apps.core.middleware.SubscriptionCheckMiddleware',
+    'apps.tenants.middleware.platform_admin.PlatformAdminBypassMiddleware',
     'apps.core.middleware.ActivityAuditMiddleware',
 ]
 
@@ -118,6 +129,16 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle',
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '120/minute',
+        'user': '600/minute',
+        'auth': '5/minute',
+        'registration': '5/hour',
+    },
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,
 }
@@ -127,7 +148,7 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': False,
+    'BLACKLIST_AFTER_ROTATION': True,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
     'AUTH_HEADER_TYPES': ('Bearer',),
@@ -158,11 +179,21 @@ CINETPAY_CHECKOUT_URL = 'https://api-checkout.cinetpay.com/v2/payment'
 CINETPAY_CHECK_URL = 'https://api-checkout.cinetpay.com/v2/payment/check'
 
 # Data Encryption for Tenant Sensitive Credentials (Fernet 32 bytes base64)
-ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY', 'v1rZk5g7qHk_7D4B6T9u8-v2h1j3k4l5m6n7o8p9q0r=')
+ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY')
+if not ENCRYPTION_KEY:
+    if DEBUG:
+        ENCRYPTION_KEY = 'v1rZk5g7qHk_7D4B6T9u8-v2h1j3k4l5m6n7o8p9q0r='
+    else:
+        raise ValueError('ENCRYPTION_KEY environment variable is required in production')
 
 # Platform URL
 PLATFORM_DOMAIN = os.getenv('PLATFORM_DOMAIN', 'teamproject.deep-technologies.com')
 FRONTEND_URL = os.getenv('FRONTEND_URL', 'https://teamproject.deep-technologies.com')
+
+# Reverse proxy SSL header & Security Headers
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
 
 # Production Security Headers (enabled in production)
 if not DEBUG:

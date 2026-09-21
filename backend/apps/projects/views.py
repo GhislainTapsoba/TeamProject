@@ -24,7 +24,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['create', 'destroy']:
             return [IsTenantManager()]
-        if self.action in ['update', 'partial_update']:
+        if self.action in ['update', 'partial_update', 'members']:
             return [IsProjectManagerOrAdmin()]
         return [IsAuthenticated()]
 
@@ -56,23 +56,29 @@ class ProjectViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['get', 'post', 'delete'])
     def members(self, request, pk=None):
         project = self.get_object()
+        self.check_object_permissions(request, project)
 
         if request.method == 'GET':
             members = project.members.all().select_related('user')
             serializer = ProjectMemberSerializer(members, many=True)
             return Response(serializer.data)
 
-        # Add member to project
+        # Add member to project (manager/admin only)
         if request.method == 'POST':
             user_id = request.data.get('user_id')
             if not user_id:
                 return Response({'error': 'user_id est requis.'}, status=status.HTTP_400_BAD_REQUEST)
+            from apps.accounts.models import User
+            if not User.objects.filter(id=user_id, is_active=True).exists():
+                return Response({'error': 'Utilisateur introuvable ou inactif.'}, status=status.HTTP_404_NOT_FOUND)
             member, created = ProjectMember.objects.get_or_create(project=project, user_id=user_id)
             return Response(ProjectMemberSerializer(member).data, status=status.HTTP_201_CREATED)
 
-        # Remove member
+        # Remove member (manager/admin only)
         if request.method == 'DELETE':
             user_id = request.data.get('user_id')
+            if not user_id:
+                return Response({'error': 'user_id est requis.'}, status=status.HTTP_400_BAD_REQUEST)
             ProjectMember.objects.filter(project=project, user_id=user_id).delete()
             return Response({'detail': 'Membre retiré du projet.'}, status=status.HTTP_204_NO_CONTENT)
 

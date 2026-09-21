@@ -1,9 +1,20 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { tenantsAPI } from '@/lib/api';
 import { Building2, Globe, Mail, User, Lock, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
+
+const PLATFORM_DOMAIN = 'deep-technologies.com';
+
+function detectTenantSubdomain() {
+    if (typeof window === 'undefined') return false;
+    const host = window.location.hostname;
+    if (host === 'localhost' || host === PLATFORM_DOMAIN || host === 'www.' + PLATFORM_DOMAIN) {
+        return false;
+    }
+    return host.endsWith('.localhost') || host.endsWith('.' + PLATFORM_DOMAIN);
+}
 
 export default function RegisterTenantPage() {
     const [orgName, setOrgName] = useState('');
@@ -11,10 +22,15 @@ export default function RegisterTenantPage() {
     const [adminName, setAdminName] = useState('');
     const [adminEmail, setAdminEmail] = useState('');
     const [password, setPassword] = useState('');
-    
+
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
     const [successData, setSuccessData] = useState<any>(null);
+    const [isTenantSubdomain, setIsTenantSubdomain] = useState<boolean | null>(null);
+
+    useEffect(() => {
+        setIsTenantSubdomain(detectTenantSubdomain());
+    }, []);
 
     const handleSubdomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
@@ -37,15 +53,54 @@ export default function RegisterTenantPage() {
             setSuccessData(res.data);
         } catch (err: any) {
             console.error('Registration error:', err);
-            const msg = err.response?.data?.subdomain?.[0] ||
+            const msg = err.response?.data?.error ||
+                err.response?.data?.subdomain?.[0] ||
                 err.response?.data?.detail ||
                 err.response?.data?.message ||
-                "Erreur lors de la création de l'organisation. Vérifiez les informations.";
+                "Erreur lors de la creation de l'organisation. Verifiez les informations.";
             setError(msg);
         } finally {
             setLoading(false);
         }
     };
+
+    if (isTenantSubdomain === null) {
+        return null;
+    }
+
+    if (isTenantSubdomain) {
+        return (
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+                <div className="w-full max-w-md space-y-6 text-center">
+                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xl shadow-xl shadow-indigo-500/20 mx-auto">
+                        TP
+                    </div>
+                    <div className="p-8 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-2xl backdrop-blur-xl space-y-4">
+                        <AlertCircle className="h-8 w-8 text-amber-400 mx-auto" />
+                        <h1 className="text-base font-bold text-white">
+                            Creation d'organisation indisponible ici
+                        </h1>
+                        <p className="text-xs text-slate-400">
+                            Vous etes sur l'espace d'une organisation existante. Pour creer une nouvelle
+                            organisation, rendez-vous sur le site principal.
+                        </p>
+                        <div className="flex flex-col gap-2 pt-2">
+                            <a
+                                href={'https://' + PLATFORM_DOMAIN + '/register'}
+                                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg transition"
+                            >
+                                <span>Aller au site principal</span>
+                                <ArrowRight className="h-4 w-4" />
+                            </a>
+                            <Link href="/login" className="text-xs text-slate-400 hover:underline">
+                                Se connecter a cette organisation
+                            </Link>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
@@ -55,10 +110,10 @@ export default function RegisterTenantPage() {
                         TP
                     </div>
                     <h1 className="text-xl font-bold text-white tracking-tight">
-                        Créer votre Espace SaaS
+                        Creer votre Espace SaaS
                     </h1>
                     <p className="text-xs text-slate-400">
-                        Votre propre instance isolée avec domaine dédié, gestion de projets & vue Kanban.
+                        Votre propre instance isolee avec domaine dedie, gestion de projets & vue Kanban.
                     </p>
                 </div>
 
@@ -68,18 +123,18 @@ export default function RegisterTenantPage() {
                             <div className="h-12 w-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto">
                                 <CheckCircle2 className="h-6 w-6" />
                             </div>
-                            <h2 className="text-base font-bold text-white">Espace créé avec succès !</h2>
+                            <h2 className="text-base font-bold text-white">Espace cree avec succes !</h2>
                             <p className="text-xs text-slate-300">
-                                Votre organisation <strong>{successData.tenant?.name}</strong> est prête sur son sous-domaine dédié.
+                                Votre organisation <strong>{successData.tenant?.name}</strong> est prete sur son sous-domaine dedie.
                             </p>
                             <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-indigo-400 font-mono break-all">
                                 {successData.tenant?.domain}
                             </div>
                             <a
-                                href={successData.login_url || `https://${successData.tenant?.domain}/login`}
+                                href={successData.login_url || ('https://' + successData.tenant?.domain + '/login')}
                                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg transition"
                             >
-                                <span>Accéder à votre espace</span>
+                                <span>Acceder a votre espace</span>
                                 <ArrowRight className="h-4 w-4" />
                             </a>
                         </div>
@@ -114,7 +169,7 @@ export default function RegisterTenantPage() {
                                 </div>
 
                                 <div>
-                                    <label className="block text-slate-300 font-medium mb-1.5">Sous-domaine dédié *</label>
+                                    <label className="block text-slate-300 font-medium mb-1.5">Sous-domaine dedie *</label>
                                     <div className="flex items-center bg-slate-950 border border-slate-800 rounded-xl overflow-hidden focus-within:border-indigo-500">
                                         <span className="pl-3 pr-1 text-slate-500">
                                             <Globe className="h-4 w-4" />
@@ -175,7 +230,7 @@ export default function RegisterTenantPage() {
                                             minLength={8}
                                             value={password}
                                             onChange={(e) => setPassword(e.target.value)}
-                                            placeholder="Minimum 8 caractères"
+                                            placeholder="Minimum 8 caracteres"
                                             className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500"
                                         />
                                     </div>
@@ -186,14 +241,14 @@ export default function RegisterTenantPage() {
                                     disabled={loading}
                                     className="w-full mt-3 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 disabled:opacity-50"
                                 >
-                                    <span>{loading ? 'Création en cours...' : "Créer l'organisation"}</span>
+                                    <span>{loading ? 'Creation en cours...' : "Creer l'organisation"}</span>
                                     <ArrowRight className="h-4 w-4" />
                                 </button>
                             </form>
 
                             <div className="mt-6 pt-4 border-t border-slate-800/80 text-center">
                                 <p className="text-xs text-slate-400">
-                                    Déjà une organisation ?{' '}
+                                    Deja une organisation ?{' '}
                                     <Link href="/login" className="text-indigo-400 hover:underline font-semibold">
                                         Se connecter
                                     </Link>

@@ -33,3 +33,18 @@ class Client(TenantMixin):
 class Domain(DomainMixin):
     def __str__(self):
         return self.domain
+
+
+class PlatformUser(models.Model):
+    """Super‑admin account stored in the public schema"""
+    email = models.EmailField(unique=True)
+    is_superadmin = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True)
+    date_joined = models.DateTimeField(auto_now_add=True)
+
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = []
+
+    def __str__(self):
+        return f"Platform admin: {self.email}"
