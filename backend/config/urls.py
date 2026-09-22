@@ -5,6 +5,10 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from django.db import connection
 
+from config.admin_customization import apply_admin_dashboard
+
+apply_admin_dashboard()
+
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def tenant_health_check(request):
