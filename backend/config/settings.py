@@ -2,12 +2,15 @@ import os
 from pathlib import Path
 from datetime import timedelta
 import dotenv
+from apps.core.security import ensure_no_public_secret_prefixes
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load .env file if it exists
 dotenv.load_dotenv(BASE_DIR / '.env')
 dotenv.load_dotenv(BASE_DIR.parent / '.env')
+
+ensure_no_public_secret_prefixes()
 
 DEBUG = os.getenv('DEBUG', 'True').lower() in ('true', '1', 't')
 
@@ -19,6 +22,28 @@ if not SECRET_KEY:
         raise ValueError('SECRET_KEY environment variable is required in production')
 
 ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', '*').split(',') if h.strip()]
+
+EMAIL_VERIFICATION_REQUIRED = os.getenv('EMAIL_VERIFICATION_REQUIRED', 'True').lower() in ('true', '1', 'yes', 'on')
+SENTRY_DSN = os.getenv('SENTRY_DSN', '')
+TURNSTILE_SECRET_KEY = os.getenv('TURNSTILE_SECRET_KEY', '')
+TURNSTILE_SITE_KEY = os.getenv('TURNSTILE_SITE_KEY', '')
+
+# Supabase JWT configuration
+SUPABASE_JWKS_URL = os.getenv('SUPABASE_JWKS_URL')
+SUPABASE_JWT_AUDIENCE = os.getenv('SUPABASE_JWT_AUDIENCE')
+SUPABASE_JWT_ISSUER = os.getenv('SUPABASE_JWT_ISSUER')
+
+if SENTRY_DSN:
+    try:
+        import sentry_sdk
+    except ImportError as exc:
+        raise RuntimeError('SENTRY_DSN is configured but sentry-sdk is not installed') from exc
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        send_default_pii=True,
+        traces_sample_rate=0.2,
+    )
 
 # Multi-Tenancy Applications
 SHARED_APPS = [
@@ -37,8 +62,7 @@ SHARED_APPS = [
 TENANT_APPS = [
     'django.contrib.contenttypes',
     'rest_framework',
-    'rest_framework_simplejwt',
-    'rest_framework_simplejwt.token_blacklist',
+
     'corsheaders',
     'apps.projects',
     'apps.notifications',
@@ -125,7 +149,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # REST Framework Settings
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'apps.core.authentication.SupabaseJWTAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
@@ -145,16 +169,7 @@ REST_FRAMEWORK = {
 }
 
 # SimpleJWT Settings
-SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=15),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
-    'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
-    'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
-    'AUTH_HEADER_TYPES': ('Bearer',),
-    'TOKEN_OBTAIN_SERIALIZER': 'apps.accounts.serializers.CustomTokenObtainPairSerializer',
-}
+
 
 # CORS Configuration
 CORS_ALLOW_ALL_ORIGINS = False

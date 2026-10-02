@@ -44,3 +44,14 @@ class ActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = ActivityLog.objects.all().select_related('user')
     serializer_class = ActivityLogSerializer
     permission_classes = [IsTenantManager]
+
+
+class WhoAmIView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response({
+            "user_id": request.user.id,
+            "supabase_id": str(request.user.supabase_id),
+            "email": request.user.email,
+        })

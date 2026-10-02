@@ -24,6 +24,7 @@ export default function RegisterTenantPage() {
     const [password, setPassword] = useState('');
 
     const [loading, setLoading] = useState(false);
+  const [turnstileToken, setTurnstileToken] = useState('');
     const [error, setError] = useState('');
     const [successData, setSuccessData] = useState<any>(null);
     const [isTenantSubdomain, setIsTenantSubdomain] = useState<boolean | null>(null);

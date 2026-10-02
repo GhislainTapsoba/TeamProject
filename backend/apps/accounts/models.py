@@ -1,8 +1,11 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils import timezone
+from django.core.signing import TimestampSigner
 
 
 class User(AbstractUser):
+    supabase_id = models.UUIDField(unique=True, db_index=True, null=True, blank=True)
     ROLE_CHOICES = [
         ("admin", "Admin"),
         ("manager", "Manager"),
@@ -12,6 +15,11 @@ class User(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="employee")
     phone = models.CharField(max_length=30, blank=True)
     avatar_url = models.URLField(blank=True)
+    email_verified_at = models.DateTimeField(null=True, blank=True)
+
+    @property
+    def is_email_verified(self):
+        return self.email_verified_at is not None
 
     @property
     def full_name(self):
@@ -29,6 +37,13 @@ class User(AbstractUser):
             return None
         membership = self.memberships.filter(tenant=tenant, is_active=True).first()
         return membership.role if membership else None
+
+    def generate_email_verification_token(self):
+        return TimestampSigner().sign(self.email)
+
+    def verify_email(self):
+        self.email_verified_at = timezone.now()
+        self.save(update_fields=['email_verified_at'])
 
     def __str__(self):
         return f"{self.full_name} ({self.role})"

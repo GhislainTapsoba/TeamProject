@@ -3,6 +3,38 @@ import base64
 from cryptography.fernet import Fernet
 from django.conf import settings
 
+PUBLIC_ENV_PREFIXES = ('NEXT_PUBLIC_', 'VITE_')
+PUBLIC_SECRET_INDICATORS = (
+    'secret',
+    'token',
+    'private',
+    'api_key',
+    'service_role',
+    'access_key',
+    'sk_live',
+    'rk_live',
+)
+
+
+def ensure_no_public_secret_prefixes():
+    """Fail fast if a secret is accidentally exposed to frontend clients."""
+    for key, value in os.environ.items():
+        normalized_key = key.upper()
+        if not normalized_key.startswith(PUBLIC_ENV_PREFIXES):
+            continue
+        if not value:
+            continue
+        lower_value = value.lower()
+        lower_key = normalized_key.lower()
+        if any(indicator in lower_key for indicator in PUBLIC_SECRET_INDICATORS) or any(
+            indicator in lower_value for indicator in PUBLIC_SECRET_INDICATORS
+        ):
+            raise ValueError(
+                f"Sensitive secret detected in '{key}'. Keep all secret keys server-side. "
+                "Do not prefix them with NEXT_PUBLIC_ or VITE_."
+            )
+
+
 def get_fernet_cipher():
     raw_key = getattr(settings, 'ENCRYPTION_KEY', None)
     if not raw_key:

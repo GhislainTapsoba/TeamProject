@@ -1,9 +1,12 @@
+import os
+from unittest.mock import patch
+
 from django.test import TestCase, override_settings
-from rest_framework.exceptions import ValidationError
 from apps.accounts.serializers import UserCreateSerializer, ChangePasswordSerializer
 from apps.tenants.serializers import TenantRegistrationSerializer
-from apps.core.security import encrypt_value, decrypt_value
+from apps.core.security import encrypt_value, decrypt_value, ensure_no_public_secret_prefixes
 from django.conf import settings
+from django.contrib.auth import get_user_model
 
 class SecurityPolicyTestCase(TestCase):
     def test_settings_security_configuration(self):
@@ -11,8 +14,7 @@ class SecurityPolicyTestCase(TestCase):
         self.assertEqual(settings.SECURE_PROXY_SSL_HEADER, ('HTTP_X_FORWARDED_PROTO', 'https'))
         self.assertTrue(settings.SECURE_CONTENT_TYPE_NOSNIFF)
         self.assertEqual(settings.X_FRAME_OPTIONS, 'DENY')
-        self.assertTrue(settings.SIMPLE_JWT.get('BLACKLIST_AFTER_ROTATION'))
-        self.assertIn('rest_framework_simplejwt.token_blacklist', settings.TENANT_APPS)
+
         self.assertIn('auth', settings.REST_FRAMEWORK.get('DEFAULT_THROTTLE_RATES', {}))
         self.assertIn('registration', settings.REST_FRAMEWORK.get('DEFAULT_THROTTLE_RATES', {}))
 
@@ -54,3 +56,11 @@ class SecurityPolicyTestCase(TestCase):
         self.assertNotEqual(raw_secret, encrypted)
         decrypted = decrypt_value(encrypted)
         self.assertEqual(raw_secret, decrypted)
+
+    
+
+    def test_public_secret_prefixes_are_rejected(self):
+        """Sensitive keys must never be stored in NEXT_PUBLIC_* or VITE_* env vars."""
+        with patch.dict(os.environ, {'NEXT_PUBLIC_STRIPE_SECRET_KEY': 'sk_live_123'}, clear=False):
+            with self.assertRaises(ValueError):
+                ensure_no_public_secret_prefixes()

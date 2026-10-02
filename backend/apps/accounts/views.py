@@ -2,11 +2,13 @@ from rest_framework import viewsets, status, generics
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.tokens import RefreshToken
+
+from django.db import connection
+from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
+from django.utils import timezone
 from .models import User
 from .serializers import (
-    CustomTokenObtainPairSerializer,
+
     UserSerializer,
     UserCreateSerializer,
     UserProfileUpdateSerializer,
@@ -15,9 +17,7 @@ from .serializers import (
 from apps.core.permissions import IsTenantAdmin, IsTenantManager
 from apps.core.throttling import AuthRateThrottle
 
-class CustomTokenObtainPairView(TokenObtainPairView):
-    serializer_class = CustomTokenObtainPairSerializer
-    throttle_classes = [AuthRateThrottle]
+
 
 class UserViewSet(viewsets.ModelViewSet):
     """
@@ -25,7 +25,7 @@ class UserViewSet(viewsets.ModelViewSet):
     - Any authenticated user can list active colleagues
     - Only Tenant Admin can create, update role or delete users
     """
-    queryset = User.objects.all().order_by('date_joined')
+    queryset = User.objects.none()
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -38,7 +38,15 @@ class UserViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
     def get_queryset(self):
-        qs = User.objects.all().order_by('date_joined')
+        tenant = getattr(connection, 'tenant', None)
+        if tenant is None or tenant.schema_name == 'public':
+            return User.objects.none()
+
+        qs = User.objects.filter(
+            memberships__tenant=tenant,
+            memberships__is_active=True
+        ).distinct().order_by('date_joined')
+
         role = self.request.query_params.get('role')
         if role:
             qs = qs.filter(role=role)
@@ -71,16 +79,4 @@ class ChangePasswordView(APIView):
         user.set_password(serializer.validated_data['new_password'])
         user.save()
         return Response({'detail': 'Mot de passe mis à jour avec succès.'})
-
-class LogoutView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request):
-        refresh_token = request.data.get('refresh')
-        if refresh_token:
-            try:
-                token = RefreshToken(refresh_token)
-                token.blacklist()
-            except Exception:
-                pass
-        return Response({'detail': 'Déconnexion réussie.'}, status=status.HTTP_200_OK)
+
