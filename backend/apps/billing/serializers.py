@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import Plan, Subscription
-from apps.accounts.models import User
-from apps.projects.models import Project
+from . import limits
 
 class PlanSerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,11 +22,9 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         )
 
     def get_usage(self, obj):
-        current_users = User.objects.count()
-        current_projects = Project.objects.count()
         return {
-            'users_count': current_users,
+            'users_count': limits.users_count(obj.tenant),
             'max_users': obj.plan.max_users,
-            'projects_count': current_projects,
+            'projects_count': limits.projects_count(),
             'max_projects': obj.plan.max_projects,
         }

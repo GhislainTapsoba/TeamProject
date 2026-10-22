@@ -13,7 +13,8 @@ import {
     CheckCircle2,
     Clock,
     X,
-    MoreHorizontal
+    MoreHorizontal,
+    AlertCircle
 } from 'lucide-react';
 
 export default function ProjectsListPage() {
@@ -30,6 +31,7 @@ export default function ProjectsListPage() {
     const [newStatus, setNewStatus] = useState('in_progress');
     const [newDueDate, setNewDueDate] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [createError, setCreateError] = useState('');
 
     useEffect(() => {
         loadProjects();
@@ -51,6 +53,7 @@ export default function ProjectsListPage() {
         if (!newName.trim()) return;
 
         setSubmitting(true);
+        setCreateError('');
         try {
             await projectsAPI.create({
                 name: newName,
@@ -63,8 +66,10 @@ export default function ProjectsListPage() {
             setNewDescription('');
             setNewDueDate('');
             loadProjects();
-        } catch (err) {
-            console.error('Error creating project:', err);
+        } catch (err: any) {
+            const data = err.response?.data || {};
+            const firstFieldError = Object.values(data).find((v) => Array.isArray(v)) as string[] | undefined;
+            setCreateError(data.detail || firstFieldError?.[0] || 'Impossible de créer le projet.');
         } finally {
             setSubmitting(false);
         }
@@ -225,6 +230,12 @@ export default function ProjectsListPage() {
                         </div>
 
                         <form onSubmit={handleCreateProject} className="space-y-4 text-xs">
+                            {createError && (
+                                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 flex items-center gap-2">
+                                    <AlertCircle className="h-4 w-4 shrink-0" />
+                                    <span>{createError}</span>
+                                </div>
+                            )}
                             <div>
                                 <label className="block text-slate-400 font-medium mb-1">Nom du projet *</label>
                                 <input

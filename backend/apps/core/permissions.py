@@ -57,7 +57,7 @@ class IsTaskAssigneeOrManager(BasePermission):
             return True
 
         if obj.assignee_id == request.user.id:
-            if set(request.data.keys()).issubset({'state', 'status'}):
+            if set(request.data.keys()).issubset({'state', 'status', 'order'}):
                 return True
 
         return False

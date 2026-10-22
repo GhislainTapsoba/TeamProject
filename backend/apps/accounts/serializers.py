@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from rest_framework.exceptions import PermissionDenied
 
 from django.db import connection, transaction
 from django.contrib.auth.password_validation import validate_password
@@ -50,6 +51,12 @@ class UserCreateSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, attrs):
+        from apps.billing.limits import user_limit_error
+        tenant = getattr(connection, 'tenant', None)
+        if tenant is not None and tenant.schema_name != 'public':
+            error = user_limit_error(tenant)
+            if error:
+                raise PermissionDenied(error)
         self._existing_user = User.objects.filter(email__iexact=attrs['email']).first()
         password = attrs.get('password')
         if self._existing_user is None:

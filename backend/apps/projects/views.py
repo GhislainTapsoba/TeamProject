@@ -2,6 +2,8 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.exceptions import PermissionDenied
+from django.db import connection
 from .models import Project, ProjectMember, Task
 from .serializers import (
     ProjectSerializer,
@@ -12,6 +14,7 @@ from .serializers import (
 from apps.core.permissions import IsProjectManagerOrAdmin, IsTenantManager, IsTaskAssigneeOrManager
 from apps.notifications.tasks import send_task_assignment_email
 from apps.notifications.models import Notification
+from apps.billing.limits import project_limit_error
 
 class ProjectViewSet(viewsets.ModelViewSet):
     queryset = Project.objects.all().order_by('-created_at')
@@ -29,6 +32,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return [IsAuthenticated()]
 
     def perform_create(self, serializer):
+        error = project_limit_error(connection.tenant)
+        if error:
+            raise PermissionDenied(error)
         # Set current user as manager if not specified
         manager = serializer.validated_data.get('manager') or self.request.user
         project = serializer.save(manager=manager)
@@ -129,7 +135,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                 message=f"Vous avez été assigné(e) à la tâche '{task.title}' dans le projet '{task.project.name}'."
             )
             try:
-                send_task_assignment_email.delay(task.id)
+                send_task_assignment_email.delay(task.id, connection.schema_name)
             except Exception:
                 pass
 
@@ -144,7 +150,7 @@ class TaskViewSet(viewsets.ModelViewSet):
                 message=f"La tâche '{task.title}' vous a été assignée dans le projet '{task.project.name}'."
             )
             try:
-                send_task_assignment_email.delay(task.id)
+                send_task_assignment_email.delay(task.id, connection.schema_name)
             except Exception:
                 pass
 

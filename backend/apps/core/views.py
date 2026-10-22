@@ -6,7 +6,8 @@ from .models import ActivityLog
 from .serializers import ActivityLogSerializer
 from apps.core.permissions import IsTenantManager
 from apps.projects.models import Project, Task
-from apps.accounts.models import User
+from django.db import connection
+from apps.billing.limits import users_count
 
 class DashboardStatsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -21,7 +22,7 @@ class DashboardStatsView(APIView):
         my_tasks_count = Task.objects.filter(assignee=user).count()
         my_pending_tasks = Task.objects.filter(assignee=user, state__in=['todo', 'in_progress']).count()
         
-        team_members_count = User.objects.filter(is_active=True).count()
+        team_members_count = users_count(connection.tenant)
         
         completion_rate = int((completed_tasks / total_tasks * 100)) if total_tasks > 0 else 0
 
