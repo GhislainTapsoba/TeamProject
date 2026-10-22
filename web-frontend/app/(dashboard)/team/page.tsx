@@ -11,7 +11,8 @@ import {
     Phone,
     CheckCircle2,
     X,
-    MoreVertical
+    MoreVertical,
+    AlertCircle
 } from 'lucide-react';
 
 export default function TeamPage() {
@@ -28,6 +29,7 @@ export default function TeamPage() {
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [submitting, setSubmitting] = useState(false);
+    const [inviteError, setInviteError] = useState('');
 
     useEffect(() => {
         loadTeam();
@@ -47,6 +49,7 @@ export default function TeamPage() {
     const handleInviteUser = async (e: React.FormEvent) => {
         e.preventDefault();
         setSubmitting(true);
+        setInviteError('');
         try {
             await usersAPI.create({
                 email,
@@ -62,9 +65,12 @@ export default function TeamPage() {
             setFirstName('');
             setLastName('');
             setPhone('');
+            setPassword('');
             loadTeam();
-        } catch (err) {
-            console.error('Error creating user:', err);
+        } catch (err: any) {
+            const data = err.response?.data || {};
+            const firstFieldError = Object.values(data).find((v) => Array.isArray(v)) as string[] | undefined;
+            setInviteError(data.detail || firstFieldError?.[0] || "Impossible d'ajouter ce membre.");
         } finally {
             setSubmitting(false);
         }
@@ -164,6 +170,12 @@ export default function TeamPage() {
                         </div>
 
                         <form onSubmit={handleInviteUser} className="space-y-3">
+                            {inviteError && (
+                                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2">
+                                    <AlertCircle className="h-4 w-4 shrink-0" />
+                                    <span>{inviteError}</span>
+                                </div>
+                            )}
                             <div className="grid grid-cols-2 gap-3">
                                 <div>
                                     <label className="block text-slate-400 font-medium mb-1">Prénom</label>
@@ -232,6 +244,9 @@ export default function TeamPage() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
                                 />
+                                <p className="mt-1 text-[11px] text-slate-500">
+                                    Inutile si la personne a déjà un compte TeamProject : elle sera simplement ajoutée à l'organisation.
+                                </p>
                             </div>
 
                             <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">

@@ -1,7 +1,8 @@
-import uuid
 from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth import get_user_model
 from django_tenants.utils import schema_context
+from apps.accounts.models import TenantMembership
+from apps.core import supabase
 from apps.tenants.models import Client, Domain
 
 class Command(BaseCommand):
@@ -42,17 +43,26 @@ class Command(BaseCommand):
         domain.save()
         self.stdout.write(self.style.SUCCESS(f"Created domain '{domain_name}'."))
 
-        # Create admin user inside the tenant schema
+        # Create admin user (users live in the shared public schema)
         User = get_user_model()
+        if User.objects.filter(username=admin_username).exists():
+            raise CommandError(f"Admin user '{admin_username}' already exists.")
+        try:
+            supabase_id = supabase.create_auth_user(admin_email, admin_password)
+        except supabase.SupabaseError as exc:
+            supabase_id = None
+            self.stdout.write(self.style.WARNING(
+                f"Supabase account not created ({exc}); the admin can only log into Django admin."
+            ))
         with schema_context(schema_name):
-            if User.objects.filter(username=admin_username).exists():
-                raise CommandError(f"Admin user '{admin_username}' already exists in tenant '{schema_name}'.")
             admin_user = User.objects.create_superuser(
                 username=admin_username,
                 email=admin_email,
                 password=admin_password,
-                role='admin'
+                role='admin',
+                supabase_id=supabase_id,
             )
-            self.stdout.write(self.style.SUCCESS(f"Created admin user '{admin_username}' for tenant '{schema_name}'."))
+        TenantMembership.objects.create(user=admin_user, tenant=tenant, role='admin', is_active=True)
+        self.stdout.write(self.style.SUCCESS(f"Created admin user '{admin_username}' for tenant '{schema_name}'."))
 
         self.stdout.write(self.style.SUCCESS('Tenant setup complete.'))

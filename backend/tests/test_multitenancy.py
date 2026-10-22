@@ -2,7 +2,7 @@ from django.test import TestCase
 from django_tenants.test.cases import TenantTestCase
 from django_tenants.utils import schema_context
 from apps.tenants.models import Client, Domain
-from apps.accounts.models import User
+from apps.accounts.models import User, TenantMembership
 from apps.projects.models import Project, Task
 from apps.billing.models import Plan, Subscription
 from datetime import date, timedelta
@@ -33,19 +33,31 @@ class MultiTenantIsolationTestCase(TestCase):
 
     def test_complete_data_isolation_between_tenants(self):
         """
-        Verify that projects, tasks, and users created in Tenant 1 (Acme)
-        cannot be accessed or seen by Tenant 2 (Beta), proving PostgreSQL schema isolation.
+        Verify that projects and tasks created in Tenant 1 (Acme) cannot be seen
+        by Tenant 2 (Beta), proving PostgreSQL schema isolation. Users live in the
+        shared public schema; their access is scoped by TenantMembership instead.
         """
+        user_acme = User.objects.create_user(
+            username="alice@acme.com",
+            email="alice@acme.com",
+            first_name="Alice",
+            last_name="Acme",
+            password="Password123!",
+            role="admin"
+        )
+        TenantMembership.objects.create(user=user_acme, tenant=self.tenant1, role="admin")
+        user_beta = User.objects.create_user(
+            username="bob@beta.com",
+            email="bob@beta.com",
+            first_name="Bob",
+            last_name="Beta",
+            password="Password123!",
+            role="manager"
+        )
+        TenantMembership.objects.create(user=user_beta, tenant=self.tenant2, role="manager")
+
         # 1. Populate Tenant 1 (Acme)
         with schema_context(self.tenant1.schema_name):
-            user_acme = User.objects.create_user(
-                username="alice@acme.com",
-                email="alice@acme.com",
-                first_name="Alice",
-                last_name="Acme",
-                password="Password123!",
-                role="admin"
-            )
             project_acme = Project.objects.create(
                 name="Projet Confidentiel Acme",
                 manager=user_acme,
@@ -58,27 +70,15 @@ class MultiTenantIsolationTestCase(TestCase):
                 assignee=user_acme
             )
 
-            # Check presence in Tenant 1
             self.assertEqual(Project.objects.count(), 1)
             self.assertEqual(Task.objects.count(), 1)
-            self.assertEqual(User.objects.count(), 1)
 
         # 2. Check Tenant 2 (Beta) — MUST BE COMPLETELY EMPTY OF ACME DATA!
         with schema_context(self.tenant2.schema_name):
             self.assertEqual(Project.objects.count(), 0)
             self.assertEqual(Task.objects.count(), 0)
-            self.assertEqual(User.objects.count(), 0)
 
-            # Create Beta's own data
-            user_beta = User.objects.create_user(
-                username="bob@beta.com",
-                email="bob@beta.com",
-                first_name="Bob",
-                last_name="Beta",
-                password="Password123!",
-                role="manager"
-            )
-            project_beta = Project.objects.create(
+            Project.objects.create(
                 name="Projet Public Beta",
                 manager=user_beta,
                 status="planning"
@@ -91,7 +91,12 @@ class MultiTenantIsolationTestCase(TestCase):
         with schema_context(self.tenant1.schema_name):
             self.assertEqual(Project.objects.count(), 1)
             self.assertEqual(Project.objects.first().name, "Projet Confidentiel Acme")
-            self.assertFalse(User.objects.filter(email="bob@beta.com").exists())
+
+        # 4. Memberships scope each user to their own organisation
+        self.assertEqual(user_acme.get_tenant_role(self.tenant1), "admin")
+        self.assertIsNone(user_acme.get_tenant_role(self.tenant2))
+        self.assertEqual(user_beta.get_tenant_role(self.tenant2), "manager")
+        self.assertIsNone(user_beta.get_tenant_role(self.tenant1))
 
     def test_encrypted_mailjet_keys_per_tenant(self):
         """

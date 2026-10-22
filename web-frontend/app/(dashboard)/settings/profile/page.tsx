@@ -65,7 +65,8 @@ export default function ProfilePage() {
             setNewPassword('');
             setConfirmPassword('');
         } catch (err: any) {
-            const errorMsg = err.response?.data?.old_password?.[0] || 'Erreur lors du changement de mot de passe.';
+            const data = err.response?.data;
+            const errorMsg = data?.old_password?.[0] || data?.new_password?.[0] || data?.detail || 'Erreur lors du changement de mot de passe.';
             setPasswordMsg({ type: 'error', text: errorMsg });
         } finally {
             setPasswordSaving(false);

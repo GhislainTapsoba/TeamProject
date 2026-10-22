@@ -70,6 +70,11 @@ services:
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-v1rZk5g7qHk_7D4B6T9u8-v2h1j3k4l5m6n7o8p9q0r=}
       FRONTEND_URL: ${FRONTEND_URL:-https://teamproject.deep-technologies.com}
       PLATFORM_DOMAIN: ${PLATFORM_DOMAIN:-deep-technologies.com}
+      SUPABASE_URL: ${SUPABASE_URL:-${NEXT_PUBLIC_SUPABASE_URL:-}}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
+      SENTRY_DSN: ${SENTRY_DSN:-}
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -136,6 +141,8 @@ services:
       dockerfile: Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://teamproject.deep-technologies.com/api}
+        - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-}
+        - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
     container_name: teamproject-frontend
     environment:
       NODE_ENV: production

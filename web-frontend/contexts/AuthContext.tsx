@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { authAPI, tenantsAPI } from '@/lib/api';
+import { supabase } from '@/lib/supabase';
 
 export interface User {
     id: number | string;
@@ -27,7 +28,7 @@ interface AuthContextType {
     token: string | null;
     isLoading: boolean;
     login: (email: string, password: string) => Promise<void>;
-    logout: () => void;
+    logout: () => Promise<void>;
     refreshProfile: () => Promise<void>;
 }
 
@@ -39,69 +40,93 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const [token, setToken] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
+    const clearLocalState = () => {
+        localStorage.removeItem('user');
+        localStorage.removeItem('tenant');
+        setToken(null);
+        setUser(null);
+    };
+
+    const loadTenant = async () => {
+        try {
+            const tenantRes = await tenantsAPI.getCurrent();
+            if (tenantRes.data?.name) {
+                setTenant(tenantRes.data);
+                localStorage.setItem('tenant', JSON.stringify(tenantRes.data));
+            }
+        } catch (e) {
+            // Tenant may be public schema
+        }
+    };
+
     useEffect(() => {
         const initAuth = async () => {
-            const storedAccess = localStorage.getItem('access_token');
             const storedUser = localStorage.getItem('user');
             const storedTenant = localStorage.getItem('tenant');
+            if (storedTenant) {
+                setTenant(JSON.parse(storedTenant));
+            }
 
-            if (storedAccess && storedUser) {
-                setToken(storedAccess);
-                setUser(JSON.parse(storedUser));
-                if (storedTenant) {
-                    setTenant(JSON.parse(storedTenant));
+            const { data } = await supabase.auth.getSession();
+            if (data.session) {
+                setToken(data.session.access_token);
+                if (storedUser) {
+                    setUser(JSON.parse(storedUser));
                 }
-                // Also verify fresh profile in background
+                // Verify fresh profile (and tenant membership) in background
                 try {
                     const meRes = await authAPI.me();
                     setUser(meRes.data);
                     localStorage.setItem('user', JSON.stringify(meRes.data));
                 } catch (e) {
-                    // Handled by axios interceptor
+                    clearLocalState();
                 }
+            } else {
+                clearLocalState();
             }
 
-            // Also check active tenant info from backend
-            try {
-                const tenantRes = await tenantsAPI.getCurrent();
-                if (tenantRes.data?.name) {
-                    setTenant(tenantRes.data);
-                    localStorage.setItem('tenant', JSON.stringify(tenantRes.data));
-                }
-            } catch (e) {
-                // Tenant may be public schema
-            }
-
+            await loadTenant();
             setIsLoading(false);
         };
 
         initAuth();
+
+        // Keep the token in sync with Supabase's automatic refreshes and sign-outs
+        const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+            if (event === 'SIGNED_OUT') {
+                clearLocalState();
+            } else if (session) {
+                setToken(session.access_token);
+            }
+        });
+        return () => listener.subscription.unsubscribe();
     }, []);
 
     const login = async (email: string, password: string) => {
-        const response = await authAPI.login({ email, password });
-        const { access, refresh, user: loggedUser, tenant: loggedTenant } = response.data;
-
-        localStorage.setItem('access_token', access);
-        localStorage.setItem('refresh_token', refresh);
-        localStorage.setItem('user', JSON.stringify(loggedUser));
-        
-        if (loggedTenant) {
-            localStorage.setItem('tenant', JSON.stringify(loggedTenant));
-            setTenant(loggedTenant);
+        const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+        if (error || !data.session) {
+            throw new Error('Identifiants invalides. Veuillez vérifier votre email et mot de passe.');
         }
 
-        setToken(access);
-        setUser(loggedUser);
+        try {
+            const meRes = await authAPI.me();
+            localStorage.setItem('user', JSON.stringify(meRes.data));
+            setToken(data.session.access_token);
+            setUser(meRes.data);
+        } catch (err: any) {
+            // The Supabase account exists but is not allowed in this organisation
+            await supabase.auth.signOut();
+            clearLocalState();
+            throw new Error(err.response?.data?.detail || "Impossible d'accéder à cet espace.");
+        }
+
+        await loadTenant();
     };
 
-    const logout = () => {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
-        localStorage.removeItem('user');
+    const logout = async () => {
+        await supabase.auth.signOut();
+        clearLocalState();
         localStorage.removeItem('tenant');
-        setToken(null);
-        setUser(null);
         setTenant(null);
         window.location.href = '/login';
     };

@@ -24,7 +24,7 @@ export default function LoginPage() {
             await login(email, password);
             router.push('/dashboard');
         } catch (err: any) {
-            setError(err.response?.data?.detail || 'Identifiants invalides. Veuillez vérifier votre email et mot de passe.');
+            setError(err.message || 'Identifiants invalides. Veuillez vérifier votre email et mot de passe.');
         } finally {
             setLoading(false);
         }

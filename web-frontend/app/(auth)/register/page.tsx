@@ -24,7 +24,6 @@ export default function RegisterTenantPage() {
     const [password, setPassword] = useState('');
 
     const [loading, setLoading] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState('');
     const [error, setError] = useState('');
     const [successData, setSuccessData] = useState<any>(null);
     const [isTenantSubdomain, setIsTenantSubdomain] = useState<boolean | null>(null);
@@ -56,6 +55,8 @@ export default function RegisterTenantPage() {
             console.error('Registration error:', err);
             const msg = err.response?.data?.error ||
                 err.response?.data?.subdomain?.[0] ||
+                err.response?.data?.admin_email?.[0] ||
+                err.response?.data?.admin_password?.[0] ||
                 err.response?.data?.detail ||
                 err.response?.data?.message ||
                 "Erreur lors de la creation de l'organisation. Verifiez les informations.";

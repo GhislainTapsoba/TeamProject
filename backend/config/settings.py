@@ -1,6 +1,5 @@
 import os
 from pathlib import Path
-from datetime import timedelta
 import dotenv
 from apps.core.security import ensure_no_public_secret_prefixes
 
@@ -28,10 +27,15 @@ SENTRY_DSN = os.getenv('SENTRY_DSN', '')
 TURNSTILE_SECRET_KEY = os.getenv('TURNSTILE_SECRET_KEY', '')
 TURNSTILE_SITE_KEY = os.getenv('TURNSTILE_SITE_KEY', '')
 
-# Supabase JWT configuration
-SUPABASE_JWKS_URL = os.getenv('SUPABASE_JWKS_URL')
-SUPABASE_JWT_AUDIENCE = os.getenv('SUPABASE_JWT_AUDIENCE')
-SUPABASE_JWT_ISSUER = os.getenv('SUPABASE_JWT_ISSUER')
+# Supabase Auth configuration
+SUPABASE_URL = (os.getenv('SUPABASE_URL') or os.getenv('NEXT_PUBLIC_SUPABASE_URL') or '').rstrip('/')
+SUPABASE_ANON_KEY = os.getenv('SUPABASE_ANON_KEY') or os.getenv('NEXT_PUBLIC_SUPABASE_ANON_KEY') or ''
+SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY', '')
+# Legacy projects sign JWTs with a shared HS256 secret; newer ones use asymmetric keys (JWKS)
+SUPABASE_JWT_SECRET = os.getenv('SUPABASE_JWT_SECRET', '')
+SUPABASE_JWKS_URL = os.getenv('SUPABASE_JWKS_URL') or (f"{SUPABASE_URL}/auth/v1/.well-known/jwks.json" if SUPABASE_URL else '')
+SUPABASE_JWT_AUDIENCE = os.getenv('SUPABASE_JWT_AUDIENCE', 'authenticated')
+SUPABASE_JWT_ISSUER = os.getenv('SUPABASE_JWT_ISSUER') or (f"{SUPABASE_URL}/auth/v1" if SUPABASE_URL else None)
 
 if SENTRY_DSN:
     try:
@@ -62,7 +66,6 @@ SHARED_APPS = [
 TENANT_APPS = [
     'django.contrib.contenttypes',
     'rest_framework',
-
     'corsheaders',
     'apps.projects',
     'apps.notifications',
@@ -167,9 +170,6 @@ REST_FRAMEWORK = {
     'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     'PAGE_SIZE': 50,
 }
-
-# SimpleJWT Settings
-
 
 # CORS Configuration
 CORS_ALLOW_ALL_ORIGINS = False

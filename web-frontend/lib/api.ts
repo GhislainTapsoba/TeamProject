@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { supabase } from '@/lib/supabase';
 
 // Get base API URL
 const getApiBaseUrl = () => {
@@ -16,11 +17,12 @@ const api = axios.create({
     },
 });
 
-// Request interceptor to attach JWT token
+// Request interceptor to attach the Supabase access token
 api.interceptors.request.use(
-    (config) => {
+    async (config) => {
         if (typeof window !== 'undefined') {
-            const token = localStorage.getItem('access_token') || sessionStorage.getItem('access_token');
+            const { data } = await supabase.auth.getSession();
+            const token = data.session?.access_token;
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
             }
@@ -30,33 +32,23 @@ api.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
-// Response interceptor to handle token expiry & auto redirect
+// Response interceptor: refresh the Supabase session once on 401, then redirect to login
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
-        if (error.response?.status === 401 && !originalRequest._retry) {
+        if (error.response?.status === 401 && originalRequest && !originalRequest._retry && typeof window !== 'undefined') {
             originalRequest._retry = true;
-            if (typeof window !== 'undefined') {
-                const refreshToken = localStorage.getItem('refresh_token') || sessionStorage.getItem('refresh_token');
-                if (refreshToken) {
-                    try {
-                        const refreshRes = await axios.post('/api/auth/refresh/', { refresh: refreshToken });
-                        const newAccess = refreshRes.data.access;
-                        localStorage.setItem('access_token', newAccess);
-                        sessionStorage.setItem('access_token', newAccess);
-                        api.defaults.headers.common.Authorization = `Bearer ${newAccess}`;
-                        originalRequest.headers.Authorization = `Bearer ${newAccess}`;
-                        return api(originalRequest);
-                    } catch (refreshErr) {
-                        localStorage.removeItem('access_token');
-                        localStorage.removeItem('refresh_token');
-                        localStorage.removeItem('user');
-                        window.location.href = '/login';
-                    }
-                } else {
-                    window.location.href = '/login';
-                }
+            const { data, error: refreshError } = await supabase.auth.refreshSession();
+            if (!refreshError && data.session) {
+                originalRequest.headers.Authorization = `Bearer ${data.session.access_token}`;
+                return api(originalRequest);
+            }
+            await supabase.auth.signOut();
+            localStorage.removeItem('user');
+            localStorage.removeItem('tenant');
+            if (window.location.pathname !== '/login') {
+                window.location.href = '/login';
             }
         }
         return Promise.reject(error);
@@ -67,11 +59,6 @@ export default api;
 
 // Auth API
 export const authAPI = {
-    login: (credentials: { username?: string; email?: string; password: string }) =>
-        api.post('/auth/login/', {
-            username: credentials.email || credentials.username,
-            password: credentials.password
-        }),
     me: () => api.get('/auth/me/'),
     updateProfile: (data: any) => api.patch('/auth/me/', data),
     changePassword: (data: { old_password: string; new_password: string }) =>
