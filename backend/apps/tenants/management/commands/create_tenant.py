@@ -1,28 +1,34 @@
-from django.core.management.base import BaseCommand, CommandError
 from django.contrib.auth import get_user_model
+from django.core.management.base import BaseCommand, CommandError
 from django_tenants.utils import schema_context
+
 from apps.accounts.models import TenantMembership
 from apps.core import supabase
 from apps.tenants.models import Client, Domain
 
+
 class Command(BaseCommand):
-    help = 'Create a new tenant (client) with a default admin user for local testing.'
+    help = "Create a new tenant (client) with a default admin user for local testing."
 
     def add_arguments(self, parser):
-        parser.add_argument('name', type=str, help='Human readable name of the tenant')
-        parser.add_argument('schema_name', type=str, help='Schema name / subdomain identifier (lowercase, alphanumeric)')
-        parser.add_argument('--admin-email', type=str, default='admin@example.com', help='Email for the admin user')
-        parser.add_argument('--admin-password', type=str, default='adminpass123', help='Password for the admin user')
-        parser.add_argument('--admin-username', type=str, default='admin', help='Username for the admin user')
-        parser.add_argument('--domain', type=str, help='Custom domain (default: {schema_name}.teamproject.deep-technologies.com)')
+        parser.add_argument("name", type=str, help="Human readable name of the tenant")
+        parser.add_argument(
+            "schema_name", type=str, help="Schema name / subdomain identifier (lowercase, alphanumeric)"
+        )
+        parser.add_argument("--admin-email", type=str, default="admin@example.com", help="Email for the admin user")
+        parser.add_argument("--admin-password", type=str, default="adminpass123", help="Password for the admin user")
+        parser.add_argument("--admin-username", type=str, default="admin", help="Username for the admin user")
+        parser.add_argument(
+            "--domain", type=str, help="Custom domain (default: {schema_name}.teamproject.deep-technologies.com)"
+        )
 
     def handle(self, *args, **options):
-        name = options['name']
-        schema_name = options['schema_name']
-        admin_email = options['admin_email']
-        admin_password = options['admin_password']
-        admin_username = options['admin_username']
-        domain_name = options.get('domain') or f"{schema_name}.teamproject.deep-technologies.com"
+        name = options["name"]
+        schema_name = options["schema_name"]
+        admin_email = options["admin_email"]
+        admin_password = options["admin_password"]
+        admin_username = options["admin_username"]
+        domain_name = options.get("domain") or f"{schema_name}.teamproject.deep-technologies.com"
 
         # Validate schema name uniqueness
         if Client.objects.filter(schema_name=schema_name).exists():
@@ -32,7 +38,7 @@ class Command(BaseCommand):
         tenant = Client(
             name=name,
             schema_name=schema_name,
-            plan='free',
+            plan="free",
             is_active=True,
         )
         tenant.save()
@@ -51,18 +57,18 @@ class Command(BaseCommand):
             supabase_id = supabase.create_auth_user(admin_email, admin_password)
         except supabase.SupabaseError as exc:
             supabase_id = None
-            self.stdout.write(self.style.WARNING(
-                f"Supabase account not created ({exc}); the admin can only log into Django admin."
-            ))
+            self.stdout.write(
+                self.style.WARNING(f"Supabase account not created ({exc}); the admin can only log into Django admin.")
+            )
         with schema_context(schema_name):
             admin_user = User.objects.create_superuser(
                 username=admin_username,
                 email=admin_email,
                 password=admin_password,
-                role='admin',
+                role="admin",
                 supabase_id=supabase_id,
             )
-        TenantMembership.objects.create(user=admin_user, tenant=tenant, role='admin', is_active=True)
+        TenantMembership.objects.create(user=admin_user, tenant=tenant, role="admin", is_active=True)
         self.stdout.write(self.style.SUCCESS(f"Created admin user '{admin_username}' for tenant '{schema_name}'."))
 
-        self.stdout.write(self.style.SUCCESS('Tenant setup complete.'))
+        self.stdout.write(self.style.SUCCESS("Tenant setup complete."))

@@ -1,5 +1,7 @@
-from django.db import models
 from datetime import date
+
+from django.db import models
+
 
 class Plan(models.Model):
     name = models.CharField(max_length=50, unique=True)  # "free", "pro", "enterprise"
@@ -12,6 +14,7 @@ class Plan(models.Model):
     def __str__(self):
         return f"{self.display_name or self.name.capitalize()} ({int(self.price_monthly)} XOF/mois)"
 
+
 class Subscription(models.Model):
     STATUS_CHOICES = [
         ("active", "Actif"),
@@ -20,7 +23,7 @@ class Subscription(models.Model):
         ("trial", "Essai"),
     ]
 
-    tenant = models.OneToOneField('tenants.Client', on_delete=models.CASCADE, related_name="subscription")
+    tenant = models.OneToOneField("tenants.Client", on_delete=models.CASCADE, related_name="subscription")
     plan = models.ForeignKey(Plan, on_delete=models.PROTECT, related_name="subscriptions")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
     current_period_end = models.DateField()

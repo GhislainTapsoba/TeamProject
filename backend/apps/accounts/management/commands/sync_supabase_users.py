@@ -14,17 +14,17 @@ class Command(BaseCommand):
     )
 
     def add_arguments(self, parser):
-        parser.add_argument('--dry-run', action='store_true', help='List the users without creating anything')
+        parser.add_argument("--dry-run", action="store_true", help="List the users without creating anything")
 
     def handle(self, *args, **options):
         User = get_user_model()
-        users = User.objects.filter(supabase_id__isnull=True).exclude(email='')
+        users = User.objects.filter(supabase_id__isnull=True).exclude(email="")
         if not users.exists():
-            self.stdout.write(self.style.SUCCESS('All users are already linked to Supabase.'))
+            self.stdout.write(self.style.SUCCESS("All users are already linked to Supabase."))
             return
 
         for user in users:
-            if options['dry_run']:
+            if options["dry_run"]:
                 self.stdout.write(f"Would link {user.email}")
                 continue
             temporary_password = secrets.token_urlsafe(12)
@@ -34,5 +34,5 @@ class Command(BaseCommand):
                 self.stdout.write(self.style.ERROR(f"{user.email}: {exc}"))
                 continue
             user.set_password(temporary_password)
-            user.save(update_fields=['supabase_id', 'password'])
+            user.save(update_fields=["supabase_id", "password"])
             self.stdout.write(self.style.SUCCESS(f"{user.email}: temporary password {temporary_password}"))

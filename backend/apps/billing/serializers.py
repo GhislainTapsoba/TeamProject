@@ -1,14 +1,17 @@
 from rest_framework import serializers
-from .models import Plan, Subscription
+
 from . import limits
+from .models import Plan, Subscription
+
 
 class PlanSerializer(serializers.ModelSerializer):
     class Meta:
         model = Plan
-        fields = ('id', 'name', 'display_name', 'price_monthly', 'max_users', 'max_projects', 'features')
+        fields = ("id", "name", "display_name", "price_monthly", "max_users", "max_projects", "features")
+
 
 class SubscriptionSerializer(serializers.ModelSerializer):
-    plan_details = PlanSerializer(source='plan', read_only=True)
+    plan_details = PlanSerializer(source="plan", read_only=True)
     is_expired = serializers.ReadOnlyField()
     days_left = serializers.ReadOnlyField()
     usage = serializers.SerializerMethodField()
@@ -16,15 +19,23 @@ class SubscriptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
         fields = (
-            'id', 'plan', 'plan_details', 'status', 'current_period_end',
-            'is_expired', 'days_left', 'payment_provider', 'provider_reference',
-            'usage', 'created_at'
+            "id",
+            "plan",
+            "plan_details",
+            "status",
+            "current_period_end",
+            "is_expired",
+            "days_left",
+            "payment_provider",
+            "provider_reference",
+            "usage",
+            "created_at",
         )
 
     def get_usage(self, obj):
         return {
-            'users_count': limits.users_count(obj.tenant),
-            'max_users': obj.plan.max_users,
-            'projects_count': limits.projects_count(),
-            'max_projects': obj.plan.max_projects,
+            "users_count": limits.users_count(obj.tenant),
+            "max_users": obj.plan.max_users,
+            "projects_count": limits.projects_count(),
+            "max_projects": obj.plan.max_projects,
         }

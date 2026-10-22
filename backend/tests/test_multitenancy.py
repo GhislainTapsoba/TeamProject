@@ -1,34 +1,25 @@
 from django.test import TestCase
-from django_tenants.test.cases import TenantTestCase
 from django_tenants.utils import schema_context
-from apps.tenants.models import Client, Domain
-from apps.accounts.models import User, TenantMembership
+
+from apps.accounts.models import TenantMembership, User
+from apps.billing.models import Plan
 from apps.projects.models import Project, Task
-from apps.billing.models import Plan, Subscription
-from datetime import date, timedelta
+from apps.tenants.models import Client, Domain
+
 
 class MultiTenantIsolationTestCase(TestCase):
     def setUp(self):
         # Create shared Plan
         self.plan, _ = Plan.objects.get_or_create(
-            name="pro",
-            defaults={"price_monthly": 15000, "max_users": 20, "max_projects": 25}
+            name="pro", defaults={"price_monthly": 15000, "max_users": 20, "max_projects": 25}
         )
 
         # Create Tenant 1 (Acme Corp)
-        self.tenant1 = Client.objects.create(
-            schema_name="acme",
-            name="Acme Corporation",
-            plan="pro"
-        )
+        self.tenant1 = Client.objects.create(schema_name="acme", name="Acme Corporation", plan="pro")
         Domain.objects.create(domain="acme.teamproject.deep-technologies.com", tenant=self.tenant1, is_primary=True)
 
         # Create Tenant 2 (Beta Tech)
-        self.tenant2 = Client.objects.create(
-            schema_name="betacorp",
-            name="Beta Corporation",
-            plan="pro"
-        )
+        self.tenant2 = Client.objects.create(schema_name="betacorp", name="Beta Corporation", plan="pro")
         Domain.objects.create(domain="betacorp.teamproject.deep-technologies.com", tenant=self.tenant2, is_primary=True)
 
     def test_complete_data_isolation_between_tenants(self):
@@ -43,7 +34,7 @@ class MultiTenantIsolationTestCase(TestCase):
             first_name="Alice",
             last_name="Acme",
             password="Password123!",
-            role="admin"
+            role="admin",
         )
         TenantMembership.objects.create(user=user_acme, tenant=self.tenant1, role="admin")
         user_beta = User.objects.create_user(
@@ -52,23 +43,16 @@ class MultiTenantIsolationTestCase(TestCase):
             first_name="Bob",
             last_name="Beta",
             password="Password123!",
-            role="manager"
+            role="manager",
         )
         TenantMembership.objects.create(user=user_beta, tenant=self.tenant2, role="manager")
 
         # 1. Populate Tenant 1 (Acme)
         with schema_context(self.tenant1.schema_name):
             project_acme = Project.objects.create(
-                name="Projet Confidentiel Acme",
-                manager=user_acme,
-                status="in_progress"
+                name="Projet Confidentiel Acme", manager=user_acme, status="in_progress"
             )
-            Task.objects.create(
-                project=project_acme,
-                title="Tâche secrète Acme 1",
-                state="todo",
-                assignee=user_acme
-            )
+            Task.objects.create(project=project_acme, title="Tâche secrète Acme 1", state="todo", assignee=user_acme)
 
             self.assertEqual(Project.objects.count(), 1)
             self.assertEqual(Task.objects.count(), 1)
@@ -78,11 +62,7 @@ class MultiTenantIsolationTestCase(TestCase):
             self.assertEqual(Project.objects.count(), 0)
             self.assertEqual(Task.objects.count(), 0)
 
-            Project.objects.create(
-                name="Projet Public Beta",
-                manager=user_beta,
-                status="planning"
-            )
+            Project.objects.create(name="Projet Public Beta", manager=user_beta, status="planning")
 
             self.assertEqual(Project.objects.count(), 1)
             self.assertEqual(Project.objects.first().name, "Projet Public Beta")
@@ -111,6 +91,6 @@ class MultiTenantIsolationTestCase(TestCase):
 
         # Check decryption helper
         decrypted = self.tenant1.get_decrypted_mailjet_keys()
-        self.assertEqual(decrypted['api_key'], "test_api_key_123")
-        self.assertEqual(decrypted['secret_key'], "test_secret_key_456")
-        self.assertEqual(decrypted['from_email'], "sender@acme.com")
+        self.assertEqual(decrypted["api_key"], "test_api_key_123")
+        self.assertEqual(decrypted["secret_key"], "test_secret_key_456")
+        self.assertEqual(decrypted["from_email"], "sender@acme.com")

@@ -1,53 +1,51 @@
 import os
 from unittest.mock import patch
 
-from django.test import TestCase, override_settings
-from apps.accounts.serializers import UserCreateSerializer, ChangePasswordSerializer
-from apps.tenants.serializers import TenantRegistrationSerializer
-from apps.core.security import encrypt_value, decrypt_value, ensure_no_public_secret_prefixes
 from django.conf import settings
-from django.contrib.auth import get_user_model
+from django.test import TestCase
+
+from apps.accounts.serializers import ChangePasswordSerializer, UserCreateSerializer
+from apps.core.security import decrypt_value, encrypt_value, ensure_no_public_secret_prefixes
+from apps.tenants.serializers import TenantRegistrationSerializer
+
 
 class SecurityPolicyTestCase(TestCase):
     def test_settings_security_configuration(self):
         """Verify core security settings are properly configured."""
-        self.assertEqual(settings.SECURE_PROXY_SSL_HEADER, ('HTTP_X_FORWARDED_PROTO', 'https'))
+        self.assertEqual(settings.SECURE_PROXY_SSL_HEADER, ("HTTP_X_FORWARDED_PROTO", "https"))
         self.assertTrue(settings.SECURE_CONTENT_TYPE_NOSNIFF)
-        self.assertEqual(settings.X_FRAME_OPTIONS, 'DENY')
+        self.assertEqual(settings.X_FRAME_OPTIONS, "DENY")
 
-        self.assertIn('auth', settings.REST_FRAMEWORK.get('DEFAULT_THROTTLE_RATES', {}))
-        self.assertIn('registration', settings.REST_FRAMEWORK.get('DEFAULT_THROTTLE_RATES', {}))
+        self.assertIn("auth", settings.REST_FRAMEWORK.get("DEFAULT_THROTTLE_RATES", {}))
+        self.assertIn("registration", settings.REST_FRAMEWORK.get("DEFAULT_THROTTLE_RATES", {}))
 
     def test_user_create_rejects_weak_password(self):
         """Verify that UserCreateSerializer rejects weak passwords."""
-        serializer = UserCreateSerializer(data={
-            'username': 'test@example.com',
-            'email': 'test@example.com',
-            'password': '123'
-        })
+        serializer = UserCreateSerializer(
+            data={"username": "test@example.com", "email": "test@example.com", "password": "123"}
+        )
         self.assertFalse(serializer.is_valid())
-        self.assertIn('password', serializer.errors)
+        self.assertIn("password", serializer.errors)
 
     def test_tenant_registration_rejects_weak_password(self):
         """Verify that TenantRegistrationSerializer rejects weak passwords."""
-        serializer = TenantRegistrationSerializer(data={
-            'organization_name': 'Acme',
-            'subdomain': 'acmetest',
-            'admin_email': 'admin@acme.com',
-            'admin_name': 'Admin User',
-            'admin_password': '123'
-        })
+        serializer = TenantRegistrationSerializer(
+            data={
+                "organization_name": "Acme",
+                "subdomain": "acmetest",
+                "admin_email": "admin@acme.com",
+                "admin_name": "Admin User",
+                "admin_password": "123",
+            }
+        )
         self.assertFalse(serializer.is_valid())
-        self.assertIn('admin_password', serializer.errors)
+        self.assertIn("admin_password", serializer.errors)
 
     def test_change_password_rejects_weak_password(self):
         """Verify that ChangePasswordSerializer rejects weak new passwords."""
-        serializer = ChangePasswordSerializer(data={
-            'old_password': 'ValidOldPassword123!',
-            'new_password': '123'
-        })
+        serializer = ChangePasswordSerializer(data={"old_password": "ValidOldPassword123!", "new_password": "123"})
         self.assertFalse(serializer.is_valid())
-        self.assertIn('new_password', serializer.errors)
+        self.assertIn("new_password", serializer.errors)
 
     def test_fernet_encryption_and_decryption(self):
         """Verify Fernet encryption and decryption integrity."""
@@ -57,10 +55,10 @@ class SecurityPolicyTestCase(TestCase):
         decrypted = decrypt_value(encrypted)
         self.assertEqual(raw_secret, decrypted)
 
-    
-
     def test_public_secret_prefixes_are_rejected(self):
         """Sensitive keys must never be stored in NEXT_PUBLIC_* or VITE_* env vars."""
-        with patch.dict(os.environ, {'NEXT_PUBLIC_STRIPE_SECRET_KEY': 'sk_live_123'}, clear=False):
-            with self.assertRaises(ValueError):
-                ensure_no_public_secret_prefixes()
+        with (
+            patch.dict(os.environ, {"NEXT_PUBLIC_STRIPE_SECRET_KEY": "sk_live_123"}, clear=False),
+            self.assertRaises(ValueError),
+        ):
+            ensure_no_public_secret_prefixes()

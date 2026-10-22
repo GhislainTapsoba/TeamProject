@@ -1,9 +1,13 @@
-from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
+from rest_framework.throttling import AnonRateThrottle
+
 
 class AuthRateThrottle(AnonRateThrottle):
     """Limits login and password change attempts to prevent brute force."""
-    scope = 'auth'
+
+    scope = "auth"
+
 
 class RegistrationRateThrottle(AnonRateThrottle):
     """Limits tenant creation to prevent schema flooding and DoS."""
-    scope = 'registration'
+
+    scope = "registration"

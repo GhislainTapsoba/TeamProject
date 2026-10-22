@@ -1,6 +1,8 @@
 from django.db import models
-from django_tenants.models import TenantMixin, DomainMixin
-from apps.core.security import encrypt_value, decrypt_value
+from django_tenants.models import DomainMixin, TenantMixin
+
+from apps.core.security import decrypt_value, encrypt_value
+
 
 class Client(TenantMixin):
     name = models.CharField(max_length=100)
@@ -22,13 +24,14 @@ class Client(TenantMixin):
 
     def get_decrypted_mailjet_keys(self):
         return {
-            'api_key': decrypt_value(self.mailjet_api_key),
-            'secret_key': decrypt_value(self.mailjet_secret_key),
-            'from_email': self.mail_from_email,
+            "api_key": decrypt_value(self.mailjet_api_key),
+            "secret_key": decrypt_value(self.mailjet_secret_key),
+            "from_email": self.mail_from_email,
         }
 
     def __str__(self):
         return f"{self.name} ({self.schema_name})"
+
 
 class Domain(DomainMixin):
     def __str__(self):
@@ -37,13 +40,14 @@ class Domain(DomainMixin):
 
 class PlatformUser(models.Model):
     """Super‑admin account stored in the public schema"""
+
     email = models.EmailField(unique=True)
     is_superadmin = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True)
 
-    USERNAME_FIELD = 'email'
+    USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     def __str__(self):

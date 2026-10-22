@@ -1,13 +1,16 @@
-from rest_framework import viewsets, status
-from rest_framework.views import APIView
-from rest_framework.response import Response
+from django.db import connection
+from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
-from .models import ActivityLog
-from .serializers import ActivityLogSerializer
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from apps.billing.limits import users_count
 from apps.core.permissions import IsTenantManager
 from apps.projects.models import Project, Task
-from django.db import connection
-from apps.billing.limits import users_count
+
+from .models import ActivityLog
+from .serializers import ActivityLogSerializer
+
 
 class DashboardStatsView(APIView):
     permission_classes = [IsAuthenticated]
@@ -15,34 +18,37 @@ class DashboardStatsView(APIView):
     def get(self, request):
         user = request.user
         total_projects = Project.objects.count()
-        active_projects = Project.objects.filter(status__in=['planning', 'in_progress']).count()
-        
+        active_projects = Project.objects.filter(status__in=["planning", "in_progress"]).count()
+
         total_tasks = Task.objects.count()
-        completed_tasks = Task.objects.filter(state='done').count()
+        completed_tasks = Task.objects.filter(state="done").count()
         my_tasks_count = Task.objects.filter(assignee=user).count()
-        my_pending_tasks = Task.objects.filter(assignee=user, state__in=['todo', 'in_progress']).count()
-        
+        my_pending_tasks = Task.objects.filter(assignee=user, state__in=["todo", "in_progress"]).count()
+
         team_members_count = users_count(connection.tenant)
-        
-        completion_rate = int((completed_tasks / total_tasks * 100)) if total_tasks > 0 else 0
+
+        completion_rate = int(completed_tasks / total_tasks * 100) if total_tasks > 0 else 0
 
         # Recent activities
-        recent_logs = ActivityLog.objects.all().select_related('user')[:10]
+        recent_logs = ActivityLog.objects.all().select_related("user")[:10]
 
-        return Response({
-            'total_projects': total_projects,
-            'active_projects': active_projects,
-            'total_tasks': total_tasks,
-            'completed_tasks': completed_tasks,
-            'completion_rate': completion_rate,
-            'my_tasks_count': my_tasks_count,
-            'my_pending_tasks': my_pending_tasks,
-            'team_members_count': team_members_count,
-            'recent_activities': ActivityLogSerializer(recent_logs, many=True).data,
-        })
+        return Response(
+            {
+                "total_projects": total_projects,
+                "active_projects": active_projects,
+                "total_tasks": total_tasks,
+                "completed_tasks": completed_tasks,
+                "completion_rate": completion_rate,
+                "my_tasks_count": my_tasks_count,
+                "my_pending_tasks": my_pending_tasks,
+                "team_members_count": team_members_count,
+                "recent_activities": ActivityLogSerializer(recent_logs, many=True).data,
+            }
+        )
+
 
 class ActivityLogViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = ActivityLog.objects.all().select_related('user')
+    queryset = ActivityLog.objects.all().select_related("user")
     serializer_class = ActivityLogSerializer
     permission_classes = [IsTenantManager]
 
@@ -51,8 +57,10 @@ class WhoAmIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response({
-            "user_id": request.user.id,
-            "supabase_id": str(request.user.supabase_id),
-            "email": request.user.email,
-        })
+        return Response(
+            {
+                "user_id": request.user.id,
+                "supabase_id": str(request.user.supabase_id),
+                "email": request.user.email,
+            }
+        )

@@ -1,5 +1,6 @@
-from django.db import models
 from django.conf import settings
+from django.db import models
+
 
 class Project(models.Model):
     STATUS_CHOICES = [
@@ -13,11 +14,7 @@ class Project(models.Model):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True)
     manager = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="managed_projects"
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="managed_projects"
     )
     status = models.CharField(max_length=50, choices=STATUS_CHOICES, default="in_progress")
     start_date = models.DateField(null=True, blank=True)
@@ -43,6 +40,7 @@ class Project(models.Model):
     def __str__(self):
         return self.name
 
+
 class ProjectMember(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name="members")
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="project_memberships")
@@ -53,6 +51,7 @@ class ProjectMember(models.Model):
 
     def __str__(self):
         return f"{self.user} dans {self.project}"
+
 
 class Task(models.Model):
     STATE_CHOICES = [
@@ -72,18 +71,14 @@ class Task(models.Model):
     state = models.CharField(max_length=20, choices=STATE_CHOICES, default="todo")
     priority = models.CharField(max_length=20, choices=PRIORITY_CHOICES, default="medium")
     assignee = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="tasks"
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="tasks"
     )
     due_date = models.DateField(null=True, blank=True)
     order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        ordering = ['order', '-created_at']
+        ordering = ["order", "-created_at"]
 
     def __str__(self):
         return f"[{self.get_state_display()}] {self.title}"

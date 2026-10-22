@@ -1,18 +1,18 @@
 import os
-import base64
+
 from cryptography.fernet import Fernet
 from django.conf import settings
 
-PUBLIC_ENV_PREFIXES = ('NEXT_PUBLIC_', 'VITE_')
+PUBLIC_ENV_PREFIXES = ("NEXT_PUBLIC_", "VITE_")
 PUBLIC_SECRET_INDICATORS = (
-    'secret',
-    'token',
-    'private',
-    'api_key',
-    'service_role',
-    'access_key',
-    'sk_live',
-    'rk_live',
+    "secret",
+    "token",
+    "private",
+    "api_key",
+    "service_role",
+    "access_key",
+    "sk_live",
+    "rk_live",
 )
 
 
@@ -36,22 +36,21 @@ def ensure_no_public_secret_prefixes():
 
 
 def get_fernet_cipher():
-    raw_key = getattr(settings, 'ENCRYPTION_KEY', None)
+    raw_key = getattr(settings, "ENCRYPTION_KEY", None)
     if not raw_key:
-        raise ValueError('ENCRYPTION_KEY is not configured')
-    if isinstance(raw_key, str):
-        key_bytes = raw_key.encode('utf-8')
-    else:
-        key_bytes = raw_key
+        raise ValueError("ENCRYPTION_KEY is not configured")
+    key_bytes = raw_key.encode("utf-8") if isinstance(raw_key, str) else raw_key
     return Fernet(key_bytes)
+
 
 def encrypt_value(value: str) -> str:
     """Encrypt a plaintext string using Fernet symetric encryption."""
     if not value:
         return ""
     cipher = get_fernet_cipher()
-    encrypted_bytes = cipher.encrypt(value.encode('utf-8'))
-    return encrypted_bytes.decode('utf-8')
+    encrypted_bytes = cipher.encrypt(value.encode("utf-8"))
+    return encrypted_bytes.decode("utf-8")
+
 
 def decrypt_value(encrypted_val: str) -> str:
     """Decrypt an encrypted string back to plaintext."""
@@ -59,8 +58,8 @@ def decrypt_value(encrypted_val: str) -> str:
         return ""
     try:
         cipher = get_fernet_cipher()
-        decrypted_bytes = cipher.decrypt(encrypted_val.encode('utf-8'))
-        return decrypted_bytes.decode('utf-8')
-    except Exception as e:
+        decrypted_bytes = cipher.decrypt(encrypted_val.encode("utf-8"))
+        return decrypted_bytes.decode("utf-8")
+    except Exception:
         # If not encrypted or invalid key, return as is or empty
         return encrypted_val

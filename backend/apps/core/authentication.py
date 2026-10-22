@@ -1,8 +1,8 @@
 import jwt
-from jwt import PyJWKClient
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import connection
+from jwt import PyJWKClient
 from rest_framework.authentication import BaseAuthentication
 from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
 
@@ -23,13 +23,13 @@ def _get_jwk_client():
 
 def decode_supabase_token(token):
     options = {
-        'audience': settings.SUPABASE_JWT_AUDIENCE or None,
-        'issuer': settings.SUPABASE_JWT_ISSUER or None,
+        "audience": settings.SUPABASE_JWT_AUDIENCE or None,
+        "issuer": settings.SUPABASE_JWT_ISSUER or None,
     }
-    if settings.SUPABASE_JWT_SECRET and jwt.get_unverified_header(token).get('alg') == 'HS256':
-        return jwt.decode(token, settings.SUPABASE_JWT_SECRET, algorithms=['HS256'], **options)
+    if settings.SUPABASE_JWT_SECRET and jwt.get_unverified_header(token).get("alg") == "HS256":
+        return jwt.decode(token, settings.SUPABASE_JWT_SECRET, algorithms=["HS256"], **options)
     signing_key = _get_jwk_client().get_signing_key_from_jwt(token)
-    return jwt.decode(token, signing_key.key, algorithms=['RS256', 'ES256'], **options)
+    return jwt.decode(token, signing_key.key, algorithms=["RS256", "ES256"], **options)
 
 
 class SupabaseJWTAuthentication(BaseAuthentication):
@@ -41,33 +41,33 @@ class SupabaseJWTAuthentication(BaseAuthentication):
     must also hold an active membership.
     """
 
-    keyword = 'Bearer'
+    keyword = "Bearer"
 
     def authenticate(self, request):
-        auth_header = request.headers.get('Authorization', '')
-        if not auth_header.startswith(f'{self.keyword} '):
+        auth_header = request.headers.get("Authorization", "")
+        if not auth_header.startswith(f"{self.keyword} "):
             return None  # No token → anonymous request
 
-        token = auth_header.split(' ', 1)[1].strip()
+        token = auth_header.split(" ", 1)[1].strip()
         try:
             payload = decode_supabase_token(token)
         except AuthenticationFailed:
             raise
-        except jwt.ExpiredSignatureError:
-            raise AuthenticationFailed('Session expirée.')
-        except Exception:
-            raise AuthenticationFailed('Jeton d\'authentification invalide.')
+        except jwt.ExpiredSignatureError as exc:
+            raise AuthenticationFailed("Session expirée.") from exc
+        except Exception as exc:
+            raise AuthenticationFailed("Jeton d'authentification invalide.") from exc
 
-        supabase_uid = payload.get('sub')
+        supabase_uid = payload.get("sub")
         if not supabase_uid:
             raise AuthenticationFailed("Jeton sans identifiant utilisateur.")
 
         user = self._resolve_user(supabase_uid)
         if not user.is_active:
-            raise AuthenticationFailed('Ce compte est désactivé.')
+            raise AuthenticationFailed("Ce compte est désactivé.")
 
-        tenant = getattr(connection, 'tenant', None)
-        if tenant is not None and tenant.schema_name != 'public' and not user.is_superuser:
+        tenant = getattr(connection, "tenant", None)
+        if tenant is not None and tenant.schema_name != "public" and not user.is_superuser:
             if not user.memberships.filter(tenant=tenant, is_active=True).exists():
                 raise PermissionDenied("Vous n'êtes pas membre de cette organisation.")
 

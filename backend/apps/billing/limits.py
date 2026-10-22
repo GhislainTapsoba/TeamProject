@@ -1,9 +1,10 @@
 """Enforcement of the per-plan quotas (max_users, max_projects)."""
+
 from apps.accounts.models import TenantMembership
 
 
 def _plan(tenant):
-    subscription = getattr(tenant, 'subscription', None)
+    subscription = getattr(tenant, "subscription", None)
     return subscription.plan if subscription else None
 
 
@@ -14,6 +15,7 @@ def users_count(tenant):
 def projects_count():
     # Projects live in the tenant schema: the active connection already scopes them
     from apps.projects.models import Project
+
     return Project.objects.count()
 
 

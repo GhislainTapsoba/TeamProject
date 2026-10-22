@@ -1,6 +1,6 @@
 from django.db import connection
 from django.utils.deprecation import MiddlewareMixin
-from django_tenants.utils import get_tenant_model, get_public_schema_name
+from django_tenants.utils import get_public_schema_name, get_tenant_model
 
 
 class PlatformAdminBypassMiddleware(MiddlewareMixin):
@@ -11,10 +11,10 @@ class PlatformAdminBypassMiddleware(MiddlewareMixin):
     """
 
     def process_request(self, request):
-        user = getattr(request, 'user', None)
+        user = getattr(request, "user", None)
         if user is None or not user.is_authenticated:
             return
-        if getattr(user, 'is_superadmin', False) or getattr(user, 'is_superuser', False):
+        if getattr(user, "is_superadmin", False) or getattr(user, "is_superuser", False):
             TenantModel = get_tenant_model()
             try:
                 public_tenant = TenantModel.objects.get(schema_name=get_public_schema_name())

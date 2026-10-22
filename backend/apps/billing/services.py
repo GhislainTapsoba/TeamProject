@@ -1,6 +1,8 @@
 import time
+
 import requests
 from django.conf import settings
+
 
 def create_cinetpay_payment(subscription, target_plan, return_url=None):
     """
@@ -29,24 +31,19 @@ def create_cinetpay_payment(subscription, target_plan, return_url=None):
 
     try:
         response = requests.post(
-            settings.CINETPAY_CHECKOUT_URL,
-            json=payload,
-            headers={"Content-Type": "application/json"},
-            timeout=15
+            settings.CINETPAY_CHECKOUT_URL, json=payload, headers={"Content-Type": "application/json"}, timeout=15
         )
         res_data = response.json()
         return {
-            'success': res_data.get('code') == '201',
-            'transaction_id': transaction_id,
-            'payment_url': res_data.get('data', {}).get('payment_url'),
-            'payment_token': res_data.get('data', {}).get('payment_token'),
-            'raw': res_data,
+            "success": res_data.get("code") == "201",
+            "transaction_id": transaction_id,
+            "payment_url": res_data.get("data", {}).get("payment_url"),
+            "payment_token": res_data.get("data", {}).get("payment_token"),
+            "raw": res_data,
         }
     except Exception as e:
-        return {
-            'success': False,
-            'error': str(e)
-        }
+        return {"success": False, "error": str(e)}
+
 
 def verify_cinetpay_transaction(transaction_id):
     """
@@ -60,12 +57,9 @@ def verify_cinetpay_transaction(transaction_id):
             "transaction_id": transaction_id,
         }
         response = requests.post(
-            settings.CINETPAY_CHECK_URL,
-            json=payload,
-            headers={"Content-Type": "application/json"},
-            timeout=15
+            settings.CINETPAY_CHECK_URL, json=payload, headers={"Content-Type": "application/json"}, timeout=15
         )
         res_data = response.json()
         return res_data
     except Exception as e:
-        return {'status': 'ERROR', 'message': str(e)}
+        return {"status": "ERROR", "message": str(e)}

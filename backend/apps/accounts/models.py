@@ -1,7 +1,7 @@
 from django.contrib.auth.models import AbstractUser
+from django.core.signing import TimestampSigner
 from django.db import models
 from django.utils import timezone
-from django.core.signing import TimestampSigner
 
 
 class User(AbstractUser):
@@ -32,8 +32,9 @@ class User(AbstractUser):
         courant si omis). Retourne None si aucune appartenance active n'existe.
         """
         from django.db import connection
-        tenant = tenant or getattr(connection, 'tenant', None)
-        if tenant is None or tenant.schema_name == 'public':
+
+        tenant = tenant or getattr(connection, "tenant", None)
+        if tenant is None or tenant.schema_name == "public":
             return None
         membership = self.memberships.filter(tenant=tenant, is_active=True).first()
         return membership.role if membership else None
@@ -43,7 +44,7 @@ class User(AbstractUser):
 
     def verify_email(self):
         self.email_verified_at = timezone.now()
-        self.save(update_fields=['email_verified_at'])
+        self.save(update_fields=["email_verified_at"])
 
     def __str__(self):
         return f"{self.full_name} ({self.role})"
@@ -54,14 +55,15 @@ class TenantMembership(models.Model):
     Appartenance d'un utilisateur a un tenant, avec un role specifique a ce tenant.
     Permet a un meme compte d'avoir des roles differents selon le sous-domaine.
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='memberships')
-    tenant = models.ForeignKey('tenants.Client', on_delete=models.CASCADE, related_name='memberships')
-    role = models.CharField(max_length=20, choices=User.ROLE_CHOICES, default='employee')
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="memberships")
+    tenant = models.ForeignKey("tenants.Client", on_delete=models.CASCADE, related_name="memberships")
+    role = models.CharField(max_length=20, choices=User.ROLE_CHOICES, default="employee")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        unique_together = ('user', 'tenant')
+        unique_together = ("user", "tenant")
 
     def __str__(self):
         return f"{self.user.username} @ {self.tenant.schema_name} = {self.role}"

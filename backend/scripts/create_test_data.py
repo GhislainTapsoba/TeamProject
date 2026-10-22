@@ -25,7 +25,7 @@ users_data = [
         "first_name": "Fatou",
         "last_name": "Sow",
         "role": "admin",
-        "is_staff": True,     # acces admin Django
+        "is_staff": True,  # acces admin Django
         "is_superuser": False,
     },
     {
@@ -34,7 +34,7 @@ users_data = [
         "first_name": "Marie",
         "last_name": "Dupont",
         "role": "manager",
-        "is_staff": True,     # acces admin Django
+        "is_staff": True,  # acces admin Django
         "is_superuser": False,
     },
     {
@@ -43,7 +43,7 @@ users_data = [
         "first_name": "Jean",
         "last_name": "Martin",
         "role": "employee",
-        "is_staff": False,    # pas d'acces admin Django, teste via API/frontend
+        "is_staff": False,  # pas d'acces admin Django, teste via API/frontend
         "is_superuser": False,
     },
     {
@@ -91,9 +91,7 @@ with schema_context(TENANT_SCHEMA):
     print(f"[PROJET] {project.name} ({'cree' if created else 'existe deja'})")
 
     for username in ["admin1", "manager1", "employee1", "employee2"]:
-        _, member_created = ProjectMember.objects.get_or_create(
-            project=project, user=created_users[username]
-        )
+        _, member_created = ProjectMember.objects.get_or_create(project=project, user=created_users[username])
         if member_created:
             print(f"  [MEMBRE AJOUTE] {username}")
 
@@ -134,9 +132,7 @@ with schema_context(TENANT_SCHEMA):
     ]
 
     for t in tasks_data:
-        task, task_created = Task.objects.get_or_create(
-            project=project, title=t["title"], defaults=t
-        )
+        task, task_created = Task.objects.get_or_create(project=project, title=t["title"], defaults=t)
         if task_created:
             print(f"  [TACHE CREEE] {task.title} -> {task.state} ({task.priority})")
         else:
