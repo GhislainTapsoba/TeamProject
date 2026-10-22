@@ -47,7 +47,8 @@ api.interceptors.response.use(
             await supabase.auth.signOut();
             localStorage.removeItem('user');
             localStorage.removeItem('tenant');
-            if (window.location.pathname !== '/login') {
+            // Leave the platform console to manage its own session
+            if (window.location.pathname !== '/login' && !window.location.pathname.startsWith('/platform')) {
                 window.location.href = '/login';
             }
         }
@@ -119,8 +120,9 @@ export const notificationsAPI = {
 export const billingAPI = {
     getPlans: () => api.get('/billing/plans/'),
     getSubscription: () => api.get('/billing/subscription/'),
-    initiateCheckout: (planId: number | string, returnUrl?: string) =>
-        api.post('/billing/checkout/', { plan_id: planId, return_url: returnUrl }),
+    initiateCheckout: (planId: number | string) => api.post('/billing/checkout/', { plan_id: planId }),
+    getPayments: () => api.get('/billing/payments/'),
+    getPayment: (transactionId: string) => api.get(`/billing/payments/${encodeURIComponent(transactionId)}/`),
 };
 
 // Core / Dashboard API

@@ -50,6 +50,7 @@ services:
         python manage.py migrate_schemas --shared &&
         echo 'Migration des schémas tenants (TENANT_APPS)...' &&
         python manage.py migrate_schemas &&
+        python manage.py seed_plans &&
         echo 'Collecte des fichiers statiques...' &&
         python manage.py collectstatic --noinput &&
         echo 'Démarrage de Gunicorn...' &&
@@ -65,6 +66,10 @@ services:
       POSTGRES_PORT: 5432
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
+      REDIS_CACHE_URL: redis://redis:6379/1
+      BILLING_PROVIDER: ${BILLING_PROVIDER:-cinetpay}
+      BILLING_GRACE_DAYS: ${BILLING_GRACE_DAYS:-7}
+      BILLING_TRIAL_DAYS: ${BILLING_TRIAL_DAYS:-14}
       CINETPAY_API_KEY: ${CINETPAY_API_KEY:-}
       CINETPAY_SITE_ID: ${CINETPAY_SITE_ID:-}
       ENCRYPTION_KEY: ${ENCRYPTION_KEY:-v1rZk5g7qHk_7D4B6T9u8-v2h1j3k4l5m6n7o8p9q0r=}
@@ -74,7 +79,12 @@ services:
       SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}}
       SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
       SUPABASE_JWT_SECRET: ${SUPABASE_JWT_SECRET:-}
+      SUPABASE_JWT_ISSUER: ${SUPABASE_JWT_ISSUER:-}
+      PLATFORM_IP_ALLOWLIST: ${PLATFORM_IP_ALLOWLIST:-}
       SENTRY_DSN: ${SENTRY_DSN:-}
+    # Permet de joindre un Supabase local (supabase start) depuis le conteneur
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "127.0.0.1:8000:8000"
     depends_on:
@@ -92,6 +102,7 @@ services:
     container_name: teamproject-celery-worker
     command: celery -A config worker -l info
     environment:
+      BILLING_GRACE_DAYS: ${BILLING_GRACE_DAYS:-7}
       DEBUG: ${DEBUG:-True}                                                  # AJOUTÉ
       SECRET_KEY: ${SECRET_KEY:-django-insecure-dev-teamproject-local-secret-key-32chars}  # AJOUTÉ
       POSTGRES_DB: ${POSTGRES_DB:-teamproject}
@@ -117,6 +128,7 @@ services:
     container_name: teamproject-celery-beat
     command: celery -A config beat -l info
     environment:
+      BILLING_GRACE_DAYS: ${BILLING_GRACE_DAYS:-7}
       DEBUG: ${DEBUG:-True}                                                  # AJOUTÉ
       SECRET_KEY: ${SECRET_KEY:-django-insecure-dev-teamproject-local-secret-key-32chars}  # AJOUTÉ
       POSTGRES_DB: ${POSTGRES_DB:-teamproject}

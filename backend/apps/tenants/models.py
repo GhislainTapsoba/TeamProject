@@ -39,16 +39,55 @@ class Domain(DomainMixin):
 
 
 class PlatformUser(models.Model):
-    """Super‑admin account stored in the public schema"""
+    """
+    Super-admin account for the whole platform, stored in the public schema.
+
+    These accounts are provisioned manually (management command), never through
+    self-service, and authenticate with Supabase like everyone else: the link is
+    the Supabase user id. Every privileged action they take is written to
+    PlatformAuditLog.
+    """
 
     email = models.EmailField(unique=True)
+    supabase_id = models.UUIDField(unique=True, null=True, blank=True, db_index=True)
     is_superadmin = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(auto_now_add=True)
+    last_login_at = models.DateTimeField(null=True, blank=True)
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
+    # Consumed by DRF / middleware the same way a Django user is
+    @property
+    def is_authenticated(self):
+        return True
+
+    @property
+    def is_anonymous(self):
+        return False
+
+    @property
+    def is_superuser(self):
+        return True
+
     def __str__(self):
         return f"Platform admin: {self.email}"
+
+
+class PlatformAuditLog(models.Model):
+    """Append-only trail of every privileged action in the platform console."""
+
+    actor_email = models.EmailField()
+    action = models.CharField(max_length=80)
+    target = models.CharField(max_length=255, blank=True)
+    detail = models.JSONField(default=dict, blank=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.created_at:%Y-%m-%d %H:%M} {self.actor_email} {self.action} {self.target}"

@@ -1,4 +1,3 @@
-from datetime import date, timedelta
 from unittest.mock import MagicMock, patch
 
 import requests
@@ -6,8 +5,7 @@ from django.test import SimpleTestCase, override_settings
 from django_tenants.test.cases import TenantTestCase
 
 from apps.accounts.models import User
-from apps.billing.models import Plan, Subscription
-from apps.billing.services import create_cinetpay_payment, verify_cinetpay_transaction
+from apps.billing.services import verify_cinetpay_transaction
 from apps.core import supabase
 from apps.notifications.models import Notification
 from apps.notifications.tasks import MailjetError, _send_task_assignment_email, send_task_assignment_email
@@ -129,44 +127,13 @@ class TaskAssignmentEmailTestCase(ServicesTenantTestCase):
         self.assertEqual(result, "Mailjet credentials not configured")
 
 
-@override_settings(
-    CINETPAY_API_KEY="key",
-    CINETPAY_SITE_ID="site",
-    CINETPAY_CHECKOUT_URL="https://cinetpay/checkout",
-    CINETPAY_CHECK_URL="https://cinetpay/check",
-)
-class CinetPayServiceTestCase(ServicesTenantTestCase):
-    def setUp(self):
-        super().setUp()
-        self.plan = Plan.objects.create(name="pro-svc", display_name="Pro", price_monthly=15000)
-        self.subscription = Subscription.objects.create(
-            tenant=self.tenant, plan=self.plan, current_period_end=date.today() + timedelta(days=1)
-        )
-
-    @patch("apps.billing.services.requests.post")
-    def test_create_payment(self, post):
-        post.return_value = http_response(
-            200, {"code": "201", "data": {"payment_url": "https://pay", "payment_token": "t"}}
-        )
-
-        result = create_cinetpay_payment(self.subscription, self.plan)
-
-        self.assertTrue(result["success"])
-        self.assertEqual(result["payment_url"], "https://pay")
-        payload = post.call_args.kwargs["json"]
-        self.assertEqual((payload["amount"], payload["metadata"]), (15000, str(self.plan.id)))
-        self.assertTrue(payload["transaction_id"].startswith(f"sub-{self.subscription.id}-{self.tenant.schema_name}-"))
-
-    @patch("apps.billing.services.requests.post", side_effect=requests.ConnectionError("down"))
-    def test_create_payment_handles_network_errors(self, _post):
-        result = create_cinetpay_payment(self.subscription, self.plan, return_url="https://back")
-
-        self.assertFalse(result["success"])
-
+@override_settings(CINETPAY_API_KEY="key", CINETPAY_SITE_ID="site", CINETPAY_CHECK_URL="https://cinetpay/check")
+class CinetPayServiceTestCase(SimpleTestCase):
     @patch("apps.billing.services.requests.post")
     def test_verify_transaction(self, post):
         post.return_value = http_response(200, {"data": {"status": "ACCEPTED"}})
         self.assertEqual(verify_cinetpay_transaction("tx")["data"]["status"], "ACCEPTED")
+        self.assertEqual(post.call_args.kwargs["json"]["site_id"], "site")
 
         post.side_effect = requests.ConnectionError("down")
         self.assertEqual(verify_cinetpay_transaction("tx")["status"], "ERROR")

@@ -33,12 +33,13 @@ class SubscriptionCheckMiddleware:
 
         # Check tenant subscription
         subscription = getattr(tenant, "subscription", None)
-        if subscription and subscription.is_expired and subscription.status != "active":
+        if subscription and subscription.is_read_only:
             return JsonResponse(
                 {
-                    "error": "Abonnement expiré",
-                    "detail": "Votre abonnement a expiré. L'accès est actuellement restreint en lecture seule. Rendez-vous dans Paramètres > Facturation pour régulariser.",
-                    "code": "subscription_expired",
+                    "error": "Organisation suspendue",
+                    "detail": "Votre organisation est suspendue : l'accès est en lecture seule. "
+                    "Contactez le support pour la réactiver.",
+                    "code": "subscription_suspended",
                 },
                 status=402,
             )

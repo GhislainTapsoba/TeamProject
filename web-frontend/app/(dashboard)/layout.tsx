@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import { notificationsAPI } from '@/lib/api';
+import SubscriptionBanner from '@/components/SubscriptionBanner';
 import {
     LayoutDashboard,
     FolderKanban,
@@ -270,6 +271,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         )}
                     </div>
                 </header>
+
+                <SubscriptionBanner isAdmin={user.role === 'admin'} />
 
                 {/* Page Content */}
                 <main className="flex-1 overflow-y-auto p-6 md:p-8">

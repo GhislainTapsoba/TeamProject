@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Paiement de test</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0f172a; color: #e2e8f0;
+           font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    .card { width: min(420px, calc(100% - 32px)); background: #111827; border: 1px solid #1f2937; border-radius: 16px;
+            padding: 28px; box-sizing: border-box; }
+    .badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+             color: #fbbf24; background: rgba(251, 191, 36, .12); border: 1px solid rgba(251, 191, 36, .3);
+             padding: 3px 10px; border-radius: 999px; }
+    h1 { font-size: 20px; margin: 16px 0 4px; }
+    .muted { color: #94a3b8; font-size: 13px; margin: 0; }
+    .amount { font-size: 34px; font-weight: 800; margin: 24px 0; }
+    .amount small { font-size: 14px; color: #94a3b8; font-weight: 500; }
+    dl { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 13px; margin: 0 0 24px; }
+    dt { color: #94a3b8; } dd { margin: 0; text-align: right; word-break: break-all; }
+    button { width: 100%; border: 0; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 700;
+             cursor: pointer; margin-top: 8px; }
+    .pay { background: #4f46e5; color: #fff; } .pay:hover { background: #6366f1; }
+    .cancel { background: #1f2937; color: #cbd5e1; } .cancel:hover { background: #374151; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <span class="badge">Mode test - aucun argent réel</span>
+    <h1>Abonnement {{ payment.plan.display_name|default:payment.plan.name }}</h1>
+    <p class="muted">{{ payment.tenant.name }}</p>
+    <p class="amount">{{ payment.amount|floatformat:0 }} <small>{{ payment.currency }} / mois</small></p>
+    <dl>
+      <dt>Transaction</dt><dd>{{ payment.transaction_id }}</dd>
+      <dt>Statut</dt><dd>{{ payment.get_status_display }}</dd>
+    </dl>
+    {% if payment.status == "pending" %}
+    <form method="post">
+      {% csrf_token %}
+      <button class="pay" name="action" value="pay">Simuler un paiement réussi</button>
+      <button class="cancel" name="action" value="cancel">Simuler un échec</button>
+    </form>
+    {% else %}
+    <form method="get" action="/api/billing/return/">
+      <input type="hidden" name="tx" value="{{ payment.transaction_id }}">
+      <button class="cancel">Retour à la facturation</button>
+    </form>
+    {% endif %}
+  </main>
+</body>
+</html>

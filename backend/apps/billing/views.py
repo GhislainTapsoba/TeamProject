@@ -1,6 +1,9 @@
-from datetime import date, timedelta
-
+from django.conf import settings
 from django.db import connection
+from django.http import Http404
+from django.shortcuts import get_object_or_404, redirect, render
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_http_methods
 from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
@@ -8,59 +11,26 @@ from rest_framework.views import APIView
 
 from apps.core.permissions import IsTenantAdmin
 
-from .models import Plan, Subscription
-from .serializers import PlanSerializer, SubscriptionSerializer
-from .services import create_cinetpay_payment, verify_cinetpay_transaction
+from . import services
+from .defaults import ensure_default_plans
+from .models import Payment, Plan, Subscription
+from .serializers import PaymentSerializer, PlanSerializer, SubscriptionSerializer
+
+
+def _tenant():
+    tenant = getattr(connection, "tenant", None)
+    if tenant is None or tenant.schema_name == "public":
+        raise Http404("Aucune organisation active.")
+    return tenant
 
 
 class PlanListView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request):
-        plans = Plan.objects.all().order_by("price_monthly")
-        # Seed default plans if empty
-        if not plans.exists():
-            Plan.objects.create(
-                name="free",
-                display_name="Gratuit",
-                price_monthly=0,
-                max_users=5,
-                max_projects=3,
-                features=[
-                    "Jusqu'à 5 utilisateurs",
-                    "3 projets actifs",
-                    "Vue Kanban interactive",
-                    "Notifications in-app",
-                ],
-            )
-            Plan.objects.create(
-                name="pro",
-                display_name="Professionnel",
-                price_monthly=15000,
-                max_users=25,
-                max_projects=30,
-                features=[
-                    "Jusqu'à 25 utilisateurs",
-                    "30 projets",
-                    "Emails Mailjet transactionnels",
-                    "Support prioritaire",
-                    "Vue Kanban & Rapports",
-                ],
-            )
-            Plan.objects.create(
-                name="enterprise",
-                display_name="Entreprise",
-                price_monthly=45000,
-                max_users=100,
-                max_projects=200,
-                features=[
-                    "Utilisateurs illimités",
-                    "Projets illimités",
-                    "Logs d'audit & sécurité avancée",
-                    "Accompagnement dédié",
-                ],
-            )
-            plans = Plan.objects.all().order_by("price_monthly")
+        if not Plan.objects.exists():
+            ensure_default_plans()
+        plans = Plan.objects.order_by("price_monthly")
         return Response(PlanSerializer(plans, many=True).data)
 
 
@@ -68,20 +38,11 @@ class CurrentSubscriptionView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        tenant = getattr(connection, "tenant", None)
-        if not tenant:
-            return Response({"error": "Aucun tenant actif"}, status=status.HTTP_404_NOT_FOUND)
-
-        sub = getattr(tenant, "subscription", None)
-        if not sub:
-            # Fallback create free subscription
-            plan = Plan.objects.filter(name="free").first()
-            if not plan:
-                plan = Plan.objects.create(
-                    name="free", display_name="Gratuit", price_monthly=0, max_users=5, max_projects=3
-                )
+        tenant = _tenant()
+        sub = Subscription.objects.select_related("plan").filter(tenant=tenant).first()
+        if sub is None:
             sub = Subscription.objects.create(
-                tenant=tenant, plan=plan, status="active", current_period_end=date.today() + timedelta(days=365)
+                tenant=tenant, plan=services.free_plan(), status="active", current_period_end=tenant.created_at.date()
             )
         return Response(SubscriptionSerializer(sub).data)
 
@@ -90,74 +51,92 @@ class InitiateCheckoutView(APIView):
     permission_classes = [IsTenantAdmin]
 
     def post(self, request):
-        tenant = getattr(connection, "tenant", None)
-        if not tenant:
-            return Response({"error": "Aucun tenant actif"}, status=status.HTTP_404_NOT_FOUND)
+        tenant = _tenant()
+        plan = Plan.objects.filter(id=request.data.get("plan_id")).first()
+        if plan is None:
+            return Response({"error": "Plan introuvable."}, status=status.HTTP_404_NOT_FOUND)
 
-        plan_id = request.data.get("plan_id")
-        if not plan_id:
-            return Response({"error": "plan_id requis"}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            payment = services.start_checkout(tenant, plan, request)
+        except services.BillingError as exc:
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"transaction_id": payment.transaction_id, "payment_url": payment.payment_url},
+            status=status.HTTP_201_CREATED,
+        )
 
-        plan = Plan.objects.filter(id=plan_id).first()
-        if not plan:
-            return Response({"error": "Plan introuvable"}, status=status.HTTP_404_NOT_FOUND)
 
-        sub = getattr(tenant, "subscription", None)
-        if not sub:
-            sub = Subscription.objects.create(
-                tenant=tenant, plan=plan, status="active", current_period_end=date.today()
-            )
+class PaymentListView(APIView):
+    permission_classes = [IsTenantAdmin]
 
-        return_url = request.data.get("return_url")
-        payment_data = create_cinetpay_payment(sub, plan, return_url=return_url)
+    def get(self, request):
+        payments = Payment.objects.filter(tenant=_tenant()).select_related("plan")[:24]
+        return Response(PaymentSerializer(payments, many=True).data)
 
-        return Response(payment_data)
+
+class PaymentDetailView(APIView):
+    """Status of one payment; re-checks it with the provider while it is not confirmed."""
+
+    permission_classes = [IsTenantAdmin]
+
+    def get(self, request, transaction_id):
+        payment = get_object_or_404(
+            Payment.objects.select_related("plan"), tenant=_tenant(), transaction_id=transaction_id
+        )
+        payment = services.refresh_payment(payment)
+        return Response(PaymentSerializer(payment).data)
+
+
+# No state change here (only a redirect), and CinetPay posts without a CSRF token
+@csrf_exempt
+@require_http_methods(["GET", "POST"])
+def payment_return(request):
+    """Customer comes back from the checkout (CinetPay may POST here): send them to the billing page."""
+    transaction_id = request.GET.get("tx") or request.POST.get("transaction_id") or ""
+    target = "/settings/billing"
+    if transaction_id.isalnum():
+        target += f"?payment={transaction_id}"
+    return redirect(target)
+
+
+@require_http_methods(["GET", "POST"])
+def mock_checkout(request, transaction_id):
+    """Fake payment page to test the subscription flow locally (DEBUG only)."""
+    if not settings.DEBUG:
+        raise Http404
+    payment = get_object_or_404(Payment.objects.select_related("plan", "tenant"), transaction_id=transaction_id)
+    if payment.tenant_id != _tenant().id or payment.provider != "mock":
+        raise Http404
+
+    if request.method == "POST":
+        if payment.status == "pending":
+            if request.POST.get("action") == "pay":
+                services.apply_payment(payment)
+            else:
+                services.mark_failed(payment)
+        return redirect(f"/api/billing/return/?tx={payment.transaction_id}")
+    return render(request, "billing/mock_checkout.html", {"payment": payment})
 
 
 class CinetPayWebhookView(APIView):
     """
-    Public webhook called by CinetPay on payment confirmation.
-    Re-verifies transaction with CinetPay API to prevent forged requests.
-    Processes idempotently.
+    Public notification endpoint called by CinetPay.
+    The body is never trusted: the transaction is re-verified with the CinetPay API.
     """
 
     permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request):
+        # CinetPay checks that the URL is reachable
+        return Response({"status": "OK"})
 
     def post(self, request):
         transaction_id = request.data.get("cpm_trans_id") or request.data.get("transaction_id")
         if not transaction_id:
             return Response({"error": "Missing transaction_id"}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Server-side verification with CinetPay
-        check_result = verify_cinetpay_transaction(transaction_id)
-        data = check_result.get("data", {})
-        status_code = data.get("status")
-
-        if status_code == "ACCEPTED":
-            # Format: sub-{sub_id}-{schema}-{timestamp}
-            parts = transaction_id.split("-")
-            if len(parts) >= 2:
-                sub_id = parts[1]
-                subscription = Subscription.objects.filter(id=sub_id).first()
-                if subscription:
-                    # Idempotent handling
-                    if subscription.provider_reference != transaction_id:
-                        subscription.status = "active"
-                        subscription.provider_reference = transaction_id
-                        # Extend period by 30 days
-                        subscription.current_period_end = max(
-                            subscription.current_period_end, date.today()
-                        ) + timedelta(days=30)
-
-                        # Upgrade plan if metadata specified target plan id
-                        meta_plan_id = data.get("metadata")
-                        if meta_plan_id:
-                            target_plan = Plan.objects.filter(id=meta_plan_id).first()
-                            if target_plan:
-                                subscription.plan = target_plan
-                                subscription.tenant.plan = target_plan.name
-                                subscription.tenant.save()
-
-                        subscription.save()
-
-        return Response({"status": "OK"}, status=status.HTTP_200_OK)
+        payment = Payment.objects.filter(transaction_id=transaction_id, provider="cinetpay").first()
+        if payment is not None:
+            services.refresh_payment(payment)
+        return Response({"status": "OK"})

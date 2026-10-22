@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.accounts.models import TenantMembership, User
+from apps.billing.defaults import ensure_default_plans
 from apps.billing.models import Plan, Subscription
 from apps.core import supabase
 from apps.core.throttling import RegistrationRateThrottle
@@ -77,6 +78,13 @@ class TenantRegistrationView(APIView):
                 supabase.delete_auth_user(supabase_id)
             raise
 
+        # En local, le sous-domaine de production n'est pas joignable : on renvoie vers *.localhost
+        host, _, port = request.get_host().partition(":")
+        if host == "localhost" or host.endswith(".localhost"):
+            login_url = f"http://{subdomain}.localhost{':' + port if port else ''}/login"
+        else:
+            login_url = f"https://{primary_domain}/login"
+
         return Response(
             {
                 "message": "Organisation créée avec succès.",
@@ -85,7 +93,7 @@ class TenantRegistrationView(APIView):
                     "subdomain": subdomain,
                     "domain": primary_domain,
                 },
-                "login_url": f"https://{primary_domain}/login",
+                "login_url": login_url,
             },
             status=status.HTTP_201_CREATED,
         )
@@ -100,16 +108,16 @@ class TenantRegistrationView(APIView):
                 Domain.objects.create(domain=primary_domain, tenant=client, is_primary=True)
                 Domain.objects.create(domain=f"{subdomain}.localhost", tenant=client, is_primary=False)
 
-                default_plan = Plan.objects.filter(name="free").first()
-                if not default_plan:
-                    default_plan = Plan.objects.create(name="free", price_monthly=0, max_users=5, max_projects=3)
-
+                # Essai du plan Pro, puis retour automatique au plan gratuit (apps.billing.tasks)
+                ensure_default_plans()
                 Subscription.objects.create(
                     tenant=client,
-                    plan=default_plan,
+                    plan=Plan.objects.get(name="pro"),
                     status="trial",
-                    current_period_end=date.today() + timedelta(days=14),
+                    current_period_end=date.today() + timedelta(days=settings.BILLING_TRIAL_DAYS),
                 )
+                client.plan = "pro"
+                client.save(update_fields=["plan"])
 
                 user = User.objects.create_user(
                     username=admin_email,

@@ -1,7 +1,7 @@
 import uuid
 from unittest.mock import patch
 
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from rest_framework.test import APIRequestFactory, force_authenticate
 
 from apps.accounts.models import TenantMembership, User
@@ -24,8 +24,8 @@ class TenantRegistrationTestCase(TestCase):
     def setUp(self):
         self.factory = APIRequestFactory()
 
-    def _register(self):
-        request = self.factory.post("/api/tenants/register/", REGISTRATION, format="json")
+    def _register(self, **extra):
+        request = self.factory.post("/api/tenants/register/", REGISTRATION, format="json", **extra)
         return TenantRegistrationView.as_view()(request)
 
     @patch("apps.tenants.views.supabase.create_auth_user")
@@ -40,7 +40,17 @@ class TenantRegistrationTestCase(TestCase):
         admin = User.objects.get(email="admin@gamma.com")
         self.assertEqual(admin.supabase_id, supabase_id)
         self.assertEqual(admin.get_tenant_role(client), "admin")
+        self.assertEqual(response.data["login_url"], f"https://{response.data['tenant']['domain']}/login")
         create_auth_user.assert_called_once()
+
+    @override_settings(ALLOWED_HOSTS=["localhost"])
+    @patch("apps.tenants.views.supabase.create_auth_user")
+    def test_registration_from_localhost_points_to_local_subdomain(self, create_auth_user):
+        create_auth_user.return_value = str(uuid.uuid4())
+
+        response = self._register(HTTP_HOST="localhost")
+
+        self.assertEqual(response.data["login_url"], "http://gamma.localhost/login")
 
     @patch("apps.tenants.views.supabase.create_auth_user", side_effect=SupabaseError("down", status_code=500))
     def test_registration_aborts_when_supabase_is_down(self, _create_auth_user):

@@ -1,7 +1,9 @@
 import os
+import sys
 from pathlib import Path
 
 import dotenv
+from celery.schedules import crontab
 
 from apps.core.security import ensure_no_public_secret_prefixes
 
@@ -128,6 +130,9 @@ DATABASES = {
         "PASSWORD": os.getenv("POSTGRES_PASSWORD", "postgres"),
         "HOST": os.getenv("POSTGRES_HOST", "postgres"),
         "PORT": os.getenv("POSTGRES_PORT", "5432"),
+        # Reuse connections between requests instead of reconnecting each time
+        "CONN_MAX_AGE": int(os.getenv("DB_CONN_MAX_AGE", "60")),
+        "CONN_HEALTH_CHECKS": True,
     }
 }
 
@@ -164,7 +169,10 @@ REST_FRAMEWORK = {
         "user": "600/minute",
         "auth": "5/minute",
         "registration": "5/hour",
+        "platform": "300/minute",
     },
+    # Nginx overwrites X-Forwarded-For with the real client IP: trust exactly one proxy hop
+    "NUM_PROXIES": int(os.getenv("NUM_PROXIES", "1")),
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,
 }
@@ -185,6 +193,28 @@ CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
 CELERY_TIMEZONE = TIME_ZONE
+CELERY_BEAT_SCHEDULE = {
+    "billing-check-subscriptions": {
+        "task": "apps.billing.tasks.check_subscriptions",
+        "schedule": crontab(minute=0),
+    },
+}
+
+# Shared cache (throttling counters must be shared between Gunicorn workers)
+REDIS_CACHE_URL = os.getenv("REDIS_CACHE_URL", "")
+if REDIS_CACHE_URL and "pytest" not in sys.modules:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.redis.RedisCache", "LOCATION": REDIS_CACHE_URL}}
+
+# Platform console (super-admins): optional IP allowlist, comma-separated IPs or CIDRs
+PLATFORM_IP_ALLOWLIST = [h.strip() for h in os.getenv("PLATFORM_IP_ALLOWLIST", "").split(",") if h.strip()]
+
+# Billing
+# "cinetpay" in production, "mock" to test the payment flow locally (refused when DEBUG is off)
+BILLING_PROVIDER = os.getenv("BILLING_PROVIDER", "cinetpay")
+# Days of full access after a paid period ends, before going back to the free plan
+BILLING_GRACE_DAYS = int(os.getenv("BILLING_GRACE_DAYS", "7"))
+# New organizations try the Pro plan for this many days
+BILLING_TRIAL_DAYS = int(os.getenv("BILLING_TRIAL_DAYS", "14"))
 
 # CinetPay Configuration
 CINETPAY_API_KEY = os.getenv("CINETPAY_API_KEY", "")

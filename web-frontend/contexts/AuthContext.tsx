@@ -60,6 +60,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     useEffect(() => {
+        // The platform console (/platform) has its own super-admin session and must not
+        // be driven by the tenant AuthContext, whose /auth/me call would 401 and sign it out.
+        if (typeof window !== 'undefined' && window.location.pathname.startsWith('/platform')) {
+            setIsLoading(false);
+            return;
+        }
+
         const initAuth = async () => {
             const storedUser = localStorage.getItem('user');
             const storedTenant = localStorage.getItem('tenant');

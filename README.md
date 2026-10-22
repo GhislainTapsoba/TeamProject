@@ -9,7 +9,8 @@ Application SaaS de gestion de projets en équipe, multi-organisations. Chaque o
 - **Projets et tâches** : tableau kanban, assignation, priorités et échéances.
 - **Équipe** : invitation de membres. Un même compte peut appartenir à plusieurs organisations.
 - **Notifications** : email d'assignation de tâche via Mailjet, envoyé en tâche de fond (Celery).
-- **Facturation** : plans avec quotas d'utilisateurs et de projets, paiement CinetPay.
+- **Facturation** : abonnement mensuel (Mobile Money et carte via CinetPay), essai Pro de 14 jours, rappels avant échéance, délai de grâce, historique des paiements, quotas d'utilisateurs et de projets.
+- **Console plateforme** : un espace super-admin séparé (`/platform`) pour le propriétaire du SaaS — vue de toutes les organisations, suspension/réactivation, prolongation d'abonnement, historique des paiements, journal d'audit.
 - **Supervision** : Sentry (backend et frontend).
 
 ## Stack
@@ -96,6 +97,37 @@ Passe toujours par Nginx (port 80) : c'est lui qui transmet le sous-domaine de l
 2. Connecte-toi sur http://demo.localhost/login avec l'email et le mot de passe choisis.
 3. Crée un projet et des tâches, puis invite des membres depuis la page **Équipe**.
 
+## Tout tester en local, sans compte ni argent réel
+
+Supabase peut tourner sur ta machine, et les paiements peuvent être simulés.
+
+```bash
+npx supabase start          # Supabase local (Docker), ~2 Go au premier lancement
+npx supabase status         # affiche l'URL, la clé anon, la clé service_role et le JWT secret
+```
+
+Dans `.env` :
+
+```env
+NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_ANON_KEY=<ANON_KEY>
+# Le backend tourne dans Docker : il joint Supabase via l'hôte, mais les jetons sont émis pour 127.0.0.1
+SUPABASE_URL=http://host.docker.internal:54321
+SUPABASE_JWT_ISSUER=http://127.0.0.1:54321/auth/v1
+SUPABASE_SERVICE_ROLE_KEY=<SERVICE_ROLE_KEY>
+SUPABASE_JWT_SECRET=<JWT_SECRET>
+BILLING_PROVIDER=mock
+```
+
+Puis `docker compose up --build -d`.
+
+| Outil | Adresse |
+|---|---|
+| Supabase Studio (comptes créés) | http://127.0.0.1:54323 |
+| Emails envoyés par Supabase | http://127.0.0.1:54324 |
+
+Avec `BILLING_PROVIDER=mock`, le bouton de paiement ouvre une page de test qui permet de simuler un paiement réussi ou un échec. Elle est refusée dès que `DEBUG=False`.
+
 ## Développement local (sans Docker pour le code)
 
 Lance seulement PostgreSQL et Redis dans Docker :
@@ -143,6 +175,9 @@ python manage.py seed_plans
 # Créer un compte Supabase pour les utilisateurs créés avant la migration vers Supabase
 python manage.py sync_supabase_users --dry-run
 python manage.py sync_supabase_users
+
+# Créer un super-admin de la plateforme (console /platform sur le domaine principal)
+python manage.py create_platform_admin --email proprietaire@exemple.com
 ```
 
 ## Tests et qualité
@@ -183,6 +218,30 @@ Les comptes sont créés par le backend avec la clé service_role : à l'inscrip
 - Le schéma `public` contient les organisations, les domaines, les utilisateurs, les appartenances (`TenantMembership`) et la facturation.
 - Chaque organisation a son propre schéma pour les projets, les tâches et les notifications.
 - Le sous-domaine de la requête détermine le schéma utilisé.
+
+### Abonnements et paiements
+
+| Étape | Ce qui se passe |
+|---|---|
+| Inscription | L'organisation essaie le plan Pro pendant `BILLING_TRIAL_DAYS` jours (14 par défaut). |
+| Paiement | L'administrateur choisit un plan dans **Paramètres → Facturation** et paie sur CinetPay. Un paiement donne 30 jours ; renouveler le même plan ajoute 30 jours à la date de fin actuelle. |
+| Confirmation | Le paiement est revérifié auprès de CinetPay (montant et devise compris), via le webhook et au retour de l'utilisateur. Chaque transaction n'est appliquée qu'une fois. |
+| J-3 | Rappel aux administrateurs (notification et bandeau). |
+| Fin de période | Statut « en retard », accès complet pendant `BILLING_GRACE_DAYS` jours (7 par défaut). |
+| Fin du délai ou de l'essai | Retour au plan gratuit. Les données sont conservées, les quotas gratuits s'appliquent. |
+
+Ces vérifications tournent toutes les heures (Celery beat, `apps.billing.tasks.check_subscriptions`). Une organisation suspendue par la plateforme (statut `cancelled`) passe en lecture seule.
+
+### Console plateforme (super-admin)
+
+Le propriétaire du SaaS dispose d'un espace séparé des organisations, sur le domaine principal : **http://localhost/platform** en local.
+
+- **Compte séparé** : un `PlatformUser`, provisionné uniquement par `create_platform_admin` (jamais en libre-service). Il s'authentifie avec Supabase comme tout le monde, mais le jeton doit correspondre à un super-admin **actif**, vérifié à chaque requête.
+- **Actions** : lister toutes les organisations et leur usage, suspendre (lecture seule) ou réactiver, prolonger/changer un abonnement, consulter les paiements.
+- **Traçabilité** : chaque action privilégiée est écrite dans un **journal d'audit** inaltérable (`PlatformAuditLog`), visible dans la console et dans l'admin Django.
+- **Durcissement optionnel** : `PLATFORM_IP_ALLOWLIST` (IP ou plages CIDR séparées par des virgules) restreint l'accès à la console à certaines adresses. Pour une double authentification, activez la MFA de Supabase sur le compte super-admin.
+
+> Il n'existe aucun accès caché (backdoor) : la console passe par l'authentification normale, et tout y est journalisé.
 
 ### Quotas
 

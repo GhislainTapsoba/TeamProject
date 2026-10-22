@@ -5,6 +5,20 @@ from django.conf import settings
 from django.db import migrations, models
 
 
+class CreateModelIfMissing(migrations.CreateModel):
+    """
+    Databases migrated with an earlier version of this app (accounts 0002_tenantmembership,
+    since removed) already have this exact table: keep it instead of failing.
+    """
+
+    def database_forwards(self, app_label, schema_editor, from_state, to_state):
+        table = to_state.apps.get_model(app_label, self.name)._meta.db_table
+        with schema_editor.connection.cursor() as cursor:
+            if table in schema_editor.connection.introspection.table_names(cursor):
+                return
+        super().database_forwards(app_label, schema_editor, from_state, to_state)
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -18,7 +32,7 @@ class Migration(migrations.Migration):
             name='supabase_id',
             field=models.UUIDField(blank=True, db_index=True, null=True, unique=True),
         ),
-        migrations.CreateModel(
+        CreateModelIfMissing(
             name='TenantMembership',
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),

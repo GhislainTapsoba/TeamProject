@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django_tenants.admin import TenantAdminMixin
 
+from . import admin_platform  # noqa: F401  (registers PlatformUser & PlatformAuditLog)
 from .models import Client, Domain
 
 
