@@ -1,40 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# TeamProject — Frontend (Next.js)
 
-## Getting Started
+Interface web du SaaS TeamProject : Next.js 15, React 19, Tailwind CSS et `@supabase/supabase-js`.
 
-First, run the development server:
+> Pour lancer **toute** l'application (backend, base, Supabase, paiements) via Docker, suis le guide à la racine : [`../README.md`](../README.md). Ce fichier ne couvre que le développement du frontend seul.
+
+## Développement du frontend seul
+
+Le frontend a besoin du backend (API) et de Supabase. Le plus simple est de lancer le reste avec Docker, puis le frontend en local pour le rechargement à chaud :
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Depuis la racine du projet : tout sauf le frontend
+docker compose up -d backend celery-worker postgres redis nginx
+
+# Ici, dans web-frontend/
+npm install
+npm run dev          # http://localhost:3001
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Variables lues depuis `.env` à la racine (voir `.env.example`) :
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+| Variable | Rôle |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | URL du projet Supabase |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Clé publique Supabase |
+| `NEXT_PUBLIC_API_URL` | URL de l'API (en prod) ; en local le navigateur utilise `/api` via Nginx |
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+Ne mets jamais de secret dans une variable `NEXT_PUBLIC_*` : elle est incluse dans le code envoyé au navigateur.
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+> En accès direct sur `http://localhost:3001`, le routage par sous-domaine des organisations n'est pas actif. Passe par Nginx (http://localhost, http://`sous-domaine`.localhost) pour un comportement identique à la production.
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+```bash
+npm run dev       # serveur de développement (port 3001)
+npm run build     # build de production
+npm start         # servir le build
+npm run lint      # ESLint
+npm test          # tests Jest
+npx tsc --noEmit  # vérification TypeScript
+```
 
-To learn more about Next.js, take a look at the following resources:
+## Organisation
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+```
+app/
+├── (auth)/            connexion, inscription
+├── (dashboard)/       espace organisation (projets, tâches, équipe, facturation…)
+└── platform/          console super-admin (/platform)
+components/            composants partagés (ex. bandeau d'abonnement)
+contexts/AuthContext   session Supabase + profil de l'utilisateur
+lib/
+├── api.ts             client axios (API tenant, token Supabase auto)
+├── platform.ts        client dédié de la console plateforme
+└── supabase.ts        client Supabase
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+L'authentification passe par Supabase (`signInWithPassword`) ; le jeton est joint à chaque appel API et rafraîchi automatiquement. La console `/platform` gère sa propre session, isolée de celle du tableau de bord.
