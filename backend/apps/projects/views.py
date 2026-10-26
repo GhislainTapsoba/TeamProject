@@ -1,6 +1,7 @@
 import contextlib
 
 from django.db import connection
+from django.db.models import Count, Q
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.exceptions import PermissionDenied
@@ -17,7 +18,15 @@ from .serializers import ProjectDetailSerializer, ProjectMemberSerializer, Proje
 
 
 class ProjectViewSet(viewsets.ModelViewSet):
-    queryset = Project.objects.all().order_by("-created_at")
+    # Compteurs de tâches et responsable chargés en une requête, quel que soit le nombre de projets
+    queryset = (
+        Project.objects.select_related("manager")
+        .annotate(
+            annotated_total_tasks=Count("tasks"),
+            annotated_done_tasks=Count("tasks", filter=Q(tasks__state="done")),
+        )
+        .order_by("-created_at")
+    )
 
     def get_serializer_class(self):
         if self.action in ["retrieve", "kanban"]:
@@ -76,9 +85,10 @@ class ProjectViewSet(viewsets.ModelViewSet):
             user_id = request.data.get("user_id")
             if not user_id:
                 return Response({"error": "user_id est requis."}, status=status.HTTP_400_BAD_REQUEST)
-            from apps.accounts.models import User
+            from apps.accounts.models import User, is_tenant_member
 
-            if not User.objects.filter(id=user_id, is_active=True).exists():
+            # La table des comptes est commune à toutes les organisations : on n'accepte que les membres
+            if not User.objects.filter(id=user_id, is_active=True).exists() or not is_tenant_member(user_id):
                 return Response({"error": "Utilisateur introuvable ou inactif."}, status=status.HTTP_404_NOT_FOUND)
             member, created = ProjectMember.objects.get_or_create(project=project, user_id=user_id)
             return Response(ProjectMemberSerializer(member).data, status=status.HTTP_201_CREATED)

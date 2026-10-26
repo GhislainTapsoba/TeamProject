@@ -67,3 +67,18 @@ class TenantMembership(models.Model):
 
     def __str__(self):
         return f"{self.user.username} @ {self.tenant.schema_name} = {self.role}"
+
+
+def is_tenant_member(user, tenant=None):
+    """
+    Vrai si ce compte est membre actif de l'organisation (courante par défaut).
+    La table des comptes est partagée entre organisations : toute référence à un
+    compte (assignation, membre ou responsable de projet) doit passer par ici.
+    """
+    from django.db import connection
+
+    tenant = tenant or getattr(connection, "tenant", None)
+    if user is None or tenant is None or tenant.schema_name == "public":
+        return False
+    user_id = getattr(user, "pk", user)
+    return TenantMembership.objects.filter(user_id=user_id, tenant=tenant, is_active=True).exists()

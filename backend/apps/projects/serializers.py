@@ -1,8 +1,11 @@
 from rest_framework import serializers
 
+from apps.accounts.models import is_tenant_member
 from apps.accounts.serializers import UserSerializer
 
 from .models import Project, ProjectMember, Task
+
+NOT_A_MEMBER = "Cette personne ne fait pas partie de l'organisation."
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -25,6 +28,11 @@ class TaskSerializer(serializers.ModelSerializer):
             "order",
             "created_at",
         )
+
+    def validate_assignee(self, value):
+        if value is not None and not is_tenant_member(value):
+            raise serializers.ValidationError(NOT_A_MEMBER)
+        return value
 
 
 class ProjectMemberSerializer(serializers.ModelSerializer):
@@ -58,6 +66,11 @@ class ProjectSerializer(serializers.ModelSerializer):
             "completed_tasks_count",
             "progress_percentage",
         )
+
+    def validate_manager(self, value):
+        if value is not None and not is_tenant_member(value):
+            raise serializers.ValidationError(NOT_A_MEMBER)
+        return value
 
 
 class ProjectDetailSerializer(ProjectSerializer):

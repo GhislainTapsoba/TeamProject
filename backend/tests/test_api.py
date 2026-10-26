@@ -112,6 +112,49 @@ class ProjectAPITestCase(TenantAPITestCase):
         self.assertEqual(removed.status_code, 204)
         self.assertFalse(ProjectMember.objects.filter(project=project, user=self.employee).exists())
 
+    def test_project_list_query_count_does_not_grow_with_projects(self):
+        from django.db import connection
+        from django.test.utils import CaptureQueriesContext
+
+        client = self.client_for(self.admin)
+
+        def list_queries():
+            with CaptureQueriesContext(connection) as ctx:
+                response = client.get("/api/projects/")
+            self.assertEqual(response.status_code, 200)
+            self.last_queries = [q["sql"] for q in ctx.captured_queries]
+            return len(ctx.captured_queries), response
+
+        project = Project.objects.create(name="P0", manager=self.manager)
+        Task.objects.create(project=project, title="A", state="done")
+        Task.objects.create(project=project, title="B")
+        few, response = list_queries()
+        for i in range(1, 6):
+            Project.objects.create(name=f"P{i}", manager=self.manager)
+        many, _ = list_queries()
+
+        self.assertEqual(few, many, " | ".join(self.last_queries))
+        self.assertEqual(response.data["results"][0]["progress_percentage"], 50)
+
+    def test_accounts_of_other_organisations_cannot_be_referenced(self):
+        outsider = User.objects.create_user(username="out@other.com", email="out@other.com", password="x")
+        project = Project.objects.create(name="Isolé", manager=self.manager)
+        client = self.client_for(self.admin)
+
+        member = client.post(f"/api/projects/{project.id}/members/", {"user_id": outsider.id}, format="json")
+        manager = client.patch(f"/api/projects/{project.id}/", {"manager": outsider.id}, format="json")
+        task = client.post(
+            "/api/projects/tasks/", {"project": project.id, "title": "T", "assignee": outsider.id}, format="json"
+        )
+
+        self.assertEqual(member.status_code, 404)
+        self.assertEqual(manager.status_code, 400)
+        self.assertEqual(task.status_code, 400)
+        # Rien ne doit renvoyer les coordonnées de ce compte
+        self.assertNotIn("out@other.com", str(member.data) + str(manager.data) + str(task.data))
+        self.assertFalse(ProjectMember.objects.filter(user=outsider).exists())
+        self.assertFalse(Task.objects.filter(assignee=outsider).exists())
+
     def test_only_project_manager_or_admin_can_edit(self):
         project = Project.objects.create(name="Avant", manager=self.manager)
 
