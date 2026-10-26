@@ -25,6 +25,7 @@ export default function LandingPage() {
     return (
         <div className="relative overflow-hidden">
             <header className="fixed inset-x-0 top-0 z-30 border-b border-line bg-white/80 backdrop-blur-xl">
+                <span className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-brand-600 via-brand-500 to-flame-500" />
                 <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
                     <Logo />
                     <nav className="flex items-center gap-2">

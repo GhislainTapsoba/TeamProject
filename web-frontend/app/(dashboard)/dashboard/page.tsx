@@ -210,7 +210,7 @@ function GettingStarted({ stats, organisation }: { stats: any; organisation?: st
                 {steps.map((s, i) => (
                     <li
                         key={s.title}
-                        className={cn('flex flex-col rounded-2xl border p-4', i === current ? 'border-brand-400/50 bg-brand-500/10' : 'border-line bg-ink/[0.02]')}
+                        className={cn('flex flex-col rounded-2xl border p-4', i === current ? 'border-flame-400/60 bg-flame-50' : 'border-line bg-ink/[0.02]')}
                     >
                         <div className="flex items-center gap-3">
                             <motion.span
@@ -219,7 +219,7 @@ function GettingStarted({ stats, organisation }: { stats: any; organisation?: st
                                 transition={spring}
                                 className={cn(
                                     'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[15px] font-semibold',
-                                    s.done ? 'bg-emerald-500 text-white' : i === current ? 'bg-brand-500 text-white' : 'bg-ink/[0.08] text-ink-muted'
+                                    s.done ? 'bg-emerald-500 text-white' : i === current ? 'bg-flame-600 text-white' : 'bg-ink/[0.08] text-ink-muted'
                                 )}
                             >
                                 {s.done ? <Check className="h-4 w-4" strokeWidth={3} /> : i + 1}

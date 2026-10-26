@@ -7,7 +7,7 @@ import { NEXT_STEP, type TaskState } from '@/lib/labels';
 import { cn } from '@/lib/utils';
 
 const styles: Record<TaskState, { icon: React.ElementType; className: string }> = {
-    todo: { icon: Play, className: 'bg-brand-500/15 text-brand-800 ring-brand-400/40 hover:bg-brand-500/25' },
+    todo: { icon: Play, className: 'bg-flame-500/15 text-flame-800 ring-flame-400/50 hover:bg-flame-500/25' },
     in_progress: { icon: Check, className: 'bg-emerald-500/15 text-emerald-800 ring-emerald-400/40 hover:bg-emerald-500/25' },
     done: { icon: RotateCcw, className: 'bg-ink/[0.04] text-ink-muted ring-line hover:bg-ink/[0.08]' },
 };

@@ -141,6 +141,7 @@ export default function PlatformConsole() {
     return (
         <div className="min-h-screen">
             <header className="sticky top-0 z-30 border-b border-line bg-white/80 backdrop-blur-xl">
+                <span className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-brand-600 via-brand-500 to-flame-500" />
                 <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-8">
                     <div className="flex items-center gap-3">
                         <Logo />

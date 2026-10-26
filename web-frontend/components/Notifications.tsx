@@ -60,7 +60,7 @@ export default function Notifications() {
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             exit={{ scale: 0 }}
-                            className="absolute left-6 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-xs font-semibold text-white ring-2 ring-white"
+                            className="absolute left-6 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-flame-600 px-1 text-xs font-semibold text-white ring-2 ring-white"
                         >
                             {unread > 9 ? '9+' : unread}
                         </motion.span>

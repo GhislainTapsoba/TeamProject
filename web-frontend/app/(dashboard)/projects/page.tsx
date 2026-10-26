@@ -73,7 +73,7 @@ export default function ProjectsPage() {
                     onChange={setFilter}
                     options={[
                         { id: 'active', label: 'En cours', count: projects.filter(isActive).length },
-                        { id: 'completed', label: 'Clos' },
+                        { id: 'completed', label: 'Terminés' },
                         { id: 'all', label: 'Tous' },
                     ]}
                 />

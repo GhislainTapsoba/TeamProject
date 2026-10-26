@@ -67,10 +67,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <motion.span
                         layoutId="nav-active"
                         transition={spring}
-                        className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-500/20 to-brand-500/[0.04] ring-1 ring-inset ring-brand-400/20"
-                    />
+                        className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-500/15 to-flame-500/[0.06] ring-1 ring-inset ring-brand-400/20"
+                    >
+                        {/* Liseré orange du logo sur l'élément actif */}
+                        <span className="absolute bottom-2 left-0 top-2 w-1 rounded-full bg-flame-500" />
+                    </motion.span>
                 )}
-                <item.icon className={cn('relative h-5 w-5', active ? 'text-brand-600' : 'text-ink-soft')} />
+                <item.icon className={cn('relative h-5 w-5', active ? 'text-flame-600' : 'text-ink-soft')} />
                 <span className="relative">{item.name}</span>
             </Link>
         );
@@ -134,6 +137,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="flex min-w-0 flex-1 flex-col">
                 {/* Barre du haut */}
                 <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-line bg-white/80 px-4 backdrop-blur-xl sm:px-8 md:justify-end">
+                    <span className="pointer-events-none absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-brand-600 via-brand-500 to-flame-500" />
                     <Link href="/dashboard" className="md:hidden">
                         <Logo />
                     </Link>
@@ -159,8 +163,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     const active = isActive(item.href);
                     return (
                         <Link key={item.href} href={item.href} className="relative flex flex-1 flex-col items-center gap-1 rounded-xl py-2.5 text-[13px] font-medium">
-                            {active && <motion.span layoutId="tab-active" transition={spring} className="absolute inset-0 rounded-xl bg-ink/[0.07]" />}
-                            <item.icon className={cn('relative h-6 w-6', active ? 'text-brand-600' : 'text-ink-soft')} />
+                            {active && <motion.span layoutId="tab-active" transition={spring} className="absolute inset-0 rounded-xl bg-flame-50 ring-1 ring-flame-200" />}
+                            <item.icon className={cn('relative h-6 w-6', active ? 'text-flame-600' : 'text-ink-soft')} />
                             <span className={cn('relative', active ? 'text-ink' : 'text-ink-muted')}>{item.short ?? item.name}</span>
                         </Link>
                     );

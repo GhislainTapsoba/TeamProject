@@ -6,7 +6,7 @@ export type TaskState = 'todo' | 'in_progress' | 'done';
 
 export const TASK_STATES: { id: TaskState; label: string; help: string; tone: Tone; dot: string }[] = [
     { id: 'todo', label: 'À faire', help: 'Pas encore commencées', tone: 'neutral', dot: 'bg-zinc-400' },
-    { id: 'in_progress', label: 'En cours', help: "Quelqu'un s'en occupe", tone: 'accent', dot: 'bg-brand-400' },
+    { id: 'in_progress', label: 'En cours', help: "Quelqu'un s'en occupe", tone: 'flame', dot: 'bg-flame-500' },
     { id: 'done', label: 'Terminé', help: "C'est fini", tone: 'success', dot: 'bg-emerald-400' },
 ];
 

@@ -103,7 +103,7 @@ export default function ProjectPage() {
             finishing
                 ? {
                       title: 'Marquer le projet comme terminé ?',
-                      message: 'Il passera dans les projets « Clos ». Vous pourrez le rouvrir à tout moment.',
+                      message: 'Il passera dans les projets « Terminés ». Vous pourrez le rouvrir à tout moment.',
                       confirmLabel: 'Oui, il est terminé',
                   }
                 : { title: 'Rouvrir ce projet ?', message: 'Il reviendra dans les projets en cours.', confirmLabel: 'Oui, le rouvrir' }
@@ -162,7 +162,7 @@ export default function ProjectPage() {
                     <ArrowLeft className="h-5 w-5" /> Retour aux projets
                 </Link>
 
-                <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+                <div className="flex flex-col gap-5">
                     <div className="min-w-0 space-y-2">
                         <div className="flex flex-wrap items-center gap-3">
                             <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">{project.name}</h1>
@@ -187,7 +187,7 @@ export default function ProjectPage() {
                             Membres ({members.length})
                         </Button>
                         {canLead && !finished && (
-                            <Button variant="secondary" icon={CheckCircle2} onClick={() => setStatus('completed')}>
+                            <Button variant="accent" icon={CheckCircle2} onClick={() => setStatus('completed')}>
                                 Terminer le projet
                             </Button>
                         )}
@@ -226,7 +226,7 @@ export default function ProjectPage() {
                             className="flex flex-col gap-3 rounded-2xl border border-flame-400/30 bg-flame-500/10 p-4 sm:flex-row sm:items-center sm:justify-between"
                         >
                             <p className="text-base font-medium text-flame-800">Toutes les tâches sont terminées. Le projet est-il fini ?</p>
-                            <Button icon={CheckCircle2} onClick={() => setStatus('completed')}>
+                            <Button variant="accent" icon={CheckCircle2} onClick={() => setStatus('completed')}>
                                 Oui, terminer le projet
                             </Button>
                         </motion.div>
