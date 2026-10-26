@@ -9,8 +9,8 @@ import type { Tone } from '@/lib/labels';
 
 const toneClasses: Record<Tone, string> = {
     neutral: 'bg-white/[0.06] text-zinc-300 ring-white/[0.08]',
-    accent: 'bg-violet-500/15 text-violet-200 ring-violet-400/25',
-    sky: 'bg-sky-500/15 text-sky-200 ring-sky-400/25',
+    accent: 'bg-brand-500/15 text-brand-200 ring-brand-400/25',
+    flame: 'bg-flame-500/15 text-flame-200 ring-flame-400/30',
     success: 'bg-emerald-500/15 text-emerald-200 ring-emerald-400/25',
     warning: 'bg-amber-500/15 text-amber-200 ring-amber-400/25',
     danger: 'bg-rose-500/15 text-rose-200 ring-rose-400/25',
@@ -57,9 +57,9 @@ export function EmptyState({ icon: Icon, title, text, action }: { icon: React.El
                 initial={{ scale: 0.6, opacity: 0, rotate: -8 }}
                 animate={{ scale: 1, opacity: 1, rotate: 0 }}
                 transition={{ ...spring, delay: 0.1 }}
-                className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500/20 to-sky-500/10 ring-1 ring-white/[0.08]"
+                className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/20 to-flame-500/15 ring-1 ring-white/[0.08]"
             >
-                <Icon className="h-6 w-6 text-violet-300" />
+                <Icon className="h-6 w-6 text-brand-300" />
             </motion.div>
             <p className="font-medium text-zinc-100">{title}</p>
             {text && <p className="mt-1 max-w-sm text-sm text-zinc-400">{text}</p>}
@@ -78,7 +78,7 @@ export function Avatar({ name, size = 'md', className }: { name?: string; size?:
         <span
             title={name}
             className={cn(
-                'inline-flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-400/30 via-fuchsia-400/20 to-sky-400/20 font-semibold text-white ring-1 ring-white/10',
+                'inline-flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500/40 to-flame-500/30 font-semibold text-white ring-1 ring-white/10',
                 sizes[size],
                 className
             )}
@@ -145,7 +145,7 @@ export function Progress({ value, className, tone = 'accent' }: { value: number;
     return (
         <div className={cn('h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]', className)}>
             <motion.div
-                className={cn('h-full rounded-full', tone === 'warning' ? 'bg-amber-400' : 'bg-gradient-to-r from-violet-500 to-sky-400')}
+                className={cn('h-full rounded-full', tone === 'warning' ? 'bg-amber-400' : 'bg-gradient-to-r from-brand-500 to-flame-400')}
                 initial={{ width: 0 }}
                 animate={{ width: `${Math.min(100, Math.max(0, value))}%` }}
                 transition={{ duration: 1, ease, delay: 0.15 }}

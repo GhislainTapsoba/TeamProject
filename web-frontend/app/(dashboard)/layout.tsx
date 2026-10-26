@@ -67,10 +67,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     <motion.span
                         layoutId="nav-active"
                         transition={spring}
-                        className="absolute inset-0 rounded-xl bg-gradient-to-r from-violet-500/20 to-violet-500/[0.04] ring-1 ring-inset ring-violet-400/20"
+                        className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-500/20 to-brand-500/[0.04] ring-1 ring-inset ring-brand-400/20"
                     />
                 )}
-                <item.icon className={cn('relative h-5 w-5', active ? 'text-violet-300' : 'text-zinc-400')} />
+                <item.icon className={cn('relative h-5 w-5', active ? 'text-brand-300' : 'text-zinc-400')} />
                 <span className="relative">{item.name}</span>
             </Link>
         );
@@ -107,9 +107,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {tenant?.plan === 'free' && user.role === 'admin' && (
                         <Link
                             href="/settings/billing"
-                            className="group relative block overflow-hidden rounded-2xl border border-violet-400/20 bg-gradient-to-br from-violet-500/15 to-transparent p-4"
+                            className="group relative block overflow-hidden rounded-2xl border border-brand-400/20 bg-gradient-to-br from-brand-500/15 to-transparent p-4"
                         >
-                            <Sparkles className="h-4 w-4 text-violet-300" />
+                            <Sparkles className="h-4 w-4 text-brand-300" />
                             <p className="mt-2 text-sm font-medium text-white">Passer au plan Pro</p>
                             <p className="text-xs text-zinc-400">Plus de membres et de projets.</p>
                             <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-700 group-hover:translate-x-full" />
@@ -160,7 +160,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     return (
                         <Link key={item.href} href={item.href} className="relative flex flex-1 flex-col items-center gap-1 rounded-xl py-2.5 text-[13px] font-medium">
                             {active && <motion.span layoutId="tab-active" transition={spring} className="absolute inset-0 rounded-xl bg-white/[0.07]" />}
-                            <item.icon className={cn('relative h-6 w-6', active ? 'text-violet-300' : 'text-zinc-400')} />
+                            <item.icon className={cn('relative h-6 w-6', active ? 'text-brand-300' : 'text-zinc-400')} />
                             <span className={cn('relative', active ? 'text-white' : 'text-zinc-300')}>{item.short ?? item.name}</span>
                         </Link>
                     );

@@ -35,14 +35,14 @@ export default function AuthShell({ title, subtitle, children, footer }: { title
             </div>
 
             <div className="relative hidden overflow-hidden border-l border-white/[0.06] lg:block">
-                <div className="absolute inset-0 bg-gradient-to-br from-violet-600/30 via-indigo-900/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-br from-brand-600/30 via-brand-900/20 to-transparent" />
                 <motion.div
-                    className="absolute -left-20 top-1/4 h-96 w-96 rounded-full bg-violet-500/30 blur-[100px]"
+                    className="absolute -left-20 top-1/4 h-96 w-96 rounded-full bg-brand-500/30 blur-[100px]"
                     animate={{ x: [0, 60, 0], y: [0, -40, 0] }}
                     transition={{ duration: 14, repeat: Infinity, ease: 'easeInOut' }}
                 />
                 <motion.div
-                    className="absolute bottom-10 right-0 h-80 w-80 rounded-full bg-sky-500/20 blur-[100px]"
+                    className="absolute bottom-10 right-0 h-80 w-80 rounded-full bg-flame-500/20 blur-[100px]"
                     animate={{ x: [0, -50, 0], y: [0, 30, 0] }}
                     transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
                 />
@@ -54,7 +54,7 @@ export default function AuthShell({ title, subtitle, children, footer }: { title
 
 const PREVIEW = [
     { title: 'À faire', dot: 'bg-zinc-400', cards: ['Maquettes de la page d’accueil', 'Préparer la réunion client'] },
-    { title: 'En cours', dot: 'bg-violet-400', cards: ['Intégration du paiement', 'Rédiger la documentation'] },
+    { title: 'En cours', dot: 'bg-brand-400', cards: ['Intégration du paiement', 'Rédiger la documentation'] },
     { title: 'Terminé', dot: 'bg-emerald-400', cards: ['Choisir le nom du produit'] },
 ];
 

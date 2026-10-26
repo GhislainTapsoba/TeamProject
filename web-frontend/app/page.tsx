@@ -55,7 +55,7 @@ export default function LandingPage() {
                     <motion.h1 variants={fadeUp} className="mt-8 text-5xl font-semibold leading-[1.05] tracking-tighter text-white sm:text-7xl">
                         Votre équipe,
                         <br />
-                        <span className="bg-gradient-to-r from-violet-300 via-fuchsia-300 to-sky-300 bg-clip-text text-transparent">enfin alignée.</span>
+                        <span className="bg-gradient-to-r from-brand-300 via-brand-200 to-flame-400 bg-clip-text text-transparent">enfin alignée.</span>
                     </motion.h1>
                     <motion.p variants={fadeUp} className="mx-auto mt-6 max-w-xl text-lg text-zinc-400">
                         Projets, tâches et collègues au même endroit. Simple dès la première minute, agréable tous les jours.
@@ -77,7 +77,7 @@ export default function LandingPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 1.1, ease, delay: 0.5 }}
                         style={{ y: previewY, rotateX: previewRotate }}
-                        className="glass relative rounded-3xl p-2 shadow-[0_40px_120px_-40px_rgba(139,92,246,0.5)]"
+                        className="glass relative rounded-3xl p-2 shadow-[0_40px_120px_-40px_rgba(0,110,219,0.5)]"
                     >
                         <div className="rounded-[20px] border border-white/[0.05] bg-zinc-950/80 p-5">
                             <div className="mb-5 flex items-center gap-2">
@@ -89,7 +89,7 @@ export default function LandingPage() {
                             <div className="grid grid-cols-3 gap-3 text-left">
                                 {[
                                     { title: 'À faire', dot: 'bg-zinc-400', cards: ['Préparer l’offre client', 'Maquette mobile', 'Relancer le fournisseur'] },
-                                    { title: 'En cours', dot: 'bg-violet-400', cards: ['Intégration Mobile Money', 'Campagne de lancement'] },
+                                    { title: 'En cours', dot: 'bg-brand-400', cards: ['Intégration Mobile Money', 'Campagne de lancement'] },
                                     { title: 'Terminé', dot: 'bg-emerald-400', cards: ['Choix du logo'] },
                                 ].map((col, c) => (
                                     <div key={col.title} className="space-y-2 rounded-2xl bg-white/[0.02] p-2.5">
@@ -108,7 +108,7 @@ export default function LandingPage() {
                                                 {card}
                                                 <div className="mt-2.5 flex items-center justify-between">
                                                     <span className="h-1 w-10 rounded-full bg-white/[0.07]" />
-                                                    <span className="h-4 w-4 rounded-full bg-gradient-to-br from-violet-400/50 to-sky-400/40" />
+                                                    <span className="h-4 w-4 rounded-full bg-gradient-to-br from-brand-400/50 to-flame-400/50" />
                                                 </div>
                                             </motion.div>
                                         ))}
@@ -137,8 +137,8 @@ export default function LandingPage() {
                                     whileHover={{ y: -4 }}
                                     className="glass group rounded-2xl p-6 transition-colors hover:border-white/[0.12]"
                                 >
-                                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 ring-1 ring-violet-400/20 transition group-hover:bg-violet-500/20">
-                                        <f.icon className="h-5 w-5 text-violet-300" />
+                                    <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 ring-1 ring-brand-400/20 transition group-hover:bg-brand-500/20">
+                                        <f.icon className="h-5 w-5 text-brand-300" />
                                     </span>
                                     <h3 className="mt-5 font-semibold text-white">{f.title}</h3>
                                     <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{f.text}</p>
@@ -154,7 +154,7 @@ export default function LandingPage() {
                         whileInView={{ opacity: 1, scale: 1 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.8, ease }}
-                        className="relative overflow-hidden rounded-3xl border border-violet-400/20 bg-gradient-to-br from-violet-600/25 via-zinc-950 to-sky-600/10 px-8 py-16 text-center"
+                        className="relative overflow-hidden rounded-3xl border border-brand-400/20 bg-gradient-to-br from-brand-600/25 via-zinc-950 to-flame-600/15 px-8 py-16 text-center"
                     >
                         <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Lancez votre équipe aujourd&apos;hui.</h2>
                         <p className="mx-auto mt-4 max-w-md text-zinc-400">Gratuit pour démarrer, sans carte bancaire.</p>

@@ -100,7 +100,7 @@ export default function TeamPage() {
                                     </div>
                                 </div>
                                 <div className="mt-4 space-y-1.5 border-t border-white/[0.05] pt-4 text-sm text-zinc-400">
-                                    <a href={`mailto:${m.email}`} className="flex items-center gap-2 truncate transition hover:text-violet-300">
+                                    <a href={`mailto:${m.email}`} className="flex items-center gap-2 truncate transition hover:text-brand-300">
                                         <Mail className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
                                         {m.email}
                                     </a>

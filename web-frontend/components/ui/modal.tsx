@@ -54,7 +54,7 @@ export function Modal({ open, onClose, title, description, children }: ModalProp
                         exit={{ opacity: 0, y: 24, scale: 0.97, transition: { duration: 0.18 } }}
                         transition={spring}
                     >
-                        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/50 to-transparent" />
+                        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-400/50 to-transparent" />
                         <div className="flex items-start justify-between gap-4 px-6 pt-6">
                             <div>
                                 <h2 className="text-xl font-semibold tracking-tight text-white">{title}</h2>

@@ -66,7 +66,7 @@ export default function RegisterPage() {
                 <div className="space-y-3">
                     <a
                         href={`https://${PLATFORM_DOMAIN}/register`}
-                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 font-medium text-white transition hover:bg-violet-500"
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 font-medium text-white transition hover:bg-brand-500"
                     >
                         Aller au site principal <ArrowRight className="h-4 w-4" />
                     </a>
@@ -90,10 +90,10 @@ export default function RegisterPage() {
                     >
                         <Check className="h-8 w-8 text-emerald-300" strokeWidth={2.5} />
                     </motion.div>
-                    <p className="rounded-xl border border-white/[0.06] bg-black/30 px-4 py-3 font-mono text-sm text-violet-200">{created.tenant?.domain}</p>
+                    <p className="rounded-xl border border-white/[0.06] bg-black/30 px-4 py-3 font-mono text-sm text-brand-200">{created.tenant?.domain}</p>
                     <a
                         href={created.login_url || `https://${created.tenant?.domain}/login`}
-                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-violet-500 to-violet-600 font-medium text-white shadow-glow transition hover:from-violet-400"
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-brand-500 to-brand-600 font-medium text-white shadow-glow transition hover:from-brand-400"
                     >
                         Accéder à mon espace <ArrowRight className="h-4 w-4" />
                     </a>
@@ -109,7 +109,7 @@ export default function RegisterPage() {
             footer={
                 <>
                     Déjà une organisation ?{' '}
-                    <Link href="/login" className="font-medium text-violet-300 hover:text-violet-200">
+                    <Link href="/login" className="font-medium text-brand-300 hover:text-brand-200">
                         Se connecter
                     </Link>
                 </>
@@ -130,7 +130,7 @@ export default function RegisterPage() {
                 />
                 <label className="block space-y-1.5">
                     <span className="block text-[13px] font-medium text-zinc-400">Adresse de votre espace</span>
-                    <span className="flex h-11 items-center overflow-hidden rounded-xl border border-white/[0.08] bg-black/30 transition focus-within:border-violet-400/60 focus-within:ring-4 focus-within:ring-violet-500/10">
+                    <span className="flex h-11 items-center overflow-hidden rounded-xl border border-white/[0.08] bg-black/30 transition focus-within:border-brand-400/60 focus-within:ring-4 focus-within:ring-brand-500/10">
                         <input
                             required
                             value={form.subdomain}

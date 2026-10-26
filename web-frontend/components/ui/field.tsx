@@ -5,7 +5,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const control =
-    'w-full rounded-xl border border-white/[0.12] bg-black/30 px-4 text-base text-zinc-50 placeholder:text-zinc-500 transition duration-200 hover:border-white/[0.2] focus:border-violet-400/70 focus:bg-black/40 focus:outline-none focus:ring-4 focus:ring-violet-500/15 disabled:cursor-not-allowed disabled:opacity-50';
+    'w-full rounded-xl border border-white/[0.12] bg-black/30 px-4 text-base text-zinc-50 placeholder:text-zinc-500 transition duration-200 hover:border-white/[0.2] focus:border-brand-400/70 focus:bg-black/40 focus:outline-none focus:ring-4 focus:ring-brand-500/15 disabled:cursor-not-allowed disabled:opacity-50';
 
 type FieldProps = { label?: string; hint?: string; icon?: React.ElementType; className?: string };
 

@@ -2,9 +2,9 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
-import { ArrowLeft, Plus, UserMinus, UserPlus, Users } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, Pencil, Plus, RotateCcw, Trash2, UserMinus, UserPlus, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { projectsAPI, tasksAPI, usersAPI } from '@/lib/api';
 import { NEXT_STEP, PROJECT_STATUSES, TASK_STATES, type TaskState } from '@/lib/labels';
@@ -21,6 +21,7 @@ import KanbanBoard from '@/components/KanbanBoard';
 
 export default function ProjectPage() {
     const projectId = useParams()?.id as string;
+    const router = useRouter();
     const { user } = useAuth();
     const toast = useToast();
     const confirm = useConfirm();
@@ -30,7 +31,9 @@ export default function ProjectPage() {
     const [team, setTeam] = useState<any[]>([]);
     const [taskModal, setTaskModal] = useState(false);
     const [membersModal, setMembersModal] = useState(false);
-    const canManage = user?.role === 'admin' || user?.role === 'manager';
+    const [editModal, setEditModal] = useState(false);
+    // Après une réouverture, on ne repropose pas aussitôt de clore le projet
+    const [reopened, setReopened] = useState(false);
 
     const load = async () => {
         try {
@@ -94,6 +97,45 @@ export default function ProjectPage() {
         }
     };
 
+    const setStatus = async (status: 'completed' | 'in_progress') => {
+        const finishing = status === 'completed';
+        const ok = await confirm(
+            finishing
+                ? {
+                      title: 'Marquer le projet comme terminé ?',
+                      message: 'Il passera dans les projets « Clos ». Vous pourrez le rouvrir à tout moment.',
+                      confirmLabel: 'Oui, il est terminé',
+                  }
+                : { title: 'Rouvrir ce projet ?', message: 'Il reviendra dans les projets en cours.', confirmLabel: 'Oui, le rouvrir' }
+        );
+        if (!ok) return;
+        try {
+            const res = await projectsAPI.update(projectId, { status });
+            setProject((p: any) => ({ ...p, status: res.data.status }));
+            setReopened(!finishing);
+            toast.success(finishing ? 'Bravo, le projet est terminé !' : 'Le projet est de nouveau en cours.');
+        } catch (err) {
+            toast.error(errorMessage(err, 'Seul le responsable du projet ou un administrateur peut faire cela.'));
+        }
+    };
+
+    const deleteProject = async () => {
+        const ok = await confirm({
+            title: 'Supprimer définitivement ce projet ?',
+            message: `« ${project.name} » et toutes ses tâches seront effacés. Cette action ne peut pas être annulée.`,
+            confirmLabel: 'Oui, tout supprimer',
+            danger: true,
+        });
+        if (!ok) return;
+        try {
+            await projectsAPI.delete(projectId);
+            toast.success('Projet supprimé.');
+            router.push('/projects');
+        } catch (err) {
+            toast.error(errorMessage(err, "Le projet n'a pas pu être supprimé."));
+        }
+    };
+
     if (!project) {
         return (
             <div className="mx-auto max-w-6xl space-y-6">
@@ -109,6 +151,9 @@ export default function ProjectPage() {
 
     const doneCount = tasks.filter((t) => t.state === 'done').length;
     const progress = tasks.length ? Math.round((doneCount / tasks.length) * 100) : 0;
+    const finished = project.status === 'completed';
+    // Mêmes règles que le backend : un administrateur, ou le responsable de ce projet
+    const canLead = user?.role === 'admin' || project.manager === user?.id;
 
     return (
         <Page>
@@ -132,15 +177,61 @@ export default function ProjectPage() {
                         </div>
                     </div>
 
-                    <div className="flex flex-col gap-2 sm:flex-row">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                        {canLead && (
+                            <Button variant="secondary" icon={Pencil} onClick={() => setEditModal(true)}>
+                                Modifier
+                            </Button>
+                        )}
                         <Button variant="secondary" icon={Users} onClick={() => setMembersModal(true)}>
                             Membres ({members.length})
                         </Button>
-                        <Button icon={Plus} onClick={() => setTaskModal(true)}>
-                            Nouvelle tâche
-                        </Button>
+                        {canLead && !finished && (
+                            <Button variant="secondary" icon={CheckCircle2} onClick={() => setStatus('completed')}>
+                                Terminer le projet
+                            </Button>
+                        )}
+                        {!finished && (
+                            <Button icon={Plus} onClick={() => setTaskModal(true)}>
+                                Nouvelle tâche
+                            </Button>
+                        )}
                     </div>
                 </div>
+
+                {finished ? (
+                    <motion.div
+                        initial={{ opacity: 0, y: -6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex flex-col gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-4 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                        <p className="flex items-center gap-2.5 text-base font-medium text-emerald-100">
+                            <CheckCircle2 className="h-5 w-5 shrink-0" /> Ce projet est terminé.
+                        </p>
+                        {canLead && (
+                            <Button variant="secondary" icon={RotateCcw} onClick={() => setStatus('in_progress')}>
+                                Rouvrir le projet
+                            </Button>
+                        )}
+                    </motion.div>
+                ) : (
+                    canLead &&
+                    !reopened &&
+                    tasks.length > 0 &&
+                    doneCount === tasks.length && (
+                        // Toutes les tâches sont finies : on propose de clore le projet
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.98 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="flex flex-col gap-3 rounded-2xl border border-flame-400/30 bg-flame-500/10 p-4 sm:flex-row sm:items-center sm:justify-between"
+                        >
+                            <p className="text-base font-medium text-flame-100">Toutes les tâches sont terminées. Le projet est-il fini ?</p>
+                            <Button icon={CheckCircle2} onClick={() => setStatus('completed')}>
+                                Oui, terminer le projet
+                            </Button>
+                        </motion.div>
+                    )
+                )}
 
                 <p className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-[15px] text-zinc-300">
                     Quand vous vous mettez sur une tâche, appuyez sur <strong className="text-white">Commencer</strong>. Une fois finie, appuyez sur{' '}
@@ -153,7 +244,7 @@ export default function ProjectPage() {
                     tasks={tasks}
                     onMove={moveTask}
                     onQuickAdd={(title, state) => createTask({ title, state, priority: 'medium' })}
-                    onDelete={canManage ? deleteTask : undefined}
+                    onDelete={canLead ? deleteTask : undefined}
                 />
             </motion.div>
 
@@ -165,10 +256,79 @@ export default function ProjectPage() {
                 managerId={project.manager}
                 members={members}
                 team={team}
-                canManage={canManage}
+                canManage={canLead}
                 onChange={load}
             />
+            {canLead && (
+                <EditProjectModal
+                    open={editModal}
+                    onClose={() => setEditModal(false)}
+                    project={project}
+                    onSaved={(updated) => setProject((p: any) => ({ ...p, ...updated }))}
+                    onDelete={deleteProject}
+                />
+            )}
         </Page>
+    );
+}
+
+type EditProps = { open: boolean; onClose: () => void; project: any; onSaved: (project: any) => void; onDelete: () => void };
+
+function EditProjectModal({ open, onClose, project, onSaved, onDelete }: EditProps) {
+    const toast = useToast();
+    const current = () => ({ name: project.name, description: project.description || '', due_date: project.due_date || '' });
+    const [form, setForm] = useState(current);
+    const [saving, setSaving] = useState(false);
+
+    // Repart des valeurs actuelles à chaque ouverture
+    useEffect(() => {
+        if (open) setForm(current());
+    }, [open]);
+
+    const submit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSaving(true);
+        try {
+            const res = await projectsAPI.update(project.id, { ...form, due_date: form.due_date || null });
+            onSaved(res.data);
+            toast.success('Projet enregistré.');
+            onClose();
+        } catch (err) {
+            toast.error(errorMessage(err, "Les changements n'ont pas pu être enregistrés."));
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    return (
+        <Modal open={open} onClose={onClose} title="Modifier le projet">
+            <form onSubmit={submit} className="space-y-6">
+                <Input label="Nom du projet" required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                <Textarea label="En quelques mots" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                <DateChoice label="À finir pour quand ?" value={form.due_date} onChange={(due_date) => setForm({ ...form, due_date })} />
+                <ModalActions>
+                    <Button type="button" variant="secondary" size="lg" onClick={onClose}>
+                        Annuler
+                    </Button>
+                    <Button type="submit" size="lg" loading={saving}>
+                        Enregistrer
+                    </Button>
+                </ModalActions>
+            </form>
+            <div className="mt-8 border-t border-white/[0.08] pt-5">
+                <Button
+                    variant="danger"
+                    icon={Trash2}
+                    className="w-full"
+                    onClick={() => {
+                        onClose();
+                        onDelete();
+                    }}
+                >
+                    Supprimer ce projet
+                </Button>
+            </div>
+        </Modal>
     );
 }
 
@@ -212,7 +372,7 @@ function TaskModal({ open, onClose, team, me, onCreate }: TaskModalProps) {
                 {details ? (
                     <Textarea label="Détails" value={form.description} onChange={(e) => set('description')(e.target.value)} placeholder="Ce qu'il faut savoir pour la faire" />
                 ) : (
-                    <button type="button" onClick={() => setDetails(true)} className="-mt-2 text-[15px] font-medium text-violet-300 hover:text-violet-200">
+                    <button type="button" onClick={() => setDetails(true)} className="-mt-2 text-[15px] font-medium text-brand-300 hover:text-brand-200">
                         + Ajouter des détails
                     </button>
                 )}

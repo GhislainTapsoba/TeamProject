@@ -71,7 +71,7 @@ export default function ProfilePage() {
 
             <Card className="p-6">
                 <h2 className="flex items-center gap-2 font-semibold text-white">
-                    <UserCircle className="h-4 w-4 text-violet-300" /> Informations
+                    <UserCircle className="h-4 w-4 text-brand-300" /> Informations
                 </h2>
                 <form onSubmit={saveProfile} className="mt-5 space-y-4">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -89,7 +89,7 @@ export default function ProfilePage() {
 
             <Card className="p-6">
                 <h2 className="flex items-center gap-2 font-semibold text-white">
-                    <KeyRound className="h-4 w-4 text-violet-300" /> Mot de passe
+                    <KeyRound className="h-4 w-4 text-brand-300" /> Mot de passe
                 </h2>
                 <form onSubmit={savePassword} className="mt-5 space-y-4">
                     <PasswordInput label="Mot de passe actuel" required value={passwords.old} onChange={(e) => setPasswords({ ...passwords, old: e.target.value })} />

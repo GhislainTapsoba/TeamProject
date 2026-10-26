@@ -28,13 +28,13 @@
         z-index: -1;
         pointer-events: none;
         background:
-            radial-gradient(60rem 40rem at 10% -10%, rgba(139, 92, 246, 0.12), transparent 60%),
-            radial-gradient(50rem 36rem at 110% 10%, rgba(56, 189, 248, 0.07), transparent 60%),
-            radial-gradient(40rem 30rem at 50% 120%, rgba(236, 72, 153, 0.05), transparent 60%);
+            radial-gradient(60rem 40rem at 10% -10%, rgba(0, 110, 219, 0.16), transparent 60%),
+            radial-gradient(50rem 36rem at 110% 10%, rgba(246, 101, 0, 0.07), transparent 60%),
+            radial-gradient(40rem 30rem at 50% 120%, rgba(0, 110, 219, 0.06), transparent 60%);
     }
 
     ::selection {
-        background: rgba(139, 92, 246, 0.35);
+        background: rgba(0, 110, 219, 0.35);
         color: white;
     }
 
@@ -62,7 +62,7 @@
     }
 
     .text-gradient {
-        @apply bg-gradient-to-r from-white via-violet-200 to-violet-400 bg-clip-text text-transparent;
+        @apply bg-gradient-to-r from-white via-brand-200 to-flame-400 bg-clip-text text-transparent;
     }
 
     .skeleton {

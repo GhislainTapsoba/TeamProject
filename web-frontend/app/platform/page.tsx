@@ -129,7 +129,7 @@ export default function PlatformConsole() {
             <div className="min-h-screen grid place-items-center bg-slate-950 px-4">
                 <form onSubmit={handleLogin} className="w-full max-w-sm space-y-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-7">
                     <div className="flex items-center gap-2.5">
-                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 grid place-items-center">
+                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 grid place-items-center">
                             <ShieldCheck className="h-5 w-5 text-white" />
                         </div>
                         <div>
@@ -146,17 +146,17 @@ export default function PlatformConsole() {
                         <input
                             type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
                             placeholder="Email super-admin"
-                            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none"
                         />
                         <input
                             type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
                             placeholder="Mot de passe"
-                            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-indigo-500 focus:outline-none"
+                            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none"
                         />
                     </div>
                     <button
                         type="submit" disabled={submitting}
-                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-2.5 text-sm font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
+                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-500 disabled:opacity-60"
                     >
                         {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
                         Se connecter
@@ -173,7 +173,7 @@ export default function PlatformConsole() {
         <div className="min-h-screen bg-slate-950 text-slate-100">
             <header className="flex items-center justify-between border-b border-slate-800 bg-slate-900/50 px-6 py-3">
                 <div className="flex items-center gap-2.5">
-                    <ShieldCheck className="h-5 w-5 text-indigo-400" />
+                    <ShieldCheck className="h-5 w-5 text-brand-400" />
                     <span className="font-bold text-white">Console plateforme</span>
                 </div>
                 <button onClick={logout} className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-slate-400 hover:bg-slate-800 hover:text-red-400">
@@ -206,7 +206,7 @@ export default function PlatformConsole() {
                             <button
                                 key={key} onClick={() => loadTab(key)}
                                 className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium ${
-                                    tab === key ? 'border-indigo-500 text-indigo-400' : 'border-transparent text-slate-400 hover:text-slate-200'
+                                    tab === key ? 'border-brand-500 text-brand-400' : 'border-transparent text-slate-400 hover:text-slate-200'
                                 }`}
                             >
                                 <Icon className="h-3.5 w-3.5" /> {label}
@@ -337,7 +337,7 @@ function AuditTable({ logs }: { logs: any[] }) {
                         <tr key={l.id} className="text-slate-300">
                             <td className="px-4 py-2.5 whitespace-nowrap">{new Date(l.created_at).toLocaleString('fr-FR')}</td>
                             <td className="px-4 py-2.5">{l.actor_email}</td>
-                            <td className="px-4 py-2.5 font-mono text-[11px] text-indigo-300">{l.action}</td>
+                            <td className="px-4 py-2.5 font-mono text-[11px] text-brand-300">{l.action}</td>
                             <td className="px-4 py-2.5">{l.target}</td>
                             <td className="px-4 py-2.5 text-slate-500">{l.ip_address || '-'}</td>
                         </tr>
@@ -396,12 +396,12 @@ function TenantDrawer({ tenant, onClose, onChanged, setBanner }: {
                     <div className="flex items-center gap-2">
                         <input
                             type="number" min={1} max={3650} value={days} onChange={(e) => setDays(Number(e.target.value))}
-                            className="w-24 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                            className="w-24 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white focus:border-brand-500 focus:outline-none"
                         />
                         <button
                             disabled={busy}
                             onClick={() => act(() => platformAPI.extend(tenant.schema_name, days), `Période prolongée de ${days} jours.`)}
-                            className="flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-2 text-xs font-semibold text-white hover:bg-indigo-500 disabled:opacity-60"
+                            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-500 disabled:opacity-60"
                         >
                             <CalendarPlus className="h-4 w-4" /> Prolonger
                         </button>

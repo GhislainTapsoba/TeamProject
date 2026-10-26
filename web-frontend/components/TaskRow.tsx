@@ -32,7 +32,7 @@ export default function TaskRow({ task, onStep }: { task: any; onStep: (task: an
                 </div>
                 <p className={cn('text-base font-medium', done ? 'text-zinc-400 line-through' : 'text-white')}>{task.title}</p>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-zinc-400">
-                    <Link href={`/projects/${task.project}`} className="flex items-center gap-1.5 hover:text-violet-300">
+                    <Link href={`/projects/${task.project}`} className="flex items-center gap-1.5 hover:text-brand-300">
                         <FolderKanban className="h-4 w-4" />
                         {task.project_name}
                     </Link>

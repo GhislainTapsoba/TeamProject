@@ -1,13 +1,14 @@
 import type { Metadata } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Geist_Mono, Poppins } from 'next/font/google';
 import './globals.css';
 import Providers from './providers';
 
-const sans = Geist({ subsets: ['latin'], variable: '--font-sans' });
+// Poppins : la police du site Deep Technologies
+const sans = Poppins({ subsets: ['latin'], weight: ['400', '500', '600', '700'], variable: '--font-sans' });
 const mono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
-    title: 'Team Project',
+    title: 'Team Project — Deep Technologies',
     description: 'Gestion de projets en équipe, simple et rapide.',
     icons: {
         icon: '/favicon.ico',

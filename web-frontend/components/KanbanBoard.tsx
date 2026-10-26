@@ -46,7 +46,7 @@ export default function KanbanBoard({ tasks, onMove, onQuickAdd, onDelete }: Boa
                             onDrop={() => drop(column.id)}
                             className={cn(
                                 'flex flex-col rounded-3xl border p-3 transition-colors duration-200 md:min-h-[420px]',
-                                over === column.id && dragged?.state !== column.id ? 'border-violet-400/50 bg-violet-500/[0.07]' : 'border-white/[0.07] bg-white/[0.015]'
+                                over === column.id && dragged?.state !== column.id ? 'border-brand-400/50 bg-brand-500/[0.07]' : 'border-white/[0.07] bg-white/[0.015]'
                             )}
                         >
                             <header className="px-2 pb-3 pt-1">
@@ -194,7 +194,7 @@ function QuickAdd({ onAdd }: { onAdd: (title: string) => Promise<void> }) {
         return (
             <button
                 onClick={() => setEditing(true)}
-                className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/[0.14] text-[15px] font-medium text-zinc-300 transition hover:border-violet-400/50 hover:bg-violet-500/[0.06] hover:text-white"
+                className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/[0.14] text-[15px] font-medium text-zinc-300 transition hover:border-brand-400/50 hover:bg-brand-500/[0.06] hover:text-white"
             >
                 <Plus className="h-5 w-5" /> Ajouter une tâche
             </button>
@@ -211,7 +211,7 @@ function QuickAdd({ onAdd }: { onAdd: (title: string) => Promise<void> }) {
                 onKeyDown={(e) => e.key === 'Escape' && (setTitle(''), setEditing(false))}
                 placeholder="Que faut-il faire ?"
                 aria-label="Titre de la nouvelle tâche"
-                className="h-12 w-full rounded-xl border border-violet-400/60 bg-black/40 px-4 text-base text-white placeholder:text-zinc-500 focus:outline-none focus:ring-4 focus:ring-violet-500/15"
+                className="h-12 w-full rounded-xl border border-brand-400/60 bg-black/40 px-4 text-base text-white placeholder:text-zinc-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
             />
             <div className="flex gap-2">
                 <Button type="submit" loading={saving} disabled={!title.trim()} className="flex-1">

@@ -42,7 +42,7 @@ export default function LoginPage() {
             footer={
                 <>
                     Pas encore d&apos;espace ?{' '}
-                    <Link href="/register" className="font-medium text-violet-300 hover:text-violet-200">
+                    <Link href="/register" className="font-medium text-brand-300 hover:text-brand-200">
                         Créer une organisation
                     </Link>
                 </>
@@ -57,7 +57,7 @@ export default function LoginPage() {
                     Se connecter
                     {!loading && <ArrowRight className="h-4 w-4" />}
                 </Button>
-                <Link href="/forgot-password" className="block text-center text-[15px] font-medium text-violet-300 hover:text-violet-200">
+                <Link href="/forgot-password" className="block text-center text-[15px] font-medium text-brand-300 hover:text-brand-200">
                     J&apos;ai oublié mon mot de passe
                 </Link>
             </form>

@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
     };
 
     const back = (
-        <Link href="/login" className="inline-flex items-center gap-2 font-medium text-violet-300 hover:text-violet-200">
+        <Link href="/login" className="inline-flex items-center gap-2 font-medium text-brand-300 hover:text-brand-200">
             <ArrowLeft className="h-4 w-4" /> Retour à la connexion
         </Link>
     );
@@ -45,9 +45,9 @@ export default function ForgotPasswordPage() {
                         initial={{ scale: 0, rotate: -20 }}
                         animate={{ scale: 1, rotate: 0 }}
                         transition={spring}
-                        className="flex h-16 w-16 items-center justify-center rounded-2xl bg-violet-500/15 ring-1 ring-violet-400/30"
+                        className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-500/15 ring-1 ring-brand-400/30"
                     >
-                        <MailCheck className="h-8 w-8 text-violet-300" />
+                        <MailCheck className="h-8 w-8 text-brand-300" />
                     </motion.div>
                     <ol className="space-y-3 text-base text-zinc-200">
                         <li>1. Ouvrez l&apos;email que nous venons de vous envoyer.</li>

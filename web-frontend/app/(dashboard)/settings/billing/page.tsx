@@ -124,10 +124,10 @@ export default function BillingPage() {
 
             {subscription && (
                 <Card className="relative overflow-hidden p-6 sm:p-8">
-                    <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-600/20 blur-3xl" />
+                    <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-600/20 blur-3xl" />
                     <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <p className="text-xs font-medium uppercase tracking-widest text-violet-300">Plan actuel</p>
+                            <p className="text-xs font-medium uppercase tracking-widest text-brand-300">Plan actuel</p>
                             <div className="mt-2 flex items-center gap-3">
                                 <h2 className="text-3xl font-semibold tracking-tight text-white">{current?.display_name || current?.name}</h2>
                                 <Badge tone={status.tone}>{status.label}</Badge>
@@ -141,7 +141,7 @@ export default function BillingPage() {
                             </p>
                         </div>
                         <div className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-black/20 px-4 py-3 text-sm">
-                            <CreditCard className="h-5 w-5 text-violet-300" />
+                            <CreditCard className="h-5 w-5 text-brand-300" />
                             <div>
                                 <p className="font-medium text-white">Mobile Money et carte</p>
                                 <p className="text-xs text-zinc-400">Orange Money, Moov, Wave, Visa, Mastercard</p>
@@ -185,7 +185,7 @@ export default function BillingPage() {
                             transition={spring}
                             className={cn(
                                 'relative flex flex-col rounded-3xl p-6',
-                                featured ? 'bg-gradient-to-b from-violet-500/20 via-zinc-900/80 to-zinc-900/80 shadow-glow' : 'glass',
+                                featured ? 'bg-gradient-to-b from-brand-500/20 via-zinc-900/80 to-zinc-900/80 shadow-glow' : 'glass',
                                 isCurrent && !featured && 'ring-1 ring-emerald-400/30'
                             )}
                         >

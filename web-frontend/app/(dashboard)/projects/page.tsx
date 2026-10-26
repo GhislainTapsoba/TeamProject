@@ -115,7 +115,7 @@ export default function ProjectsPage() {
                                     href={`/projects/${p.id}`}
                                     className="glass group relative flex h-full flex-col overflow-hidden rounded-2xl p-5 transition-colors hover:border-white/[0.14]"
                                 >
-                                    <span className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-violet-500/10 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100" />
+                                    <span className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-brand-500/10 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100" />
                                     <div className="flex items-start justify-between gap-3">
                                         <h3 className="font-semibold tracking-tight text-white">{p.name}</h3>
                                         <Badge tone={PROJECT_STATUSES[p.status]?.tone}>{PROJECT_STATUSES[p.status]?.label || p.status}</Badge>

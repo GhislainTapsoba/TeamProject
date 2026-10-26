@@ -58,7 +58,7 @@ export default function HomePage() {
 
     const kpis = [
         { label: 'Tâches à faire pour moi', value: stats?.my_pending_tasks, icon: Clock, iconClass: 'text-amber-300', glow: 'from-amber-500/20' },
-        { label: 'Projets en cours', value: stats?.active_projects, icon: FolderKanban, iconClass: 'text-violet-300', glow: 'from-violet-500/20' },
+        { label: 'Projets en cours', value: stats?.active_projects, icon: FolderKanban, iconClass: 'text-brand-300', glow: 'from-brand-500/20' },
         { label: 'Tâches terminées par l’équipe', value: stats?.completed_tasks, icon: CheckCircle2, iconClass: 'text-emerald-300', glow: 'from-emerald-500/20' },
     ];
 
@@ -152,7 +152,7 @@ export default function HomePage() {
                 <motion.section variants={fadeUp} className="space-y-4">
                     <div className="flex items-center justify-between">
                         <h2 className="text-xl font-semibold tracking-tight text-white">Projets</h2>
-                        <Link href="/projects" className="flex items-center gap-1 text-[15px] font-medium text-violet-300 transition hover:text-violet-200">
+                        <Link href="/projects" className="flex items-center gap-1 text-[15px] font-medium text-brand-300 transition hover:text-brand-200">
                             Voir tous les projets <ArrowRight className="h-4 w-4" />
                         </Link>
                     </div>
@@ -210,7 +210,7 @@ function GettingStarted({ stats, organisation }: { stats: any; organisation?: st
                 {steps.map((s, i) => (
                     <li
                         key={s.title}
-                        className={cn('flex flex-col rounded-2xl border p-4', i === current ? 'border-violet-400/50 bg-violet-500/10' : 'border-white/[0.08] bg-white/[0.02]')}
+                        className={cn('flex flex-col rounded-2xl border p-4', i === current ? 'border-brand-400/50 bg-brand-500/10' : 'border-white/[0.08] bg-white/[0.02]')}
                     >
                         <div className="flex items-center gap-3">
                             <motion.span
@@ -219,7 +219,7 @@ function GettingStarted({ stats, organisation }: { stats: any; organisation?: st
                                 transition={spring}
                                 className={cn(
                                     'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[15px] font-semibold',
-                                    s.done ? 'bg-emerald-400 text-zinc-950' : i === current ? 'bg-violet-500 text-white' : 'bg-white/[0.08] text-zinc-300'
+                                    s.done ? 'bg-emerald-400 text-zinc-950' : i === current ? 'bg-brand-500 text-white' : 'bg-white/[0.08] text-zinc-300'
                                 )}
                             >
                                 {s.done ? <Check className="h-4 w-4" strokeWidth={3} /> : i + 1}

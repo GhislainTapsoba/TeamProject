@@ -60,7 +60,7 @@ export default function Notifications() {
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             exit={{ scale: 0 }}
-                            className="absolute left-6 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-500 px-1 text-xs font-semibold text-white ring-2 ring-canvas"
+                            className="absolute left-6 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-xs font-semibold text-white ring-2 ring-canvas"
                         >
                             {unread > 9 ? '9+' : unread}
                         </motion.span>
@@ -81,7 +81,7 @@ export default function Notifications() {
                         <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
                             <span className="text-sm font-semibold text-white">Notifications</span>
                             {unread > 0 && (
-                                <button onClick={markAllRead} className="flex items-center gap-1 text-xs text-violet-300 hover:text-violet-200">
+                                <button onClick={markAllRead} className="flex items-center gap-1 text-xs text-brand-300 hover:text-brand-200">
                                     <CheckCheck className="h-3.5 w-3.5" /> Tout lire
                                 </button>
                             )}
@@ -96,9 +96,9 @@ export default function Notifications() {
                                         initial={{ opacity: 0, x: 8 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         transition={{ delay: i * 0.03 }}
-                                        className={cn('flex gap-3 rounded-xl px-3 py-2.5', !n.read && 'bg-violet-500/[0.07]')}
+                                        className={cn('flex gap-3 rounded-xl px-3 py-2.5', !n.read && 'bg-brand-500/[0.07]')}
                                     >
-                                        <span className={cn('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', n.read ? 'bg-transparent' : 'bg-violet-400')} />
+                                        <span className={cn('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', n.read ? 'bg-transparent' : 'bg-brand-400')} />
                                         <div className="min-w-0">
                                             <p className={cn('text-[15px]', n.read ? 'text-zinc-400' : 'text-zinc-50')}>{n.message}</p>
                                             <p className="mt-0.5 text-xs text-zinc-400">

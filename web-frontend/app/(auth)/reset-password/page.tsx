@@ -52,7 +52,7 @@ export default function ResetPasswordPage() {
     if (ready === false) {
         return (
             <AuthShell title="Ce lien ne fonctionne plus" subtitle="Il a peut-être déjà servi ou il est trop ancien.">
-                <Link href="/forgot-password" className="flex h-12 w-full items-center justify-center rounded-xl bg-violet-600 font-medium text-white transition hover:bg-violet-500">
+                <Link href="/forgot-password" className="flex h-12 w-full items-center justify-center rounded-xl bg-brand-600 font-medium text-white transition hover:bg-brand-500">
                     Recevoir un nouveau lien
                 </Link>
             </AuthShell>
