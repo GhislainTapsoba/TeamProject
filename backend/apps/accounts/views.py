@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 from apps.core import supabase
 from apps.core.permissions import IsTenantAdmin
 from apps.core.throttling import AuthRateThrottle
+from apps.projects.models import ProjectMember
 
 from .models import TenantMembership, User
 from .serializers import ChangePasswordSerializer, UserCreateSerializer, UserProfileUpdateSerializer, UserSerializer
@@ -68,9 +69,19 @@ class UserViewSet(viewsets.ModelViewSet):
         user = serializer.save()
         return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
 
+    def update(self, request, *args, **kwargs):
+        # Un admin qui se retirerait ce rôle perdrait l'accès à l'équipe et à l'abonnement
+        if "role" in request.data and self.get_object().pk == request.user.pk:
+            return Response(
+                {"detail": "Vous ne pouvez pas changer votre propre rôle. Demandez à un autre administrateur."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().update(request, *args, **kwargs)
+
     def perform_update(self, serializer):
+        # Le rôle est propre à chaque organisation : il vit sur l'appartenance, pas sur le compte
+        role = serializer.validated_data.pop("role", None)
         user = serializer.save()
-        role = serializer.validated_data.get("role")
         tenant = _current_tenant()
         if role and tenant is not None:
             TenantMembership.objects.filter(user=user, tenant=tenant).update(role=role)
@@ -81,8 +92,10 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response(
                 {"detail": "Vous ne pouvez pas vous retirer vous-même."}, status=status.HTTP_400_BAD_REQUEST
             )
-        # Le compte peut appartenir a d'autres organisations : on retire seulement l'appartenance
+        # Le compte peut appartenir a d'autres organisations : on retire seulement l'appartenance.
+        # Ses tâches restent en place ; il disparaît des membres des projets.
         TenantMembership.objects.filter(user=user, tenant=_current_tenant()).update(is_active=False)
+        ProjectMember.objects.filter(user=user).delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
 
 

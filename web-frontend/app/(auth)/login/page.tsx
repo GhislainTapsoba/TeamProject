@@ -18,9 +18,14 @@ export default function LoginPage() {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [resetDone, setResetDone] = useState(false);
+    const [removed, setRemoved] = useState(false);
 
-    // Retour de la page « nouveau mot de passe »
-    useEffect(() => setResetDone(new URLSearchParams(window.location.search).has('reset')), []);
+    // Retour de la page « nouveau mot de passe », ou personne retirée de l'organisation
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        setResetDone(params.has('reset'));
+        setRemoved(params.has('removed'));
+    }, []);
 
     const submit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -50,6 +55,9 @@ export default function LoginPage() {
         >
             <form onSubmit={submit} className="space-y-4">
                 {resetDone && !error && <Notice tone="success">Votre mot de passe a bien été changé. Connectez-vous avec le nouveau.</Notice>}
+                {removed && !error && (
+                    <Notice tone="info">Vous ne faites plus partie de cette organisation. Si c&apos;est une erreur, contactez son administrateur.</Notice>
+                )}
                 {error && <Notice tone="error">{error}</Notice>}
                 <Input label="Email" icon={Mail} type="email" required autoFocus autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vous@entreprise.com" />
                 <PasswordInput label="Mot de passe" icon={Lock} required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />

@@ -292,13 +292,37 @@ class AccountsAPITestCase(TenantAPITestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.employee.get_tenant_role(self.tenant), "manager")
+        # Le rôle global du compte, partagé entre organisations, n'est pas touché
+        self.employee.refresh_from_db()
+        self.assertEqual(self.employee.role, "employee")
+
+    def test_admin_cannot_change_own_role(self):
+        response = self.client_for(self.admin).patch(
+            f"/api/auth/users/{self.admin.id}/", {"role": "employee"}, format="json"
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(self.admin.get_tenant_role(self.tenant), "admin")
+
+    def test_manager_cannot_change_roles(self):
+        response = self.client_for(self.manager).patch(
+            f"/api/auth/users/{self.employee.id}/", {"role": "admin"}, format="json"
+        )
+
+        self.assertEqual(response.status_code, 403)
 
     def test_admin_removes_member_from_organisation(self):
+        project = Project.objects.create(name="P", manager=self.manager)
+        ProjectMember.objects.create(project=project, user=self.employee)
+        task = Task.objects.create(project=project, title="T", assignee=self.employee)
+
         response = self.client_for(self.admin).delete(f"/api/auth/users/{self.employee.id}/")
 
         self.assertEqual(response.status_code, 204)
         self.assertIsNone(self.employee.get_tenant_role(self.tenant))
         self.assertTrue(User.objects.filter(id=self.employee.id).exists())
+        self.assertFalse(ProjectMember.objects.filter(user=self.employee).exists())
+        self.assertTrue(Task.objects.filter(id=task.id).exists())
 
     def test_admin_cannot_remove_themselves(self):
         response = self.client_for(self.admin).delete(f"/api/auth/users/{self.admin.id}/")

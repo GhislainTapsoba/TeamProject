@@ -52,6 +52,14 @@ api.interceptors.response.use(
                 window.location.href = '/login';
             }
         }
+        // Personne retirée de l'organisation pendant sa session : retour à la connexion, avec une explication
+        const removed = error.response?.status === 403 && error.response?.data?.detail === "Vous n'êtes pas membre de cette organisation.";
+        if (removed && typeof window !== 'undefined' && window.location.pathname !== '/login' && !window.location.pathname.startsWith('/platform')) {
+            await supabase.auth.signOut();
+            localStorage.removeItem('user');
+            localStorage.removeItem('tenant');
+            window.location.href = '/login?removed=1';
+        }
         return Promise.reject(error);
     }
 );
@@ -77,6 +85,9 @@ export const tenantsAPI = {
 export const usersAPI = {
     getAll: () => api.get('/auth/users/'),
     create: (data: any) => api.post('/auth/users/', data),
+    setRole: (id: number | string, role: string) => api.patch(`/auth/users/${id}/`, { role }),
+    // Retire la personne de l'organisation ; son compte est conservé
+    remove: (id: number | string) => api.delete(`/auth/users/${id}/`),
 };
 
 // Projects API
