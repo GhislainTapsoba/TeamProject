@@ -77,7 +77,7 @@ export default function LandingPage() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 1.1, ease, delay: 0.5 }}
                         style={{ y: previewY, rotateX: previewRotate }}
-                        className="glass relative rounded-3xl p-2 shadow-[0_40px_120px_-40px_rgba(0,110,219,0.5)]"
+                        className="glass relative rounded-3xl p-2 shadow-[0_40px_120px_-40px_rgba(8,32,216,0.5)]"
                     >
                         <div className="rounded-[20px] border border-white/[0.05] bg-zinc-950/80 p-5">
                             <div className="mb-5 flex items-center gap-2">
