@@ -5,6 +5,9 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   output: 'standalone',
+  // Optimiseur d'images désactivé : seul le logo l'utilisait, et il expose une faille
+  // d'exécution de code dans Next <= 15.5.27 (à réactiver après la mise à jour en 15.5.28+)
+  images: { unoptimized: true },
   // Reduce verbose logging
   logging: {
     fetches: {
