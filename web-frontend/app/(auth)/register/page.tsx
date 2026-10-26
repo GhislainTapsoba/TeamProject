@@ -1,265 +1,167 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { motion } from 'motion/react';
+import { ArrowRight, Building2, Check, Lock, Mail, User } from 'lucide-react';
 import { tenantsAPI } from '@/lib/api';
-import { Building2, Globe, Mail, User, Lock, ArrowRight, CheckCircle2, AlertCircle } from 'lucide-react';
+import { errorMessage } from '@/lib/utils';
+import { spring } from '@/lib/motion';
+import AuthShell from '@/components/AuthShell';
+import { Button, ButtonLink } from '@/components/ui/button';
+import { Input } from '@/components/ui/field';
+import { Notice } from '@/components/ui/kit';
 
 const PLATFORM_DOMAIN = 'deep-technologies.com';
 
-function detectTenantSubdomain() {
-    if (typeof window === 'undefined') return false;
+// La création d'organisation n'est possible que depuis le domaine principal
+function isTenantHost() {
     const host = window.location.hostname;
-    if (host === 'localhost' || host === PLATFORM_DOMAIN || host === 'www.' + PLATFORM_DOMAIN) {
-        return false;
-    }
+    if (host === 'localhost' || host === PLATFORM_DOMAIN || host === 'www.' + PLATFORM_DOMAIN) return false;
     return host.endsWith('.localhost') || host.endsWith('.' + PLATFORM_DOMAIN);
 }
 
-export default function RegisterTenantPage() {
-    const [orgName, setOrgName] = useState('');
-    const [subdomain, setSubdomain] = useState('');
-    const [adminName, setAdminName] = useState('');
-    const [adminEmail, setAdminEmail] = useState('');
-    const [password, setPassword] = useState('');
+const toSubdomain = (value: string) =>
+    value
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9-]/g, '');
 
+export default function RegisterPage() {
+    const [form, setForm] = useState({ orgName: '', subdomain: '', adminName: '', email: '', password: '' });
+    const [subdomainEdited, setSubdomainEdited] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
-    const [successData, setSuccessData] = useState<any>(null);
-    const [isTenantSubdomain, setIsTenantSubdomain] = useState<boolean | null>(null);
+    const [created, setCreated] = useState<any>(null);
+    const [onTenantHost, setOnTenantHost] = useState<boolean | null>(null);
 
-    useEffect(() => {
-        setIsTenantSubdomain(detectTenantSubdomain());
-    }, []);
+    useEffect(() => setOnTenantHost(isTenantHost()), []);
 
-    const handleSubdomainChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const val = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '');
-        setSubdomain(val);
-    };
-
-    const handleRegister = async (e: React.FormEvent) => {
+    const submit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
         setLoading(true);
-
         try {
             const res = await tenantsAPI.register({
-                organization_name: orgName,
-                subdomain,
-                admin_name: adminName,
-                admin_email: adminEmail,
-                admin_password: password,
+                organization_name: form.orgName,
+                subdomain: form.subdomain,
+                admin_name: form.adminName,
+                admin_email: form.email,
+                admin_password: form.password,
             });
-            setSuccessData(res.data);
-        } catch (err: any) {
-            console.error('Registration error:', err);
-            const msg = err.response?.data?.error ||
-                err.response?.data?.subdomain?.[0] ||
-                err.response?.data?.admin_email?.[0] ||
-                err.response?.data?.admin_password?.[0] ||
-                err.response?.data?.detail ||
-                err.response?.data?.message ||
-                "Erreur lors de la creation de l'organisation. Verifiez les informations.";
-            setError(msg);
+            setCreated(res.data);
+        } catch (err) {
+            setError(errorMessage(err, "L'organisation n'a pas pu être créée. Vérifiez les informations."));
         } finally {
             setLoading(false);
         }
     };
 
-    if (isTenantSubdomain === null) {
-        return null;
+    if (onTenantHost === null) return null;
+
+    if (onTenantHost) {
+        return (
+            <AuthShell title="Vous êtes dans une organisation" subtitle="Pour en créer une nouvelle, rendez-vous sur le site principal.">
+                <div className="space-y-3">
+                    <a
+                        href={`https://${PLATFORM_DOMAIN}/register`}
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-violet-600 font-medium text-white transition hover:bg-violet-500"
+                    >
+                        Aller au site principal <ArrowRight className="h-4 w-4" />
+                    </a>
+                    <ButtonLink href="/login" variant="ghost" className="w-full">
+                        Se connecter à cette organisation
+                    </ButtonLink>
+                </div>
+            </AuthShell>
+        );
     }
 
-    if (isTenantSubdomain) {
+    if (created) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-                <div className="w-full max-w-md space-y-6 text-center">
-                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xl shadow-xl shadow-indigo-500/20 mx-auto">
-                        TP
-                    </div>
-                    <div className="p-8 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-2xl backdrop-blur-xl space-y-4">
-                        <AlertCircle className="h-8 w-8 text-amber-400 mx-auto" />
-                        <h1 className="text-base font-bold text-white">
-                            Creation d'organisation indisponible ici
-                        </h1>
-                        <p className="text-xs text-slate-400">
-                            Vous etes sur l'espace d'une organisation existante. Pour creer une nouvelle
-                            organisation, rendez-vous sur le site principal.
-                        </p>
-                        <div className="flex flex-col gap-2 pt-2">
-                            <a
-                                href={'https://' + PLATFORM_DOMAIN + '/register'}
-                                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg transition"
-                            >
-                                <span>Aller au site principal</span>
-                                <ArrowRight className="h-4 w-4" />
-                            </a>
-                            <Link href="/login" className="text-xs text-slate-400 hover:underline">
-                                Se connecter a cette organisation
-                            </Link>
-                        </div>
-                    </div>
+            <AuthShell title="Votre espace est prêt" subtitle={`${created.tenant?.name} est en ligne, avec un essai gratuit du plan Pro.`}>
+                <div className="space-y-6">
+                    <motion.div
+                        initial={{ scale: 0, rotate: -45 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ ...spring, delay: 0.2 }}
+                        className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-400/15 ring-1 ring-emerald-400/30"
+                    >
+                        <Check className="h-8 w-8 text-emerald-300" strokeWidth={2.5} />
+                    </motion.div>
+                    <p className="rounded-xl border border-white/[0.06] bg-black/30 px-4 py-3 font-mono text-sm text-violet-200">{created.tenant?.domain}</p>
+                    <a
+                        href={created.login_url || `https://${created.tenant?.domain}/login`}
+                        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-violet-500 to-violet-600 font-medium text-white shadow-glow transition hover:from-violet-400"
+                    >
+                        Accéder à mon espace <ArrowRight className="h-4 w-4" />
+                    </a>
                 </div>
-            </div>
+            </AuthShell>
         );
     }
 
     return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-            <div className="w-full max-w-lg space-y-6">
-                <div className="text-center space-y-2">
-                    <div className="h-12 w-12 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xl shadow-xl shadow-indigo-500/20 mx-auto">
-                        TP
-                    </div>
-                    <h1 className="text-xl font-bold text-white tracking-tight">
-                        Creer votre Espace SaaS
-                    </h1>
-                    <p className="text-xs text-slate-400">
-                        Votre propre instance isolee avec domaine dedie, gestion de projets & vue Kanban.
-                    </p>
-                </div>
-
-                <div className="p-8 rounded-2xl bg-slate-900/60 border border-slate-800 shadow-2xl backdrop-blur-xl">
-                    {successData ? (
-                        <div className="text-center space-y-4 py-4">
-                            <div className="h-12 w-12 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 mx-auto">
-                                <CheckCircle2 className="h-6 w-6" />
-                            </div>
-                            <h2 className="text-base font-bold text-white">Espace cree avec succes !</h2>
-                            <p className="text-xs text-slate-300">
-                                Votre organisation <strong>{successData.tenant?.name}</strong> est prete sur son sous-domaine dedie.
-                            </p>
-                            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 text-xs text-indigo-400 font-mono break-all">
-                                {successData.tenant?.domain}
-                            </div>
-                            <a
-                                href={successData.login_url || ('https://' + successData.tenant?.domain + '/login')}
-                                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg transition"
-                            >
-                                <span>Acceder a votre espace</span>
-                                <ArrowRight className="h-4 w-4" />
-                            </a>
-                        </div>
-                    ) : (
-                        <>
-                            {error && (
-                                <div className="mb-4 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2">
-                                    <AlertCircle className="h-4 w-4 shrink-0" />
-                                    <span>{error}</span>
-                                </div>
-                            )}
-
-                            <form onSubmit={handleRegister} className="space-y-4 text-xs">
-                                <div>
-                                    <label className="block text-slate-300 font-medium mb-1.5">Nom de l'organisation *</label>
-                                    <div className="relative">
-                                        <Building2 className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                                        <input
-                                            type="text"
-                                            required
-                                            value={orgName}
-                                            onChange={(e) => {
-                                                setOrgName(e.target.value);
-                                                if (!subdomain) {
-                                                    setSubdomain(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''));
-                                                }
-                                            }}
-                                            placeholder="ex: Acme Technologies"
-                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-slate-200 placeholder-slate-600 focus:outline-none focus:border-indigo-500"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-slate-300 font-medium mb-1.5">Sous-domaine dedie *</label>
-                                    <div className="flex items-center bg-slate-950 border border-slate-800 rounded-xl overflow-hidden focus-within:border-indigo-500">
-                                        <span className="pl-3 pr-1 text-slate-500">
-                                            <Globe className="h-4 w-4" />
-                                        </span>
-                                        <input
-                                            type="text"
-                                            required
-                                            value={subdomain}
-                                            onChange={handleSubdomainChange}
-                                            placeholder="acme"
-                                            className="w-full bg-transparent px-2 py-2 text-slate-200 placeholder-slate-600 focus:outline-none"
-                                        />
-                                        <span className="pr-3 text-slate-500 text-[11px] select-none">
-                                            .deep-technologies.com
-                                        </span>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <label className="block text-slate-300 font-medium mb-1.5">Nom de l'admin</label>
-                                        <div className="relative">
-                                            <User className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                                            <input
-                                                type="text"
-                                                required
-                                                value={adminName}
-                                                onChange={(e) => setAdminName(e.target.value)}
-                                                placeholder="Jean Dupont"
-                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <label className="block text-slate-300 font-medium mb-1.5">Email de l'admin</label>
-                                        <div className="relative">
-                                            <Mail className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                                            <input
-                                                type="email"
-                                                required
-                                                value={adminEmail}
-                                                onChange={(e) => setAdminEmail(e.target.value)}
-                                                placeholder="admin@acme.com"
-                                                className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div>
-                                    <label className="block text-slate-300 font-medium mb-1.5">Mot de passe admin</label>
-                                    <div className="relative">
-                                        <Lock className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" />
-                                        <input
-                                            type="password"
-                                            required
-                                            minLength={8}
-                                            value={password}
-                                            onChange={(e) => setPassword(e.target.value)}
-                                            placeholder="Minimum 8 caracteres"
-                                            className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500"
-                                        />
-                                    </div>
-                                </div>
-
-                                <button
-                                    type="submit"
-                                    disabled={loading}
-                                    className="w-full mt-3 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 disabled:opacity-50"
-                                >
-                                    <span>{loading ? 'Creation en cours...' : "Creer l'organisation"}</span>
-                                    <ArrowRight className="h-4 w-4" />
-                                </button>
-                            </form>
-
-                            <div className="mt-6 pt-4 border-t border-slate-800/80 text-center">
-                                <p className="text-xs text-slate-400">
-                                    Deja une organisation ?{' '}
-                                    <Link href="/login" className="text-indigo-400 hover:underline font-semibold">
-                                        Se connecter
-                                    </Link>
-                                </p>
-                            </div>
-                        </>
-                    )}
-                </div>
-            </div>
-        </div>
+        <AuthShell
+            title="Créez votre espace"
+            subtitle="Gratuit et prêt en quelques secondes, essai du plan Pro inclus."
+            footer={
+                <>
+                    Déjà une organisation ?{' '}
+                    <Link href="/login" className="font-medium text-violet-300 hover:text-violet-200">
+                        Se connecter
+                    </Link>
+                </>
+            }
+        >
+            <form onSubmit={submit} className="space-y-4">
+                {error && <Notice tone="error">{error}</Notice>}
+                <Input
+                    label="Nom de l'organisation"
+                    icon={Building2}
+                    required
+                    autoFocus
+                    value={form.orgName}
+                    onChange={(e) =>
+                        setForm({ ...form, orgName: e.target.value, subdomain: subdomainEdited ? form.subdomain : toSubdomain(e.target.value) })
+                    }
+                    placeholder="Acme"
+                />
+                <label className="block space-y-1.5">
+                    <span className="block text-[13px] font-medium text-zinc-400">Adresse de votre espace</span>
+                    <span className="flex h-11 items-center overflow-hidden rounded-xl border border-white/[0.08] bg-black/30 transition focus-within:border-violet-400/60 focus-within:ring-4 focus-within:ring-violet-500/10">
+                        <input
+                            required
+                            value={form.subdomain}
+                            onChange={(e) => {
+                                setSubdomainEdited(true);
+                                setForm({ ...form, subdomain: toSubdomain(e.target.value) });
+                            }}
+                            placeholder="acme"
+                            className="min-w-0 flex-1 bg-transparent px-3.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none"
+                        />
+                        <span className="pr-3.5 text-sm text-zinc-500">.{PLATFORM_DOMAIN}</span>
+                    </span>
+                </label>
+                <Input label="Votre nom" icon={User} required autoComplete="name" value={form.adminName} onChange={(e) => setForm({ ...form, adminName: e.target.value })} placeholder="Awa Ouédraogo" />
+                <Input label="Email" icon={Mail} type="email" required autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="vous@entreprise.com" />
+                <Input
+                    label="Mot de passe"
+                    icon={Lock}
+                    type="password"
+                    required
+                    minLength={8}
+                    autoComplete="new-password"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    placeholder="8 caractères minimum"
+                />
+                <Button type="submit" size="lg" loading={loading} className="w-full">
+                    Créer mon espace
+                    {!loading && <ArrowRight className="h-4 w-4" />}
+                </Button>
+            </form>
+        </AuthShell>
     );
 }

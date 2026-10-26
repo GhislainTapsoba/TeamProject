@@ -1,70 +1,36 @@
 import type { Config } from 'tailwindcss';
 
 const config: Config = {
-    darkMode: ['class'],
-    content: [
-        './pages/**/*.{ts,tsx}',
-        './components/**/*.{ts,tsx}',
-        './app/**/*.{ts,tsx}',
-        './src/**/*.{ts,tsx}',
-    ],
+    content: ['./app/**/*.{ts,tsx}', './components/**/*.{ts,tsx}', './contexts/**/*.{ts,tsx}'],
     theme: {
         extend: {
-            fontSize: {
-                'xs': ['0.75rem', { lineHeight: '1rem' }],
-                'sm': ['0.875rem', { lineHeight: '1.25rem' }],
-                'base': ['1.125rem', { lineHeight: '1.75rem' }], // Augmenté de 1rem à 1.125rem
-                'lg': ['1.25rem', { lineHeight: '1.75rem' }], // Augmenté de 1.125rem à 1.25rem
-                'xl': ['1.5rem', { lineHeight: '2rem' }], // Augmenté de 1.25rem à 1.5rem
-                '2xl': ['2rem', { lineHeight: '2.5rem' }], // Augmenté de 1.5rem à 2rem
-                '3xl': ['2.5rem', { lineHeight: '3rem' }], // Augmenté de 1.875rem à 2.5rem
-                '4xl': ['3rem', { lineHeight: '3.5rem' }], // Augmenté de 2.25rem à 3rem
-                '5xl': ['3.5rem', { lineHeight: '4rem' }], // Augmenté de 3rem à 3.5rem
-                '6xl': ['4rem', { lineHeight: '4.5rem' }], // Augmenté de 3.75rem à 4rem
+            fontFamily: {
+                sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
+                mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
             },
             colors: {
-                border: 'hsl(var(--border))',
-                input: 'hsl(var(--input))',
-                ring: 'hsl(var(--ring))',
-                background: 'hsl(var(--background))',
-                foreground: 'hsl(var(--foreground))',
-                primary: {
-                    DEFAULT: 'hsl(var(--primary))',
-                    foreground: 'hsl(var(--primary-foreground))',
-                },
-                secondary: {
-                    DEFAULT: 'hsl(var(--secondary))',
-                    foreground: 'hsl(var(--secondary-foreground))',
-                },
-                destructive: {
-                    DEFAULT: 'hsl(var(--destructive))',
-                    foreground: 'hsl(var(--destructive-foreground))',
-                },
-                muted: {
-                    DEFAULT: 'hsl(var(--muted))',
-                    foreground: 'hsl(var(--muted-foreground))',
-                },
+                canvas: '#07070a',
                 accent: {
-                    DEFAULT: 'hsl(var(--accent))',
-                    foreground: 'hsl(var(--accent-foreground))',
-                },
-                popover: {
-                    DEFAULT: 'hsl(var(--popover))',
-                    foreground: 'hsl(var(--popover-foreground))',
-                },
-                card: {
-                    DEFAULT: 'hsl(var(--card))',
-                    foreground: 'hsl(var(--card-foreground))',
+                    DEFAULT: '#8b5cf6',
+                    soft: '#a78bfa',
                 },
             },
-            borderRadius: {
-                lg: 'var(--radius)',
-                md: 'calc(var(--radius) - 2px)',
-                sm: 'calc(var(--radius) - 4px)',
+            boxShadow: {
+                glow: '0 0 0 1px rgba(139, 92, 246, 0.35), 0 8px 32px -8px rgba(139, 92, 246, 0.45)',
+                card: '0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 12px 32px -16px rgba(0, 0, 0, 0.7)',
+            },
+            keyframes: {
+                shimmer: {
+                    from: { backgroundPosition: '200% 0' },
+                    to: { backgroundPosition: '-200% 0' },
+                },
+            },
+            animation: {
+                shimmer: 'shimmer 2.2s linear infinite',
             },
         },
     },
-    plugins: [require('tailwindcss-animate')],
+    plugins: [],
 };
 
 export default config;

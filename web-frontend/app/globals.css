@@ -3,62 +3,75 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 262.1 83.3% 57.8%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 262.1 83.3% 57.8%;
-    --radius: 0.5rem;
-  }
+    :root {
+        color-scheme: dark;
+    }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 262.1 83.3% 57.8%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 262.1 83.3% 57.8%;
-  }
+    html {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+    }
+
+    body {
+        @apply bg-canvas text-zinc-100 font-sans;
+        font-feature-settings: 'ss01', 'cv11';
+    }
+
+    /* Halo d'ambiance fixe derrière toute l'application */
+    body::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background:
+            radial-gradient(60rem 40rem at 10% -10%, rgba(139, 92, 246, 0.12), transparent 60%),
+            radial-gradient(50rem 36rem at 110% 10%, rgba(56, 189, 248, 0.07), transparent 60%),
+            radial-gradient(40rem 30rem at 50% 120%, rgba(236, 72, 153, 0.05), transparent 60%);
+    }
+
+    ::selection {
+        background: rgba(139, 92, 246, 0.35);
+        color: white;
+    }
+
+    :focus-visible {
+        outline: 2px solid rgba(167, 139, 250, 0.8);
+        outline-offset: 2px;
+        border-radius: 8px;
+    }
+
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.12) transparent;
+    }
+
+    input[type='date']::-webkit-calendar-picker-indicator {
+        filter: invert(0.7);
+        cursor: pointer;
+    }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground text-base;
-    font-size: 1.125rem; /* 18px au lieu de 16px par défaut */
-    line-height: 1.75rem;
-  }
-  html {
-    font-size: 1.125rem; /* Augmente la base pour tout le site */
-  }
+@layer components {
+    /* Surface vitrée réutilisée par les cartes, la barre latérale et les modales */
+    .glass {
+        @apply border border-white/[0.07] bg-white/[0.025] backdrop-blur-xl shadow-card;
+    }
+
+    .text-gradient {
+        @apply bg-gradient-to-r from-white via-violet-200 to-violet-400 bg-clip-text text-transparent;
+    }
+
+    .skeleton {
+        @apply rounded-2xl animate-shimmer;
+        background-image: linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0%, rgba(255, 255, 255, 0.06) 50%, rgba(255, 255, 255, 0.025) 100%);
+        background-size: 200% 100%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton {
+        animation: none;
+    }
 }

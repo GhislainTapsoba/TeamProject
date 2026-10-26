@@ -66,29 +66,23 @@ export const authAPI = {
         api.post('/auth/change-password/', data),
 };
 
-// Tenants API (Shared & Tenant contexts)
+// Tenants API
 export const tenantsAPI = {
     register: (data: { organization_name: string; subdomain: string; admin_email: string; admin_name: string; admin_password: string }) =>
         api.post('/tenants/register/', data),
     getCurrent: () => api.get('/tenants/current/'),
 };
 
-// Users / Team API
+// Team API
 export const usersAPI = {
-    getAll: (params?: any) => api.get('/auth/users/', { params }),
-    getById: (id: number | string) => api.get(`/auth/users/${id}/`),
+    getAll: () => api.get('/auth/users/'),
     create: (data: any) => api.post('/auth/users/', data),
-    update: (id: number | string, data: any) => api.patch(`/auth/users/${id}/`, data),
-    delete: (id: number | string) => api.delete(`/auth/users/${id}/`),
 };
 
 // Projects API
 export const projectsAPI = {
-    getAll: (params?: any) => api.get('/projects/', { params }),
-    getById: (id: number | string) => api.get(`/projects/${id}/`),
+    getAll: () => api.get('/projects/'),
     create: (data: any) => api.post('/projects/', data),
-    update: (id: number | string, data: any) => api.patch(`/projects/${id}/`, data),
-    delete: (id: number | string) => api.delete(`/projects/${id}/`),
     getKanban: (id: number | string) => api.get(`/projects/${id}/kanban/`),
     getMembers: (id: number | string) => api.get(`/projects/${id}/members/`),
     addMember: (projectId: number | string, userId: number | string) =>
@@ -99,24 +93,21 @@ export const projectsAPI = {
 
 // Tasks API
 export const tasksAPI = {
-    getAll: (params?: any) => api.get('/projects/tasks/', { params }),
-    getById: (id: number | string) => api.get(`/projects/tasks/${id}/`),
+    getMine: () => api.get('/projects/tasks/', { params: { my_tasks: true } }),
     create: (data: any) => api.post('/projects/tasks/', data),
-    update: (id: number | string, data: any) => api.patch(`/projects/tasks/${id}/`, data),
-    updateState: (id: number | string, state: 'todo' | 'in_progress' | 'done', order?: number) =>
-        api.patch(`/projects/tasks/${id}/update_state/`, { state, order }),
+    updateState: (id: number | string, state: 'todo' | 'in_progress' | 'done') =>
+        api.patch(`/projects/tasks/${id}/update_state/`, { state }),
     delete: (id: number | string) => api.delete(`/projects/tasks/${id}/`),
 };
 
 // Notifications API
 export const notificationsAPI = {
     getAll: () => api.get('/notifications/'),
-    markRead: (id: number | string) => api.patch(`/notifications/${id}/mark_read/`),
     markAllRead: () => api.post('/notifications/mark_all_read/'),
     getUnreadCount: () => api.get('/notifications/unread_count/'),
 };
 
-// Billing & CinetPay API
+// Billing API
 export const billingAPI = {
     getPlans: () => api.get('/billing/plans/'),
     getSubscription: () => api.get('/billing/subscription/'),
@@ -125,8 +116,7 @@ export const billingAPI = {
     getPayment: (transactionId: string) => api.get(`/billing/payments/${encodeURIComponent(transactionId)}/`),
 };
 
-// Core / Dashboard API
+// Dashboard API
 export const coreAPI = {
     getDashboardStats: () => api.get('/core/dashboard-stats/'),
-    getActivityLogs: () => api.get('/core/activity-logs/'),
 };

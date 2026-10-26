@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
       fullUrl: false,
     },
   },
+  // « Mes tâches » fait désormais partie de l'accueil
+  redirects: async () => [{ source: '/tasks', destination: '/dashboard', permanent: true }],
   // Security headers
   headers: async () => [
     {

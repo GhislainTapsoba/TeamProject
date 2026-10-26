@@ -1,284 +1,161 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { motion } from 'motion/react';
+import { CreditCard, FolderKanban, Home, LogOut, Sparkles, UserCircle, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { notificationsAPI } from '@/lib/api';
 import SubscriptionBanner from '@/components/SubscriptionBanner';
-import {
-    LayoutDashboard,
-    FolderKanban,
-    CheckSquare,
-    Users,
-    UserCircle,
-    CreditCard,
-    LogOut,
-    Bell,
-    Check,
-    ChevronRight,
-    Building2,
-    Sparkles,
-    Shield
-} from 'lucide-react';
+import Notifications from '@/components/Notifications';
+import Logo from '@/components/Logo';
+import { Avatar } from '@/components/ui/kit';
+import { ROLES } from '@/lib/labels';
+import { cn } from '@/lib/utils';
+import { ease, spring } from '@/lib/motion';
+
+type NavItem = { name: string; short?: string; href: string; icon: React.ElementType };
+
+const MAIN_NAV: NavItem[] = [
+    { name: 'Accueil', href: '/dashboard', icon: Home },
+    { name: 'Projets', href: '/projects', icon: FolderKanban },
+    { name: 'Équipe', href: '/team', icon: Users },
+];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-    const pathname = usePathname();
+    const pathname = usePathname() || '';
     const router = useRouter();
     const { user, tenant, logout, isLoading } = useAuth();
-    const [unreadCount, setUnreadCount] = useState(0);
-    const [notificationsOpen, setNotificationsOpen] = useState(false);
-    const [notifications, setNotifications] = useState<any[]>([]);
 
     useEffect(() => {
-        if (!isLoading && !user) {
-            router.push('/login');
-        }
+        if (!isLoading && !user) router.push('/login');
     }, [user, isLoading, router]);
 
-    useEffect(() => {
-        if (user) {
-            loadNotifications();
-            const interval = setInterval(loadNotifications, 30000);
-            return () => clearInterval(interval);
-        }
-    }, [user]);
-
-    const loadNotifications = async () => {
-        try {
-            const countRes = await notificationsAPI.getUnreadCount();
-            setUnreadCount(countRes.data.unread_count);
-        } catch (e) {
-            // silent
-        }
-    };
-
-    const handleOpenNotifications = async () => {
-        setNotificationsOpen(!notificationsOpen);
-        if (!notificationsOpen) {
-            try {
-                const res = await notificationsAPI.getAll();
-                setNotifications(res.data.results || res.data || []);
-            } catch (e) {
-                // silent
-            }
-        }
-    };
-
-    const handleMarkAllRead = async () => {
-        try {
-            await notificationsAPI.markAllRead();
-            setUnreadCount(0);
-            setNotifications(notifications.map(n => ({ ...n, read: true })));
-        } catch (e) {
-            // silent
-        }
-    };
-
-    if (isLoading) {
+    if (isLoading || !user) {
         return (
-            <div className="flex min-h-screen items-center justify-center bg-slate-950 text-white">
-                <div className="flex flex-col items-center gap-3">
-                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent"></div>
-                    <p className="text-sm text-slate-400">Chargement de votre espace...</p>
-                </div>
+            <div className="flex min-h-screen items-center justify-center">
+                <motion.div animate={{ scale: [1, 1.08, 1], opacity: [0.7, 1, 0.7] }} transition={{ duration: 1.6, repeat: Infinity }}>
+                    <Logo withText={false} />
+                </motion.div>
             </div>
         );
     }
 
-    if (!user) {
-        return null;
-    }
-
-    const navigation = [
-        {
-            group: 'WORK',
-            items: [
-                { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-                { name: 'Projets', href: '/projects', icon: FolderKanban },
-                { name: 'Mes tâches', href: '/tasks', icon: CheckSquare },
-            ],
-        },
-        {
-            group: 'ORGANISATION',
-            items: [
-                { name: 'Équipe', href: '/team', icon: Users },
-            ],
-        },
-        {
-            group: 'PARAMÈTRES',
-            items: [
-                { name: 'Mon profil', href: '/settings/profile', icon: UserCircle },
-                { name: 'Facturation & Plans', href: '/settings/billing', icon: CreditCard },
-            ],
-        },
+    const settingsNav: NavItem[] = [
+        { name: 'Mon profil', short: 'Profil', href: '/settings/profile', icon: UserCircle },
+        ...(user.role === 'admin' ? [{ name: 'Abonnement', href: '/settings/billing', icon: CreditCard }] : []),
     ];
+    const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/');
+
+    // Fonction de rendu (et non composant) : la pastille animée ne se remonte pas à chaque rendu
+    const navLink = (item: NavItem) => {
+        const active = isActive(item.href);
+        return (
+            <Link
+                key={item.href}
+                href={item.href}
+                className={cn('relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors', active ? 'text-white' : 'text-zinc-400 hover:text-zinc-100')}
+            >
+                {active && (
+                    <motion.span
+                        layoutId="nav-active"
+                        transition={spring}
+                        className="absolute inset-0 rounded-xl bg-gradient-to-r from-violet-500/20 to-violet-500/[0.04] ring-1 ring-inset ring-violet-400/20"
+                    />
+                )}
+                <item.icon className={cn('relative h-[18px] w-[18px]', active ? 'text-violet-300' : 'text-zinc-500')} />
+                <span className="relative">{item.name}</span>
+            </Link>
+        );
+    };
 
     return (
-        <div className="flex min-h-screen bg-slate-950 text-slate-100 font-sans">
-            {/* Plane-inspired Left Sidebar */}
-            <aside className="w-64 border-r border-slate-800 bg-slate-900/60 flex flex-col justify-between backdrop-blur-xl">
-                <div>
-                    {/* Workspace / Tenant Header */}
-                    <div className="p-4 border-b border-slate-800/80">
-                        <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold shadow-lg shadow-indigo-500/20">
-                                {tenant?.name ? tenant.name.substring(0, 2).toUpperCase() : 'TP'}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <h2 className="text-sm font-semibold text-white truncate tracking-tight">
-                                    {tenant?.name || 'Mon Organisation'}
-                                </h2>
-                                <div className="flex items-center gap-1.5 mt-0.5">
-                                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                                        {tenant?.plan?.toUpperCase() || 'FREE'}
-                                    </span>
-                                    <span className="text-[11px] text-slate-500 truncate">
-                                        {tenant?.schema_name}.teamproject
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Navigation Groups */}
-                    <nav className="p-3 space-y-6">
-                        {navigation.map((section) => (
-                            <div key={section.group}>
-                                <div className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-                                    {section.group}
-                                </div>
-                                <div className="space-y-1">
-                                    {section.items.map((item) => {
-                                        const Icon = item.icon;
-                                        const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname?.startsWith(item.href));
-                                        return (
-                                            <Link
-                                                key={item.name}
-                                                href={item.href}
-                                                className={`flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-150 ${
-                                                    isActive
-                                                        ? 'bg-indigo-600/15 text-indigo-400 font-semibold border border-indigo-500/30'
-                                                        : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                                                }`}
-                                            >
-                                                <Icon className={`h-4 w-4 ${isActive ? 'text-indigo-400' : 'text-slate-500'}`} />
-                                                <span>{item.name}</span>
-                                            </Link>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        ))}
-                    </nav>
+        <div className="flex min-h-screen">
+            {/* Barre latérale (bureau) */}
+            <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-white/[0.06] bg-black/20 px-3 py-5 backdrop-blur-xl md:flex">
+                <div className="px-3">
+                    <Logo />
                 </div>
 
-                {/* User Profile & Footer Actions */}
-                <div className="p-3 border-t border-slate-800/80 bg-slate-900/40">
-                    <div className="flex items-center justify-between p-2 rounded-lg hover:bg-slate-800/40 transition">
-                        <div className="flex items-center gap-2.5 min-w-0">
-                            <div className="h-8 w-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-xs font-medium text-slate-300">
-                                {user.first_name ? user.first_name[0] : user.username[0].toUpperCase()}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="text-xs font-medium text-slate-200 truncate">{user.full_name}</p>
-                                <p className="text-[11px] text-slate-500 capitalize">{user.role}</p>
-                            </div>
-                        </div>
-                        <button
-                            onClick={logout}
-                            title="Se déconnecter"
-                            className="p-1.5 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-md transition"
+                <div className="mx-1 mt-6 flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.03] p-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-700 to-zinc-800 text-xs font-bold text-white ring-1 ring-white/10">
+                        {(tenant?.name || 'TP').slice(0, 2).toUpperCase()}
+                    </div>
+                    <div className="min-w-0">
+                        <p className="truncate text-sm font-medium text-white">{tenant?.name || 'Mon organisation'}</p>
+                        <p className="text-[11px] uppercase tracking-wider text-zinc-500">Plan {tenant?.plan || 'free'}</p>
+                    </div>
+                </div>
+
+                <nav className="mt-6 space-y-1">
+                    {MAIN_NAV.map(navLink)}
+                </nav>
+
+                <p className="mb-2 mt-8 px-3 text-[11px] font-medium uppercase tracking-wider text-zinc-600">Réglages</p>
+                <nav className="space-y-1">
+                    {settingsNav.map(navLink)}
+                </nav>
+
+                <div className="mt-auto space-y-3">
+                    {tenant?.plan === 'free' && user.role === 'admin' && (
+                        <Link
+                            href="/settings/billing"
+                            className="group relative block overflow-hidden rounded-2xl border border-violet-400/20 bg-gradient-to-br from-violet-500/15 to-transparent p-4"
                         >
+                            <Sparkles className="h-4 w-4 text-violet-300" />
+                            <p className="mt-2 text-sm font-medium text-white">Passer au plan Pro</p>
+                            <p className="text-xs text-zinc-400">Plus de membres et de projets.</p>
+                            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                        </Link>
+                    )}
+                    <div className="flex items-center gap-3 rounded-2xl px-2 py-2">
+                        <Avatar name={user.full_name} />
+                        <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium text-zinc-100">{user.full_name}</p>
+                            <p className="text-xs text-zinc-500">{ROLES[user.role]?.label}</p>
+                        </div>
+                        <button onClick={logout} title="Se déconnecter" className="rounded-lg p-2 text-zinc-500 transition hover:bg-rose-500/10 hover:text-rose-300">
                             <LogOut className="h-4 w-4" />
                         </button>
                     </div>
                 </div>
             </aside>
 
-            {/* Main Content Area */}
-            <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-                {/* Topbar */}
-                <header className="h-14 border-b border-slate-800/80 bg-slate-900/30 px-6 flex items-center justify-between backdrop-blur-md sticky top-0 z-20">
-                    <div className="flex items-center gap-2 text-xs text-slate-400">
-                        <span className="text-slate-500 font-medium">{tenant?.name || 'Workspace'}</span>
-                        <ChevronRight className="h-3 w-3 text-slate-600" />
-                        <span className="text-slate-200 font-medium capitalize">
-                            {pathname?.split('/')[1] || 'Dashboard'}
-                        </span>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        {/* Notifications Bell */}
-                        <div className="relative">
-                            <button
-                                onClick={handleOpenNotifications}
-                                className="relative p-2 text-slate-400 hover:text-white hover:bg-slate-800/60 rounded-lg transition"
-                                title="Notifications"
-                            >
-                                <Bell className="h-4 w-4" />
-                                {unreadCount > 0 && (
-                                    <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-indigo-500 ring-2 ring-slate-950 animate-pulse" />
-                                )}
-                            </button>
-
-                            {/* Notifications Dropdown */}
-                            {notificationsOpen && (
-                                <div className="absolute right-0 mt-2 w-80 rounded-xl bg-slate-900 border border-slate-800 shadow-2xl p-3 z-50 text-xs">
-                                    <div className="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
-                                        <span className="font-semibold text-white">Notifications</span>
-                                        {unreadCount > 0 && (
-                                            <button
-                                                onClick={handleMarkAllRead}
-                                                className="text-[11px] text-indigo-400 hover:underline flex items-center gap-1"
-                                            >
-                                                <Check className="h-3 w-3" /> Tout marquer lu
-                                            </button>
-                                        )}
-                                    </div>
-                                    <div className="max-h-64 overflow-y-auto space-y-2">
-                                        {notifications.length === 0 ? (
-                                            <p className="text-slate-500 text-center py-4">Aucune notification.</p>
-                                        ) : (
-                                            notifications.map((n) => (
-                                                <div
-                                                    key={n.id}
-                                                    className={`p-2 rounded-lg transition ${
-                                                        n.read ? 'bg-slate-950/40 text-slate-400' : 'bg-indigo-950/30 border border-indigo-500/20 text-slate-200'
-                                                    }`}
-                                                >
-                                                    <p className="text-xs">{n.message}</p>
-                                                    <span className="text-[10px] text-slate-500 mt-1 block">
-                                                        {new Date(n.created_at).toLocaleDateString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
-                                                    </span>
-                                                </div>
-                                            ))
-                                        )}
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Upgrade plan button if on free plan */}
-                        {tenant?.plan === 'free' && (
-                            <Link
-                                href="/settings/billing"
-                                className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm hover:opacity-90 transition"
-                            >
-                                <Sparkles className="h-3 w-3" />
-                                <span>Passer Pro</span>
-                            </Link>
-                        )}
+            <div className="flex min-w-0 flex-1 flex-col">
+                {/* Barre du haut */}
+                <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-white/[0.04] bg-canvas/60 px-4 backdrop-blur-xl sm:px-8 md:justify-end">
+                    <Link href="/dashboard" className="md:hidden">
+                        <Logo />
+                    </Link>
+                    <div className="flex items-center gap-1">
+                        <Notifications />
+                        <button onClick={logout} title="Se déconnecter" className="rounded-xl p-2 text-zinc-500 transition hover:text-white md:hidden">
+                            <LogOut className="h-[18px] w-[18px]" />
+                        </button>
                     </div>
                 </header>
 
-                <SubscriptionBanner isAdmin={user.role === 'admin'} />
-
-                {/* Page Content */}
-                <main className="flex-1 overflow-y-auto p-6 md:p-8">
-                    {children}
+                <main className="flex-1 px-4 pb-28 pt-6 sm:px-8 md:pb-12 md:pt-8">
+                    <SubscriptionBanner isAdmin={user.role === 'admin'} />
+                    <motion.div key={pathname} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35, ease }}>
+                        {children}
+                    </motion.div>
                 </main>
             </div>
+
+            {/* Barre d'onglets (mobile) */}
+            <nav className="fixed inset-x-3 bottom-3 z-40 flex items-center justify-around rounded-2xl border border-white/[0.08] bg-zinc-950/80 p-1.5 shadow-2xl backdrop-blur-2xl md:hidden">
+                {[...MAIN_NAV, settingsNav[0]].map((item) => {
+                    const active = isActive(item.href);
+                    return (
+                        <Link key={item.href} href={item.href} className="relative flex flex-1 flex-col items-center gap-0.5 rounded-xl py-2 text-[11px] font-medium">
+                            {active && <motion.span layoutId="tab-active" transition={spring} className="absolute inset-0 rounded-xl bg-white/[0.07]" />}
+                            <item.icon className={cn('relative h-5 w-5', active ? 'text-violet-300' : 'text-zinc-500')} />
+                            <span className={cn('relative', active ? 'text-white' : 'text-zinc-500')}>{item.short ?? item.name}</span>
+                        </Link>
+                    );
+                })}
+            </nav>
         </div>
     );
 }

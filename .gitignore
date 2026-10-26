@@ -135,3 +135,6 @@ __pycache__/
 .coverage
 htmlcov/
 
+
+# Fichiers statiques generes par collectstatic
+backend/staticfiles/

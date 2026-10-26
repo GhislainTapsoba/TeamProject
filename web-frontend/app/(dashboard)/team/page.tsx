@@ -1,274 +1,182 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
+import { Mail, Phone, Search, UserPlus, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { usersAPI } from '@/lib/api';
-import {
-    Users,
-    UserPlus,
-    Shield,
-    Mail,
-    Phone,
-    CheckCircle2,
-    X,
-    MoreVertical,
-    AlertCircle
-} from 'lucide-react';
+import { ROLES } from '@/lib/labels';
+import { errorMessage, formatDate, listOf } from '@/lib/utils';
+import { spring } from '@/lib/motion';
+import { Avatar, Badge, EmptyState, Page, PageHeader, Skeleton } from '@/components/ui/kit';
+import { Button } from '@/components/ui/button';
+import { Input, Select } from '@/components/ui/field';
+import { Modal, ModalActions } from '@/components/ui/modal';
+import { useToast } from '@/components/ui/toast';
 
 export default function TeamPage() {
     const { user, tenant } = useAuth();
+    const toast = useToast();
     const [team, setTeam] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [search, setSearch] = useState('');
+    const [inviteOpen, setInviteOpen] = useState(false);
+    const isAdmin = user?.role === 'admin';
 
-    // Modal state
-    const [isOpen, setIsOpen] = useState(false);
-    const [email, setEmail] = useState('');
-    const [firstName, setFirstName] = useState('');
-    const [lastName, setLastName] = useState('');
-    const [role, setRole] = useState<'admin' | 'manager' | 'employee'>('employee');
-    const [phone, setPhone] = useState('');
-    const [password, setPassword] = useState('');
-    const [submitting, setSubmitting] = useState(false);
-    const [inviteError, setInviteError] = useState('');
+    const load = () =>
+        usersAPI
+            .getAll()
+            .then((res) => setTeam(listOf(res)))
+            .catch(() => toast.error("Impossible de charger l'équipe."))
+            .finally(() => setLoading(false));
 
     useEffect(() => {
-        loadTeam();
+        load();
     }, []);
 
-    const loadTeam = async () => {
-        try {
-            const res = await usersAPI.getAll();
-            setTeam(res.data.results || res.data || []);
-        } catch (e) {
-            console.error('Error loading team:', e);
-        } finally {
-            setLoading(false);
-        }
-    };
+    const query = search.trim().toLowerCase();
+    const visible = team.filter((m) => !query || m.full_name?.toLowerCase().includes(query) || m.email.toLowerCase().includes(query));
 
-    const handleInviteUser = async (e: React.FormEvent) => {
+    return (
+        <Page>
+            <PageHeader
+                title="Équipe"
+                subtitle={`${team.length} membre${team.length > 1 ? 's' : ''} chez ${tenant?.name ?? 'votre organisation'}.`}
+                action={
+                    isAdmin && (
+                        <Button icon={UserPlus} onClick={() => setInviteOpen(true)}>
+                            Ajouter un membre
+                        </Button>
+                    )
+                }
+            />
+
+            {team.length > 6 && (
+                <motion.div variants={{ hidden: { opacity: 0 }, show: { opacity: 1 } }}>
+                    <Input icon={Search} placeholder="Rechercher par nom ou email…" value={search} onChange={(e) => setSearch(e.target.value)} className="sm:w-80" />
+                </motion.div>
+            )}
+
+            {loading ? (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    {[0, 1, 2].map((i) => (
+                        <Skeleton key={i} className="h-40" />
+                    ))}
+                </div>
+            ) : visible.length === 0 ? (
+                <EmptyState icon={Users} title="Personne ici" text="Aucun membre ne correspond à votre recherche." />
+            ) : (
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                    <AnimatePresence mode="popLayout">
+                        {visible.map((m, i) => (
+                            <motion.div
+                                key={m.id}
+                                layout
+                                initial={{ opacity: 0, y: 16 }}
+                                animate={{ opacity: 1, y: 0, transition: { ...spring, delay: i * 0.04 } }}
+                                exit={{ opacity: 0, scale: 0.96 }}
+                                whileHover={{ y: -3 }}
+                                className="glass rounded-2xl p-5 transition-colors hover:border-white/[0.12]"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <span className="relative">
+                                        <Avatar name={m.full_name} size="lg" />
+                                        <span className={`absolute bottom-0 right-0 h-3 w-3 rounded-full ring-2 ring-zinc-950 ${m.is_active ? 'bg-emerald-400' : 'bg-zinc-600'}`} />
+                                    </span>
+                                    <div className="min-w-0 flex-1">
+                                        <p className="truncate font-medium text-white">
+                                            {m.full_name}
+                                            {m.id === user?.id && <span className="ml-1.5 text-xs font-normal text-zinc-500">(vous)</span>}
+                                        </p>
+                                        <Badge tone={ROLES[m.role]?.tone} className="mt-1">
+                                            {ROLES[m.role]?.label || m.role}
+                                        </Badge>
+                                    </div>
+                                </div>
+                                <div className="mt-4 space-y-1.5 border-t border-white/[0.05] pt-4 text-sm text-zinc-400">
+                                    <a href={`mailto:${m.email}`} className="flex items-center gap-2 truncate transition hover:text-violet-300">
+                                        <Mail className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
+                                        {m.email}
+                                    </a>
+                                    {m.phone && (
+                                        <p className="flex items-center gap-2">
+                                            <Phone className="h-3.5 w-3.5 text-zinc-500" />
+                                            {m.phone}
+                                        </p>
+                                    )}
+                                    <p className="pt-1 text-xs text-zinc-600">Arrivé·e le {formatDate(m.date_joined, { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                </div>
+                            </motion.div>
+                        ))}
+                    </AnimatePresence>
+                </div>
+            )}
+
+            <InviteModal
+                open={inviteOpen}
+                onClose={() => setInviteOpen(false)}
+                onInvited={() => {
+                    toast.success('Membre ajouté à l’équipe.');
+                    load();
+                }}
+            />
+        </Page>
+    );
+}
+
+function InviteModal({ open, onClose, onInvited }: { open: boolean; onClose: () => void; onInvited: () => void }) {
+    const toast = useToast();
+    const empty = { first_name: '', last_name: '', email: '', role: 'employee', phone: '', password: '' };
+    const [form, setForm] = useState(empty);
+    const [saving, setSaving] = useState(false);
+    const set = (key: keyof typeof empty) => (e: React.ChangeEvent<any>) => setForm({ ...form, [key]: e.target.value });
+
+    const submit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setSubmitting(true);
-        setInviteError('');
+        setSaving(true);
         try {
-            await usersAPI.create({
-                email,
-                username: email,
-                first_name: firstName,
-                last_name: lastName,
-                role,
-                phone,
-                password,
-            });
-            setIsOpen(false);
-            setEmail('');
-            setFirstName('');
-            setLastName('');
-            setPhone('');
-            setPassword('');
-            loadTeam();
-        } catch (err: any) {
-            const data = err.response?.data || {};
-            const firstFieldError = Object.values(data).find((v) => Array.isArray(v)) as string[] | undefined;
-            setInviteError(data.detail || firstFieldError?.[0] || "Impossible d'ajouter ce membre.");
+            await usersAPI.create({ ...form, username: form.email });
+            setForm(empty);
+            onClose();
+            onInvited();
+        } catch (err) {
+            toast.error(errorMessage(err, "Impossible d'ajouter ce membre."));
         } finally {
-            setSubmitting(false);
+            setSaving(false);
         }
-    };
-
-    const roleBadge = (role: string) => {
-        if (role === 'admin') {
-            return <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-indigo-500/15 text-indigo-400 border border-indigo-500/20">Admin</span>;
-        }
-        if (role === 'manager') {
-            return <span className="px-2 py-0.5 rounded text-[10px] font-semibold bg-purple-500/15 text-purple-400 border border-purple-500/20">Manager</span>;
-        }
-        return <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-slate-800 text-slate-400">Employé</span>;
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-xl font-bold text-white tracking-tight">Équipe & Collaborateurs</h1>
-                    <p className="text-xs text-slate-400 mt-0.5">
-                        Membres de votre organisation <strong>{tenant?.name}</strong> et leurs permissions RBAC.
-                    </p>
+        <Modal open={open} onClose={onClose} title="Ajouter un membre" description="La personne pourra se connecter avec son email.">
+            <form onSubmit={submit} className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                    <Input label="Prénom" required autoFocus value={form.first_name} onChange={set('first_name')} />
+                    <Input label="Nom" required value={form.last_name} onChange={set('last_name')} />
                 </div>
-
-                {user?.role === 'admin' && (
-                    <button
-                        onClick={() => setIsOpen(true)}
-                        className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-lg shadow-indigo-600/20 transition"
-                    >
-                        <UserPlus className="h-4 w-4" />
-                        <span>Ajouter un Collaborateur</span>
-                    </button>
-                )}
-            </div>
-
-            {/* Team Grid */}
-            {loading ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {[1, 2, 3].map((i) => (
-                        <div key={i} className="h-32 bg-slate-900/40 rounded-xl border border-slate-800 animate-pulse"></div>
-                    ))}
+                <Input label="Email" type="email" required value={form.email} onChange={set('email')} placeholder="prenom@entreprise.com" />
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    <Select label="Rôle" value={form.role} onChange={set('role')}>
+                        <option value="employee">Membre</option>
+                        <option value="manager">Manager</option>
+                        <option value="admin">Administrateur</option>
+                    </Select>
+                    <Input label="Téléphone (facultatif)" type="tel" value={form.phone} onChange={set('phone')} placeholder="+226 70 00 00 00" />
                 </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {team.map((member) => (
-                        <div
-                            key={member.id}
-                            className="p-4 rounded-xl bg-slate-900/50 border border-slate-800 hover:border-slate-700 transition flex flex-col justify-between"
-                        >
-                            <div className="flex items-start gap-3">
-                                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-slate-800 to-slate-700 border border-slate-700 flex items-center justify-center font-bold text-white shadow">
-                                    {member.first_name ? member.first_name[0] : member.username[0].toUpperCase()}
-                                </div>
-                                <div className="min-w-0 flex-1">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-xs font-bold text-white truncate">{member.full_name}</h3>
-                                        {roleBadge(member.role)}
-                                    </div>
-                                    <p className="text-[11px] text-slate-400 truncate flex items-center gap-1.5 mt-1">
-                                        <Mail className="h-3 w-3 text-slate-500" />
-                                        <span>{member.email}</span>
-                                    </p>
-                                    {member.phone && (
-                                        <p className="text-[11px] text-slate-500 truncate flex items-center gap-1.5 mt-0.5">
-                                            <Phone className="h-3 w-3" />
-                                            <span>{member.phone}</span>
-                                        </p>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="mt-4 pt-3 border-t border-slate-800/60 flex items-center justify-between text-[10px] text-slate-500">
-                                <span>Rejoint le {new Date(member.date_joined).toLocaleDateString('fr-FR')}</span>
-                                <span className={`inline-flex items-center gap-1 ${member.is_active ? 'text-emerald-400' : 'text-red-400'}`}>
-                                    <span className={`h-1.5 w-1.5 rounded-full ${member.is_active ? 'bg-emerald-400' : 'bg-red-400'}`} />
-                                    {member.is_active ? 'Actif' : 'Inactif'}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {/* Invite Modal */}
-            {isOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
-                    <div className="w-full max-w-md rounded-2xl bg-slate-900 border border-slate-800 p-6 shadow-2xl space-y-4 text-xs">
-                        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                            <h2 className="text-sm font-bold text-white">Ajouter un collaborateur</h2>
-                            <button
-                                onClick={() => setIsOpen(false)}
-                                className="p-1 text-slate-500 hover:text-white rounded-md transition"
-                            >
-                                <X className="h-4 w-4" />
-                            </button>
-                        </div>
-
-                        <form onSubmit={handleInviteUser} className="space-y-3">
-                            {inviteError && (
-                                <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2">
-                                    <AlertCircle className="h-4 w-4 shrink-0" />
-                                    <span>{inviteError}</span>
-                                </div>
-                            )}
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-slate-400 font-medium mb-1">Prénom</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={firstName}
-                                        onChange={(e) => setFirstName(e.target.value)}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
-                                    />
-                                </div>
-                                <div>
-                                    <label className="block text-slate-400 font-medium mb-1">Nom</label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={lastName}
-                                        onChange={(e) => setLastName(e.target.value)}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-slate-400 font-medium mb-1">Email professionnel *</label>
-                                <input
-                                    type="email"
-                                    required
-                                    value={email}
-                                    onChange={(e) => setEmail(e.target.value)}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
-                                />
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-3">
-                                <div>
-                                    <label className="block text-slate-400 font-medium mb-1">Rôle</label>
-                                    <select
-                                        value={role}
-                                        onChange={(e) => setRole(e.target.value as any)}
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
-                                    >
-                                        <option value="employee">Employé</option>
-                                        <option value="manager">Manager</option>
-                                        <option value="admin">Administrateur</option>
-                                    </select>
-                                </div>
-
-                                <div>
-                                    <label className="block text-slate-400 font-medium mb-1">Téléphone</label>
-                                    <input
-                                        type="tel"
-                                        value={phone}
-                                        onChange={(e) => setPhone(e.target.value)}
-                                        placeholder="+226 70000000"
-                                        className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
-                                    />
-                                </div>
-                            </div>
-
-                            <div>
-                                <label className="block text-slate-400 font-medium mb-1">Mot de passe provisoire</label>
-                                <input
-                                    type="text"
-                                    value={password}
-                                    onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2 text-slate-200 focus:outline-none focus:border-indigo-500"
-                                />
-                                <p className="mt-1 text-[11px] text-slate-500">
-                                    Inutile si la personne a déjà un compte TeamProject : elle sera simplement ajoutée à l'organisation.
-                                </p>
-                            </div>
-
-                            <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-800">
-                                <button
-                                    type="button"
-                                    onClick={() => setIsOpen(false)}
-                                    className="px-4 py-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
-                                >
-                                    Annuler
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={submitting}
-                                    className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold transition shadow-md shadow-indigo-600/20 disabled:opacity-50"
-                                >
-                                    {submitting ? 'Ajout...' : 'Ajouter le membre'}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
-        </div>
+                <Input
+                    label="Mot de passe provisoire"
+                    value={form.password}
+                    onChange={set('password')}
+                    hint="Inutile si la personne a déjà un compte Team Project : elle sera simplement ajoutée."
+                />
+                <ModalActions>
+                    <Button type="button" variant="ghost" onClick={onClose}>
+                        Annuler
+                    </Button>
+                    <Button type="submit" loading={saving}>
+                        Ajouter
+                    </Button>
+                </ModalActions>
+            </form>
+        </Modal>
     );
 }

@@ -1,29 +1,24 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
-import { AuthProvider } from '@/contexts/AuthContext';
+import Providers from './providers';
 
-const inter = Inter({ subsets: ['latin'] });
+const sans = Geist({ subsets: ['latin'], variable: '--font-sans' });
+const mono = Geist_Mono({ subsets: ['latin'], variable: '--font-mono' });
 
 export const metadata: Metadata = {
-    title: 'Team Project — SaaS Multi-Tenant',
-    description: 'Plateforme de gestion de projets collaborative inspirée de Plane',
+    title: 'Team Project',
+    description: 'Gestion de projets en équipe, simple et rapide.',
     icons: {
         icon: '/favicon.ico',
     },
 };
 
-export default function RootLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
     return (
-        <html lang="fr" className="dark">
-            <body className={`${inter.className} bg-slate-950 text-slate-100 min-h-screen antialiased`}>
-                <AuthProvider>
-                    {children}
-                </AuthProvider>
+        <html lang="fr" className={`${sans.variable} ${mono.variable}`}>
+            <body className="min-h-screen">
+                <Providers>{children}</Providers>
             </body>
         </html>
     );

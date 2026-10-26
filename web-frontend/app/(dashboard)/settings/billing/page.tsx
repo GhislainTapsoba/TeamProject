@@ -1,52 +1,34 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { motion } from 'motion/react';
+import { ArrowRight, Check, CreditCard, FolderKanban, Receipt, RefreshCw, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { billingAPI } from '@/lib/api';
-import {
-    CreditCard,
-    Check,
-    Users,
-    FolderKanban,
-    AlertCircle,
-    ArrowRight,
-    CheckCircle2,
-    Loader2,
-    Receipt,
-    RefreshCw,
-} from 'lucide-react';
+import { PAYMENT_STATUSES, SUBSCRIPTION_STATUSES } from '@/lib/labels';
+import { cn, errorMessage, formatDate } from '@/lib/utils';
+import { fadeUp, spring } from '@/lib/motion';
+import { Badge, Card, Notice, Page, PageHeader, Progress, Skeleton } from '@/components/ui/kit';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/toast';
 
-const STATUS_LABELS: Record<string, { label: string; className: string }> = {
-    active: { label: 'Actif', className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
-    trial: { label: 'Essai', className: 'bg-sky-500/15 text-sky-400 border-sky-500/30' },
-    past_due: { label: 'En retard', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
-    cancelled: { label: 'Suspendu', className: 'bg-red-500/15 text-red-400 border-red-500/30' },
-};
-
-const PAYMENT_LABELS: Record<string, { label: string; className: string }> = {
-    paid: { label: 'Payé', className: 'text-emerald-400' },
-    pending: { label: 'En attente', className: 'text-amber-400' },
-    failed: { label: 'Échoué', className: 'text-red-400' },
-};
-
-const formatDate = (value?: string | null) => (value ? new Date(value).toLocaleDateString('fr-FR') : '-');
 const formatAmount = (value: string | number) => Number(value).toLocaleString('fr-FR');
 const isFree = (plan: any) => !plan || Number(plan.price_monthly) === 0;
 
-type PaymentNotice = { tone: 'pending' | 'success' | 'error'; message: string } | null;
+type PaymentNotice = { tone: 'info' | 'success' | 'error'; message: string } | null;
 
 export default function BillingPage() {
-    const { user, tenant } = useAuth();
+    const { user } = useAuth();
+    const toast = useToast();
     const isAdmin = user?.role === 'admin';
     const [subscription, setSubscription] = useState<any>(null);
     const [plans, setPlans] = useState<any[]>([]);
     const [payments, setPayments] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
-    const [checkoutLoading, setCheckoutLoading] = useState<number | string | null>(null);
-    const [error, setError] = useState('');
+    const [checkout, setCheckout] = useState<number | string | null>(null);
     const [notice, setNotice] = useState<PaymentNotice>(null);
 
-    const loadBillingData = useCallback(async () => {
+    const load = useCallback(async () => {
         try {
             const [subRes, plansRes, paymentsRes] = await Promise.all([
                 billingAPI.getSubscription(),
@@ -56,314 +38,232 @@ export default function BillingPage() {
             setSubscription(subRes.data);
             setPlans(plansRes.data || []);
             setPayments(paymentsRes.data || []);
-        } catch (e) {
-            setError('Impossible de charger la facturation. Réessayez dans un instant.');
+        } catch {
+            toast.error('Impossible de charger la facturation.');
         } finally {
             setLoading(false);
         }
-    }, [isAdmin]);
+    }, [isAdmin, toast]);
 
-    // Back from the checkout: follow the payment until the provider confirms it
-    const followPayment = useCallback(async (transactionId: string) => {
-        setNotice({ tone: 'pending', message: 'Vérification de votre paiement en cours...' });
-        for (let attempt = 0; attempt < 15; attempt++) {
-            try {
-                const { data } = await billingAPI.getPayment(transactionId);
-                if (data.status === 'paid') {
-                    setNotice({
-                        tone: 'success',
-                        message: `Paiement confirmé : plan ${data.plan_name} actif jusqu'au ${formatDate(data.period_end)}.`,
-                    });
-                    await loadBillingData();
-                    return;
+    // Au retour du paiement : on suit la transaction jusqu'à sa confirmation
+    const followPayment = useCallback(
+        async (transactionId: string) => {
+            setNotice({ tone: 'info', message: 'Vérification de votre paiement…' });
+            for (let attempt = 0; attempt < 15; attempt++) {
+                try {
+                    const { data } = await billingAPI.getPayment(transactionId);
+                    if (data.status === 'paid') {
+                        setNotice({ tone: 'success', message: `Paiement confirmé : plan ${data.plan_name} actif jusqu'au ${formatDate(data.period_end)}.` });
+                        await load();
+                        return;
+                    }
+                    if (data.status === 'failed') {
+                        setNotice({ tone: 'error', message: "Le paiement n'a pas abouti. Aucun montant n'a été débité." });
+                        await load();
+                        return;
+                    }
+                } catch {
+                    break;
                 }
-                if (data.status === 'failed') {
-                    setNotice({ tone: 'error', message: 'Le paiement n\'a pas abouti. Aucun montant n\'a été débité pour cet abonnement.' });
-                    await loadBillingData();
-                    return;
-                }
-            } catch (e) {
-                break;
+                await new Promise((resolve) => setTimeout(resolve, 2000));
             }
-            await new Promise((resolve) => setTimeout(resolve, 2000));
-        }
-        setNotice({
-            tone: 'pending',
-            message: 'Votre paiement est toujours en cours de traitement. Votre plan sera activé automatiquement dès sa confirmation.',
-        });
-    }, [loadBillingData]);
+            setNotice({ tone: 'info', message: 'Votre paiement est encore en traitement. Le plan sera activé automatiquement dès sa confirmation.' });
+        },
+        [load]
+    );
 
     useEffect(() => {
-        loadBillingData();
+        load();
         const transactionId = new URLSearchParams(window.location.search).get('payment');
         if (transactionId) {
             window.history.replaceState(null, '', window.location.pathname);
             followPayment(transactionId);
         }
-    }, [loadBillingData, followPayment]);
+    }, [load, followPayment]);
 
-    const handleSubscribe = async (planId: number | string) => {
-        setError('');
-        setCheckoutLoading(planId);
+    const subscribe = async (planId: number | string) => {
+        setCheckout(planId);
         try {
             const res = await billingAPI.initiateCheckout(planId);
             window.location.href = res.data.payment_url;
-        } catch (err: any) {
-            setError(err.response?.data?.error || 'Impossible de démarrer le paiement. Réessayez dans un instant.');
-            setCheckoutLoading(null);
+        } catch (err) {
+            toast.error(errorMessage(err, 'Impossible de démarrer le paiement.'));
+            setCheckout(null);
         }
     };
 
     if (loading) {
         return (
-            <div className="max-w-5xl mx-auto space-y-6 animate-pulse">
-                <div className="h-44 bg-slate-900/50 rounded-2xl border border-slate-800"></div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {[1, 2, 3].map(i => (
-                        <div key={i} className="h-80 bg-slate-900/40 rounded-2xl border border-slate-800"></div>
+            <div className="mx-auto max-w-5xl space-y-6">
+                <Skeleton className="h-48" />
+                <div className="grid gap-4 md:grid-cols-3">
+                    {[0, 1, 2].map((i) => (
+                        <Skeleton key={i} className="h-80" />
                     ))}
                 </div>
             </div>
         );
     }
 
-    const currentPlan = subscription?.plan_details;
-    const status = STATUS_LABELS[subscription?.status] || STATUS_LABELS.active;
+    const current = subscription?.plan_details;
+    const status = SUBSCRIPTION_STATUSES[subscription?.status] || SUBSCRIPTION_STATUSES.active;
 
-    const planAction = (plan: any) => {
+    const actionFor = (plan: any) => {
         const isCurrent = subscription?.plan === plan.id;
-        if (isFree(plan)) {
-            return isCurrent
-                ? { label: 'Plan actuel', disabled: true }
-                : { label: 'Appliqué automatiquement à la fin de l\'abonnement', disabled: true };
-        }
-        if (isCurrent && subscription.status === 'trial') return { label: 'S\'abonner', disabled: false };
-        if (isCurrent) return { label: 'Renouveler pour 1 mois', disabled: false };
-        return { label: 'Passer à ce plan', disabled: false };
+        if (isFree(plan)) return { label: isCurrent ? 'Plan actuel' : "Appliqué à la fin de l'abonnement", disabled: true };
+        if (isCurrent && subscription.status === 'trial') return { label: "S'abonner", disabled: false };
+        if (isCurrent) return { label: 'Renouveler 1 mois', disabled: false };
+        return { label: 'Choisir ce plan', disabled: false };
     };
 
     return (
-        <div className="max-w-5xl mx-auto space-y-8">
-            <div>
-                <h1 className="text-xl font-bold text-white tracking-tight">Facturation & Abonnements</h1>
-                <p className="text-xs text-slate-400 mt-0.5">
-                    Gérez le plan de votre organisation <strong>{tenant?.name}</strong> et vos paiements.
-                </p>
-            </div>
+        <Page className="max-w-5xl">
+            <PageHeader title="Abonnement" subtitle="Paiement mensuel par Mobile Money ou carte, sans engagement." />
 
-            {notice && (
-                <div className={`flex items-start gap-3 p-4 rounded-xl border text-sm ${
-                    notice.tone === 'success'
-                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-200'
-                        : notice.tone === 'error'
-                            ? 'bg-red-500/10 border-red-500/30 text-red-200'
-                            : 'bg-sky-500/10 border-sky-500/30 text-sky-100'
-                }`}>
-                    {notice.tone === 'success' ? <CheckCircle2 className="h-5 w-5 shrink-0" />
-                        : notice.tone === 'error' ? <AlertCircle className="h-5 w-5 shrink-0" />
-                            : <Loader2 className="h-5 w-5 shrink-0 animate-spin" />}
-                    <span>{notice.message}</span>
-                </div>
-            )}
-
-            {error && (
-                <div className="flex items-start gap-3 p-4 rounded-xl border bg-red-500/10 border-red-500/30 text-red-200 text-sm">
-                    <AlertCircle className="h-5 w-5 shrink-0" />
-                    <span>{error}</span>
-                </div>
-            )}
+            {notice && <Notice tone={notice.tone}>{notice.message}</Notice>}
 
             {subscription && (
-                <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-500/30 shadow-xl space-y-6">
-                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="space-y-1">
-                            <span className="text-[11px] font-semibold uppercase tracking-wider text-indigo-400">
-                                Abonnement actuel
-                            </span>
-                            <div className="flex items-center gap-3">
-                                <h2 className="text-2xl font-bold text-white">
-                                    Plan {currentPlan?.display_name || currentPlan?.name}
-                                </h2>
-                                <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${status.className}`}>
-                                    {status.label}
-                                </span>
+                <Card className="relative overflow-hidden p-6 sm:p-8">
+                    <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-violet-600/20 blur-3xl" />
+                    <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <p className="text-xs font-medium uppercase tracking-widest text-violet-300">Plan actuel</p>
+                            <div className="mt-2 flex items-center gap-3">
+                                <h2 className="text-3xl font-semibold tracking-tight text-white">{current?.display_name || current?.name}</h2>
+                                <Badge tone={status.tone}>{status.label}</Badge>
                             </div>
-                            <p className="text-xs text-slate-400">
-                                {isFree(currentPlan) ? (
-                                    'Gratuit, sans engagement ni date de fin.'
-                                ) : subscription.status === 'past_due' ? (
-                                    <>Expiré le <strong>{formatDate(subscription.current_period_end)}</strong>. Renouvelez avant le <strong>{formatDate(subscription.grace_until)}</strong> pour conserver votre plan.</>
-                                ) : (
-                                    <>
-                                        {subscription.status === 'trial' ? 'Essai jusqu\'au' : 'Valide jusqu\'au'}{' '}
-                                        <strong>{formatDate(subscription.current_period_end)}</strong> ({subscription.days_left} jours restants)
-                                    </>
-                                )}
+                            <p className="mt-2 text-sm text-zinc-400">
+                                {isFree(current)
+                                    ? 'Gratuit, sans date de fin.'
+                                    : subscription.status === 'past_due'
+                                      ? `Expiré le ${formatDate(subscription.current_period_end)}. Renouvelez avant le ${formatDate(subscription.grace_until)}.`
+                                      : `${subscription.status === 'trial' ? 'Essai jusqu’au' : 'Valide jusqu’au'} ${formatDate(subscription.current_period_end)} · ${subscription.days_left} jours restants`}
                             </p>
                         </div>
-
-                        <div className="flex items-center gap-2 p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-xs">
-                            <CreditCard className="h-5 w-5 text-indigo-400" />
+                        <div className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-black/20 px-4 py-3 text-sm">
+                            <CreditCard className="h-5 w-5 text-violet-300" />
                             <div>
-                                <p className="font-semibold text-white">Mobile Money & carte bancaire</p>
-                                <p className="text-[10px] text-slate-400">Orange Money, Moov Money, Wave, Visa, Mastercard</p>
+                                <p className="font-medium text-white">Mobile Money et carte</p>
+                                <p className="text-xs text-zinc-500">Orange Money, Moov, Wave, Visa, Mastercard</p>
                             </div>
                         </div>
                     </div>
 
                     {subscription.usage && (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-slate-800/80">
+                        <div className="relative mt-8 grid grid-cols-1 gap-6 border-t border-white/[0.06] pt-6 sm:grid-cols-2">
                             {[
-                                { icon: Users, label: 'Collaborateurs', used: subscription.usage.users_count, max: subscription.usage.max_users, color: 'bg-indigo-500' },
-                                { icon: FolderKanban, label: 'Projets', used: subscription.usage.projects_count, max: subscription.usage.max_projects, color: 'bg-purple-500' },
-                            ].map(({ icon: Icon, label, used, max, color }) => (
-                                <div key={label} className="space-y-1.5">
-                                    <div className="flex justify-between text-xs text-slate-300">
-                                        <span className="flex items-center gap-1.5">
-                                            <Icon className="h-3.5 w-3.5 text-slate-400" /> {label}
+                                { icon: Users, label: 'Membres', used: subscription.usage.users_count, max: subscription.usage.max_users },
+                                { icon: FolderKanban, label: 'Projets', used: subscription.usage.projects_count, max: subscription.usage.max_projects },
+                            ].map(({ icon: Icon, label, used, max }) => (
+                                <div key={label} className="space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="flex items-center gap-2 text-zinc-300">
+                                            <Icon className="h-4 w-4 text-zinc-500" /> {label}
                                         </span>
-                                        <span className={`font-semibold ${used >= max ? 'text-amber-400' : ''}`}>{used} / {max}</span>
+                                        <span className={cn('tabular-nums', used >= max ? 'text-amber-300' : 'text-zinc-400')}>
+                                            {used} / {max}
+                                        </span>
                                     </div>
-                                    <div className="h-2 w-full bg-slate-800 rounded-full overflow-hidden">
-                                        <div
-                                            className={`h-full rounded-full ${used >= max ? 'bg-amber-500' : color}`}
-                                            style={{ width: `${Math.min(100, (used / Math.max(max, 1)) * 100)}%` }}
-                                        />
-                                    </div>
+                                    <Progress value={(used / Math.max(max, 1)) * 100} tone={used >= max ? 'warning' : 'accent'} />
                                 </div>
                             ))}
                         </div>
                     )}
-                </div>
+                </Card>
             )}
 
-            <div>
-                <h2 className="text-base font-bold text-white mb-1">Choisir ou faire évoluer votre plan</h2>
-                <p className="text-xs text-slate-400 mb-4">
-                    Paiement mensuel, sans engagement. Renouveler le même plan ajoute un mois à la date de fin actuelle.
-                </p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {plans.map((plan) => {
-                        const isCurrent = subscription?.plan === plan.id;
-                        const isPro = plan.name === 'pro';
-                        const action = planAction(plan);
-
-                        return (
-                            <div
-                                key={plan.id}
-                                className={`rounded-2xl p-6 flex flex-col justify-between transition-all ${
-                                    isCurrent
-                                        ? 'bg-slate-900/70 border-2 border-emerald-500/50'
-                                        : isPro
-                                            ? 'bg-gradient-to-b from-indigo-950/40 via-slate-900 to-slate-900 border-2 border-indigo-500 shadow-2xl shadow-indigo-500/10'
-                                            : 'bg-slate-900/50 border border-slate-800'
-                                }`}
-                            >
-                                <div>
-                                    <div className="flex justify-between items-start mb-3">
-                                        <h3 className="text-base font-bold text-white tracking-tight">
-                                            {plan.display_name || plan.name}
-                                        </h3>
-                                        {isCurrent ? (
-                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-300 uppercase tracking-wider">
-                                                Votre plan
-                                            </span>
-                                        ) : isPro && (
-                                            <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500 text-white uppercase tracking-wider">
-                                                Populaire
-                                            </span>
-                                        )}
-                                    </div>
-
-                                    <div className="my-5 flex items-baseline gap-1">
-                                        <span className="text-3xl font-extrabold text-white">
-                                            {formatAmount(plan.price_monthly)}
+            <motion.div variants={{ show: { transition: { staggerChildren: 0.08 } } }} className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                {plans.map((plan) => {
+                    const isCurrent = subscription?.plan === plan.id;
+                    const featured = plan.name === 'pro';
+                    const action = actionFor(plan);
+                    return (
+                        <motion.div
+                            key={plan.id}
+                            variants={fadeUp}
+                            whileHover={{ y: -6 }}
+                            transition={spring}
+                            className={cn(
+                                'relative flex flex-col rounded-3xl p-6',
+                                featured ? 'bg-gradient-to-b from-violet-500/20 via-zinc-900/80 to-zinc-900/80 shadow-glow' : 'glass',
+                                isCurrent && !featured && 'ring-1 ring-emerald-400/30'
+                            )}
+                        >
+                            <div className="flex items-center justify-between">
+                                <h3 className="font-semibold text-white">{plan.display_name || plan.name}</h3>
+                                {isCurrent ? <Badge tone="success">Votre plan</Badge> : featured && <Badge tone="accent">Populaire</Badge>}
+                            </div>
+                            <p className="mt-5 flex items-baseline gap-1.5">
+                                <span className="text-4xl font-semibold tracking-tight text-white">{formatAmount(plan.price_monthly)}</span>
+                                <span className="text-sm text-zinc-500">XOF / mois</span>
+                            </p>
+                            <ul className="mt-6 flex-1 space-y-3 text-sm text-zinc-300">
+                                {[`Jusqu'à ${plan.max_users} membres`, `Jusqu'à ${plan.max_projects} projets`, ...(plan.features || [])].map((f: string) => (
+                                    <li key={f} className="flex items-start gap-2.5">
+                                        <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-400/15">
+                                            <Check className="h-2.5 w-2.5 text-emerald-300" strokeWidth={3} />
                                         </span>
-                                        <span className="text-xs text-slate-400 font-medium">XOF / mois</span>
-                                    </div>
-
-                                    <ul className="space-y-2.5 text-xs text-slate-300 mb-6">
-                                        <li className="flex items-center gap-2">
-                                            <Check className="h-4 w-4 text-emerald-400 shrink-0" />
-                                            <span>Jusqu&apos;à <strong>{plan.max_users}</strong> collaborateurs</span>
-                                        </li>
-                                        <li className="flex items-center gap-2">
-                                            <Check className="h-4 w-4 text-emerald-400 shrink-0" />
-                                            <span>Jusqu&apos;à <strong>{plan.max_projects}</strong> projets</span>
-                                        </li>
-                                        {plan.features?.map((f: string, idx: number) => (
-                                            <li key={idx} className="flex items-center gap-2">
-                                                <Check className="h-4 w-4 text-emerald-400 shrink-0" />
-                                                <span>{f}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-
+                                        {f}
+                                    </li>
+                                ))}
+                            </ul>
+                            <div className="mt-8">
                                 {!isAdmin ? (
-                                    <p className="text-[11px] text-center text-slate-500">Seul un administrateur peut changer de plan.</p>
+                                    <p className="text-center text-xs text-zinc-500">Seul un administrateur peut changer de plan.</p>
                                 ) : action.disabled ? (
-                                    <p className="py-2.5 text-[11px] text-center text-slate-500">{action.label}</p>
+                                    <p className="py-2.5 text-center text-xs text-zinc-500">{action.label}</p>
                                 ) : (
-                                    <button
-                                        onClick={() => handleSubscribe(plan.id)}
-                                        disabled={checkoutLoading !== null}
-                                        className={`w-full py-2.5 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-lg disabled:opacity-60 ${
-                                            isPro || isCurrent
-                                                ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/20'
-                                                : 'bg-slate-800 hover:bg-slate-700 text-white'
-                                        }`}
+                                    <Button
+                                        className="w-full"
+                                        variant={featured || isCurrent ? 'primary' : 'secondary'}
+                                        icon={isCurrent ? RefreshCw : undefined}
+                                        loading={checkout === plan.id}
+                                        disabled={checkout !== null}
+                                        onClick={() => subscribe(plan.id)}
                                     >
-                                        {checkoutLoading === plan.id ? (
-                                            <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Redirection vers le paiement...</>
-                                        ) : (
-                                            <>
-                                                {isCurrent && <RefreshCw className="h-3.5 w-3.5" />}
-                                                <span>{action.label}</span>
-                                                {!isCurrent && <ArrowRight className="h-3.5 w-3.5" />}
-                                            </>
-                                        )}
-                                    </button>
+                                        {action.label}
+                                        {!isCurrent && <ArrowRight className="h-4 w-4" />}
+                                    </Button>
                                 )}
                             </div>
-                        );
-                    })}
-                </div>
-            </div>
+                        </motion.div>
+                    );
+                })}
+            </motion.div>
 
             {isAdmin && (
-                <div>
-                    <h2 className="text-base font-bold text-white mb-4 flex items-center gap-2">
-                        <Receipt className="h-4 w-4 text-slate-400" /> Historique des paiements
+                <motion.section variants={fadeUp} className="space-y-4">
+                    <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
+                        <Receipt className="h-4 w-4 text-zinc-500" /> Historique des paiements
                     </h2>
                     {payments.length === 0 ? (
-                        <p className="text-xs text-slate-500 p-6 rounded-xl border border-slate-800 bg-slate-900/40 text-center">
-                            Aucun paiement pour le moment.
-                        </p>
+                        <p className="rounded-2xl border border-dashed border-white/[0.08] py-10 text-center text-sm text-zinc-500">Aucun paiement pour le moment.</p>
                     ) : (
-                        <div className="overflow-x-auto rounded-xl border border-slate-800">
-                            <table className="w-full text-xs">
-                                <thead className="bg-slate-900/80 text-slate-400">
-                                    <tr>
-                                        <th className="text-left font-medium px-4 py-2.5">Date</th>
-                                        <th className="text-left font-medium px-4 py-2.5">Plan</th>
-                                        <th className="text-right font-medium px-4 py-2.5">Montant</th>
-                                        <th className="text-left font-medium px-4 py-2.5">Statut</th>
-                                        <th className="text-left font-medium px-4 py-2.5">Valable jusqu&apos;au</th>
-                                        <th className="text-left font-medium px-4 py-2.5">Référence</th>
+                        <div className="glass overflow-x-auto rounded-2xl">
+                            <table className="w-full text-sm">
+                                <thead className="text-left text-xs uppercase tracking-wider text-zinc-500">
+                                    <tr className="border-b border-white/[0.06]">
+                                        <th className="px-5 py-3 font-medium">Date</th>
+                                        <th className="px-5 py-3 font-medium">Plan</th>
+                                        <th className="px-5 py-3 text-right font-medium">Montant</th>
+                                        <th className="px-5 py-3 font-medium">Statut</th>
+                                        <th className="px-5 py-3 font-medium">Jusqu&apos;au</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-slate-800/80">
+                                <tbody className="divide-y divide-white/[0.04]">
                                     {payments.map((p) => {
-                                        const ps = PAYMENT_LABELS[p.status] || PAYMENT_LABELS.pending;
+                                        const ps = PAYMENT_STATUSES[p.status] || PAYMENT_STATUSES.pending;
                                         return (
-                                            <tr key={p.transaction_id} className="text-slate-300">
-                                                <td className="px-4 py-2.5 whitespace-nowrap">{formatDate(p.created_at)}</td>
-                                                <td className="px-4 py-2.5">{p.plan_name}</td>
-                                                <td className="px-4 py-2.5 text-right whitespace-nowrap">{formatAmount(p.amount)} {p.currency}</td>
-                                                <td className={`px-4 py-2.5 font-semibold ${ps.className}`}>{ps.label}</td>
-                                                <td className="px-4 py-2.5 whitespace-nowrap">{formatDate(p.period_end)}</td>
-                                                <td className="px-4 py-2.5 font-mono text-[11px] text-slate-500">{p.transaction_id}</td>
+                                            <tr key={p.transaction_id} className="text-zinc-300" title={p.transaction_id}>
+                                                <td className="whitespace-nowrap px-5 py-3">{formatDate(p.created_at)}</td>
+                                                <td className="px-5 py-3">{p.plan_name}</td>
+                                                <td className="whitespace-nowrap px-5 py-3 text-right tabular-nums">
+                                                    {formatAmount(p.amount)} {p.currency}
+                                                </td>
+                                                <td className="px-5 py-3">
+                                                    <Badge tone={ps.tone}>{ps.label}</Badge>
+                                                </td>
+                                                <td className="whitespace-nowrap px-5 py-3">{formatDate(p.period_end)}</td>
                                             </tr>
                                         );
                                     })}
@@ -371,8 +271,8 @@ export default function BillingPage() {
                             </table>
                         </div>
                     )}
-                </div>
+                </motion.section>
             )}
-        </div>
+        </Page>
     );
 }

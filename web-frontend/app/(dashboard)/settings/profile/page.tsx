@@ -1,222 +1,123 @@
 'use client';
 
 import React, { useState } from 'react';
+import { KeyRound, UserCircle } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { authAPI } from '@/lib/api';
-import {
-    UserCircle,
-    KeyRound,
-    CheckCircle2,
-    AlertCircle
-} from 'lucide-react';
+import { ROLES } from '@/lib/labels';
+import { errorMessage } from '@/lib/utils';
+import { Avatar, Badge, Card, Page, PageHeader } from '@/components/ui/kit';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/field';
+import { useToast } from '@/components/ui/toast';
 
 export default function ProfilePage() {
     const { user, refreshProfile } = useAuth();
+    const toast = useToast();
 
-    const [firstName, setFirstName] = useState(user?.first_name || '');
-    const [lastName, setLastName] = useState(user?.last_name || '');
-    const [phone, setPhone] = useState(user?.phone || '');
-    const [profileSaving, setProfileSaving] = useState(false);
-    const [profileMsg, setProfileMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+    const [profile, setProfile] = useState({ first_name: user?.first_name || '', last_name: user?.last_name || '', phone: user?.phone || '' });
+    const [savingProfile, setSavingProfile] = useState(false);
+    const [passwords, setPasswords] = useState({ old: '', new: '', confirm: '' });
+    const [savingPassword, setSavingPassword] = useState(false);
 
-    // Password State
-    const [oldPassword, setOldPassword] = useState('');
-    const [newPassword, setNewPassword] = useState('');
-    const [confirmPassword, setConfirmPassword] = useState('');
-    const [passwordSaving, setPasswordSaving] = useState(false);
-    const [passwordMsg, setPasswordMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
-
-    const handleUpdateProfile = async (e: React.FormEvent) => {
+    const saveProfile = async (e: React.FormEvent) => {
         e.preventDefault();
-        setProfileSaving(true);
-        setProfileMsg(null);
+        setSavingProfile(true);
         try {
-            await authAPI.updateProfile({
-                first_name: firstName,
-                last_name: lastName,
-                phone: phone,
-            });
+            await authAPI.updateProfile(profile);
             await refreshProfile();
-            setProfileMsg({ type: 'success', text: 'Profil mis à jour avec succès.' });
-        } catch (err: any) {
-            setProfileMsg({ type: 'error', text: err.response?.data?.detail || 'Erreur lors de la mise à jour.' });
+            toast.success('Profil enregistré.');
+        } catch (err) {
+            toast.error(errorMessage(err, "Le profil n'a pas pu être enregistré."));
         } finally {
-            setProfileSaving(false);
+            setSavingProfile(false);
         }
     };
 
-    const handleChangePassword = async (e: React.FormEvent) => {
+    const savePassword = async (e: React.FormEvent) => {
         e.preventDefault();
-        setPasswordMsg(null);
-
-        if (newPassword !== confirmPassword) {
-            setPasswordMsg({ type: 'error', text: 'Les deux mots de passe ne correspondent pas.' });
+        if (passwords.new !== passwords.confirm) {
+            toast.error('Les deux mots de passe ne correspondent pas.');
             return;
         }
-
-        setPasswordSaving(true);
+        setSavingPassword(true);
         try {
-            await authAPI.changePassword({
-                old_password: oldPassword,
-                new_password: newPassword,
-            });
-            setPasswordMsg({ type: 'success', text: 'Mot de passe modifié avec succès.' });
-            setOldPassword('');
-            setNewPassword('');
-            setConfirmPassword('');
-        } catch (err: any) {
-            const data = err.response?.data;
-            const errorMsg = data?.old_password?.[0] || data?.new_password?.[0] || data?.detail || 'Erreur lors du changement de mot de passe.';
-            setPasswordMsg({ type: 'error', text: errorMsg });
+            await authAPI.changePassword({ old_password: passwords.old, new_password: passwords.new });
+            setPasswords({ old: '', new: '', confirm: '' });
+            toast.success('Mot de passe modifié.');
+        } catch (err) {
+            toast.error(errorMessage(err, "Le mot de passe n'a pas pu être modifié."));
         } finally {
-            setPasswordSaving(false);
+            setSavingPassword(false);
         }
     };
 
     return (
-        <div className="max-w-3xl mx-auto space-y-8">
-            <div>
-                <h1 className="text-xl font-bold text-white tracking-tight">Mon Profil</h1>
-                <p className="text-xs text-slate-400 mt-0.5">
-                    Modifiez vos informations personnelles et sécurisez votre compte.
-                </p>
-            </div>
+        <Page className="max-w-3xl">
+            <PageHeader title="Mon profil" subtitle="Vos informations et la sécurité de votre compte." />
 
-            {/* Profile Info Form */}
-            <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 space-y-6">
-                <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-                    <UserCircle className="h-5 w-5 text-indigo-400" />
-                    <h2 className="text-sm font-bold text-white">Informations Personnelles</h2>
+            <Card className="flex items-center gap-4 p-6">
+                <Avatar name={user?.full_name} size="lg" />
+                <div className="min-w-0">
+                    <p className="truncate text-lg font-semibold text-white">{user?.full_name}</p>
+                    <p className="truncate text-sm text-zinc-400">{user?.email}</p>
                 </div>
-
-                {profileMsg && (
-                    <div className={`p-3 rounded-lg text-xs flex items-center gap-2 ${
-                        profileMsg.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                    }`}>
-                        {profileMsg.type === 'success' ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
-                        <span>{profileMsg.text}</span>
-                    </div>
+                {user && (
+                    <Badge tone={ROLES[user.role]?.tone} className="ml-auto">
+                        {ROLES[user.role]?.label}
+                    </Badge>
                 )}
+            </Card>
 
-                <form onSubmit={handleUpdateProfile} className="space-y-4 text-xs">
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-slate-400 font-medium mb-1">Prénom</label>
-                            <input
-                                type="text"
-                                value={firstName}
-                                onChange={(e) => setFirstName(e.target.value)}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-slate-400 font-medium mb-1">Nom</label>
-                            <input
-                                type="text"
-                                value={lastName}
-                                onChange={(e) => setLastName(e.target.value)}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
-                            />
-                        </div>
+            <Card className="p-6">
+                <h2 className="flex items-center gap-2 font-semibold text-white">
+                    <UserCircle className="h-4 w-4 text-violet-300" /> Informations
+                </h2>
+                <form onSubmit={saveProfile} className="mt-5 space-y-4">
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <Input label="Prénom" value={profile.first_name} onChange={(e) => setProfile({ ...profile, first_name: e.target.value })} />
+                        <Input label="Nom" value={profile.last_name} onChange={(e) => setProfile({ ...profile, last_name: e.target.value })} />
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-slate-400 font-medium mb-1">Email</label>
-                            <input
-                                type="email"
-                                disabled
-                                value={user?.email || ''}
-                                className="w-full bg-slate-950/60 border border-slate-800/60 rounded-lg p-2.5 text-slate-500 cursor-not-allowed"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-slate-400 font-medium mb-1">Téléphone</label>
-                            <input
-                                type="tel"
-                                value={phone}
-                                onChange={(e) => setPhone(e.target.value)}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex justify-end pt-2">
-                        <button
-                            type="submit"
-                            disabled={profileSaving}
-                            className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold shadow transition disabled:opacity-50"
-                        >
-                            {profileSaving ? 'Enregistrement...' : 'Mettre à jour le profil'}
-                        </button>
+                    <Input label="Téléphone" type="tel" value={profile.phone} onChange={(e) => setProfile({ ...profile, phone: e.target.value })} />
+                    <div className="flex justify-end">
+                        <Button type="submit" loading={savingProfile}>
+                            Enregistrer
+                        </Button>
                     </div>
                 </form>
-            </div>
+            </Card>
 
-            {/* Password Form */}
-            <div className="p-6 rounded-2xl bg-slate-900/50 border border-slate-800 space-y-6">
-                <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-                    <KeyRound className="h-5 w-5 text-indigo-400" />
-                    <h2 className="text-sm font-bold text-white">Changer de Mot de Passe</h2>
-                </div>
-
-                {passwordMsg && (
-                    <div className={`p-3 rounded-lg text-xs flex items-center gap-2 ${
-                        passwordMsg.type === 'success' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                    }`}>
-                        {passwordMsg.type === 'success' ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <AlertCircle className="h-4 w-4 shrink-0" />}
-                        <span>{passwordMsg.text}</span>
-                    </div>
-                )}
-
-                <form onSubmit={handleChangePassword} className="space-y-4 text-xs">
-                    <div>
-                        <label className="block text-slate-400 font-medium mb-1">Mot de passe actuel</label>
-                        <input
+            <Card className="p-6">
+                <h2 className="flex items-center gap-2 font-semibold text-white">
+                    <KeyRound className="h-4 w-4 text-violet-300" /> Mot de passe
+                </h2>
+                <form onSubmit={savePassword} className="mt-5 space-y-4">
+                    <Input label="Mot de passe actuel" type="password" required value={passwords.old} onChange={(e) => setPasswords({ ...passwords, old: e.target.value })} />
+                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                        <Input
+                            label="Nouveau mot de passe"
                             type="password"
                             required
-                            value={oldPassword}
-                            onChange={(e) => setOldPassword(e.target.value)}
-                            className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
+                            minLength={8}
+                            value={passwords.new}
+                            onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
+                        />
+                        <Input
+                            label="Confirmation"
+                            type="password"
+                            required
+                            minLength={8}
+                            value={passwords.confirm}
+                            onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
                         />
                     </div>
-
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-slate-400 font-medium mb-1">Nouveau mot de passe</label>
-                            <input
-                                type="password"
-                                required
-                                minLength={8}
-                                value={newPassword}
-                                onChange={(e) => setNewPassword(e.target.value)}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
-                            />
-                        </div>
-                        <div>
-                            <label className="block text-slate-400 font-medium mb-1">Confirmer le mot de passe</label>
-                            <input
-                                type="password"
-                                required
-                                minLength={8}
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
-                                className="w-full bg-slate-950 border border-slate-800 rounded-lg p-2.5 text-slate-200 focus:outline-none focus:border-indigo-500"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="flex justify-end pt-2">
-                        <button
-                            type="submit"
-                            disabled={passwordSaving}
-                            className="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-semibold transition disabled:opacity-50"
-                        >
-                            {passwordSaving ? 'Modification...' : 'Modifier le mot de passe'}
-                        </button>
+                    <div className="flex justify-end">
+                        <Button type="submit" variant="secondary" loading={savingPassword}>
+                            Changer le mot de passe
+                        </Button>
                     </div>
                 </form>
-            </div>
-        </div>
+            </Card>
+        </Page>
     );
 }
