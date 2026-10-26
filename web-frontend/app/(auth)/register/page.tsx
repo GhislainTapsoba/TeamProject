@@ -11,6 +11,7 @@ import AuthShell from '@/components/AuthShell';
 import { Button, ButtonLink } from '@/components/ui/button';
 import { Input, PasswordInput } from '@/components/ui/field';
 import { Notice } from '@/components/ui/kit';
+import Turnstile, { turnstileEnabled } from '@/components/Turnstile';
 
 const PLATFORM_DOMAIN = 'deep-technologies.com';
 
@@ -33,6 +34,7 @@ export default function RegisterPage() {
     const [subdomainEdited, setSubdomainEdited] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
+    const [captcha, setCaptcha] = useState('');
     const [created, setCreated] = useState<any>(null);
     const [onTenantHost, setOnTenantHost] = useState<boolean | null>(null);
 
@@ -49,6 +51,7 @@ export default function RegisterPage() {
                 admin_name: form.adminName,
                 admin_email: form.email,
                 admin_password: form.password,
+                turnstile_token: captcha,
             });
             setCreated(res.data);
         } catch (err) {
@@ -156,7 +159,8 @@ export default function RegisterPage() {
                     onChange={(e) => setForm({ ...form, password: e.target.value })}
                     placeholder="8 caractères minimum"
                 />
-                <Button type="submit" size="lg" loading={loading} className="w-full">
+                <Turnstile onToken={setCaptcha} />
+                <Button type="submit" size="lg" loading={loading} disabled={turnstileEnabled && !captcha} className="w-full">
                     Créer mon espace
                     {!loading && <ArrowRight className="h-4 w-4" />}
                 </Button>

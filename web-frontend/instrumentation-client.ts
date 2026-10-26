@@ -11,21 +11,18 @@ Sentry.init({
   integrations: [Sentry.replayIntegration()],
 
   // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
-  tracesSampleRate: 1,
+  tracesSampleRate: 0.1,
 
-  // Define how likely Replay events are sampled.
-  // This sets the sample rate to be 10%. You may want this to be 100% while
-  // in development and sample at a lower rate in production
-  replaysSessionSampleRate: 0.1,
+  // Les sessions ne sont jamais enregistrées en temps normal, seulement quand une erreur survient
+  replaysSessionSampleRate: 0,
 
   // Define how likely Replay events are sampled when an error occurs.
   replaysOnErrorSampleRate: 1.0,
 
   dataCollection: {
-    // To disable sending user data and HTTP bodies, uncomment the lines below. For more info visit:
-    // https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#dataCollection
-    // userInfo: false,
-    // httpBodies: [],
+    // Pas de données utilisateur ni de corps de requêtes envoyés à Sentry (https://docs.sentry.io/platforms/javascript/guides/nextjs/configuration/options/#dataCollection)
+    userInfo: false,
+    httpBodies: [],
   },
 });
 

@@ -15,7 +15,8 @@ dotenv.load_dotenv(BASE_DIR.parent / ".env")
 
 ensure_no_public_secret_prefixes()
 
-DEBUG = os.getenv("DEBUG", "True").lower() in ("true", "1", "t")
+# Sécurisé par défaut : le mode développement doit être demandé explicitement (DEBUG=True en local)
+DEBUG = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 if not SECRET_KEY:
@@ -24,7 +25,9 @@ if not SECRET_KEY:
     else:
         raise ValueError("SECRET_KEY environment variable is required in production")
 
-ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", "*").split(",") if h.strip()]
+# "backend" : nom du service Docker, utilisé par les appels internes
+_DEFAULT_HOSTS = "*" if DEBUG else ".deep-technologies.com,.localhost,localhost,backend"
+ALLOWED_HOSTS = [h.strip() for h in os.getenv("ALLOWED_HOSTS", _DEFAULT_HOSTS).split(",") if h.strip()]
 
 EMAIL_VERIFICATION_REQUIRED = os.getenv("EMAIL_VERIFICATION_REQUIRED", "True").lower() in ("true", "1", "yes", "on")
 SENTRY_DSN = os.getenv("SENTRY_DSN", "")
@@ -51,7 +54,8 @@ if SENTRY_DSN:
 
     sentry_sdk.init(
         dsn=SENTRY_DSN,
-        send_default_pii=True,
+        # Pas de données personnelles (IP, cookies, utilisateur) envoyées à Sentry
+        send_default_pii=False,
         traces_sample_rate=0.2,
     )
 

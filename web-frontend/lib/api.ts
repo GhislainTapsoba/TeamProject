@@ -76,7 +76,7 @@ export const authAPI = {
 
 // Tenants API
 export const tenantsAPI = {
-    register: (data: { organization_name: string; subdomain: string; admin_email: string; admin_name: string; admin_password: string }) =>
+    register: (data: { organization_name: string; subdomain: string; admin_email: string; admin_name: string; admin_password: string; turnstile_token?: string }) =>
         api.post('/tenants/register/', data),
     getCurrent: () => api.get('/tenants/current/'),
 };

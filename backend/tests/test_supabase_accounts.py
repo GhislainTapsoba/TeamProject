@@ -1,6 +1,7 @@
 import uuid
 from unittest.mock import patch
 
+from django.core.cache import cache
 from django.test import TestCase, override_settings
 from rest_framework.test import APIRequestFactory, force_authenticate
 
@@ -23,6 +24,8 @@ REGISTRATION = {
 class TenantRegistrationTestCase(TestCase):
     def setUp(self):
         self.factory = APIRequestFactory()
+        # La limite d'inscriptions par heure est stockée dans le cache, partagé entre les tests
+        cache.clear()
 
     def _register(self, **extra):
         request = self.factory.post("/api/tenants/register/", REGISTRATION, format="json", **extra)
@@ -40,6 +43,8 @@ class TenantRegistrationTestCase(TestCase):
         admin = User.objects.get(email="admin@gamma.com")
         self.assertEqual(admin.supabase_id, supabase_id)
         self.assertEqual(admin.get_tenant_role(client), "admin")
+        # Admin de son organisation, mais pas de l'administration Django (comptes partagés entre organisations)
+        self.assertFalse(admin.is_staff)
         self.assertEqual(response.data["login_url"], f"https://{response.data['tenant']['domain']}/login")
         create_auth_user.assert_called_once()
 
@@ -59,6 +64,30 @@ class TenantRegistrationTestCase(TestCase):
         self.assertEqual(response.status_code, 503)
         self.assertFalse(Client.objects.filter(schema_name="gamma").exists())
         self.assertFalse(User.objects.filter(email="admin@gamma.com").exists())
+
+    @override_settings(TURNSTILE_SECRET_KEY="secret-de-test")
+    @patch("apps.core.turnstile.requests.post")
+    @patch("apps.tenants.views.supabase.create_auth_user")
+    def test_registration_requires_turnstile_when_configured(self, create_auth_user, siteverify):
+        create_auth_user.return_value = str(uuid.uuid4())
+
+        missing = self._register()
+        siteverify.return_value.json.return_value = {"success": False}
+        rejected = self.factory.post(
+            "/api/tenants/register/", {**REGISTRATION, "turnstile_token": "faux"}, format="json"
+        )
+        rejected = TenantRegistrationView.as_view()(rejected)
+        siteverify.return_value.json.return_value = {"success": True}
+        accepted = self.factory.post(
+            "/api/tenants/register/", {**REGISTRATION, "turnstile_token": "bon"}, format="json"
+        )
+        accepted = TenantRegistrationView.as_view()(accepted)
+
+        self.assertEqual(missing.status_code, 400)
+        self.assertEqual(rejected.status_code, 400)
+        self.assertEqual(accepted.status_code, 201)
+        self.assertEqual(siteverify.call_args.kwargs["data"]["response"], "bon")
+        create_auth_user.assert_called_once()
 
     @patch("apps.tenants.views.supabase.create_auth_user")
     def test_registration_rejects_existing_email(self, create_auth_user):

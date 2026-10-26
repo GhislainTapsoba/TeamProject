@@ -12,7 +12,7 @@ from rest_framework.views import APIView
 from apps.accounts.models import TenantMembership, User
 from apps.billing.defaults import ensure_default_plans
 from apps.billing.models import Plan, Subscription
-from apps.core import supabase
+from apps.core import supabase, turnstile
 from apps.core.throttling import RegistrationRateThrottle
 
 from .models import Client, Domain
@@ -30,6 +30,12 @@ class TenantRegistrationView(APIView):
             return Response(
                 {"error": "La création d'une organisation n'est disponible que depuis le site principal."},
                 status=status.HTTP_403_FORBIDDEN,
+            )
+
+        if not turnstile.verify(request.data.get("turnstile_token"), request.META.get("REMOTE_ADDR")):
+            return Response(
+                {"error": "La vérification anti-robot a échoué. Rechargez la page et réessayez."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         serializer = TenantRegistrationSerializer(data=request.data)
@@ -126,7 +132,6 @@ class TenantRegistrationView(APIView):
                     last_name=last_name,
                     password=password,
                     role="admin",
-                    is_staff=True,
                     supabase_id=supabase_id,
                 )
                 TenantMembership.objects.create(user=user, tenant=client, role="admin", is_active=True)

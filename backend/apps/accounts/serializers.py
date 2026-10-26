@@ -33,8 +33,12 @@ class UserSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
-        # Le role effectif est celui de l'appartenance au tenant courant
-        tenant_role = instance.get_tenant_role()
+        # Le role effectif est celui de l'appartenance au tenant courant. Mémorisé pour la réponse :
+        # une liste de projets répète souvent le même responsable
+        roles = self.context.setdefault("_tenant_roles", {})
+        if instance.pk not in roles:
+            roles[instance.pk] = instance.get_tenant_role()
+        tenant_role = roles[instance.pk]
         if tenant_role:
             data["role"] = tenant_role
         return data

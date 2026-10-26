@@ -60,7 +60,8 @@ Complète `.env` à la racine. Les variables indispensables :
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → Project Settings → API → clé anon / publishable |
 | `SUPABASE_SERVICE_ROLE_KEY` | Supabase → Project Settings → API → clé service_role / secret (**secrète**) |
 | `SUPABASE_JWT_SECRET` | Seulement pour les anciens projets qui signent les jetons en HS256 |
-| `SECRET_KEY` | Clé Django aléatoire |
+| `DEBUG` | `False` par défaut (production). Mettre `True` uniquement en local. |
+| `SECRET_KEY` | Clé Django aléatoire (obligatoire hors `DEBUG`) |
 | `ENCRYPTION_KEY` | Clé Fernet, utilisée pour chiffrer les clés Mailjet des organisations |
 | `POSTGRES_*`, `REDIS_URL` | Valeurs par défaut de `backend/.env.example` |
 
@@ -99,6 +100,18 @@ Passe toujours par Nginx (port 80) : c'est lui qui transmet le sous-domaine de l
 2. Connecte-toi sur http://demo.localhost/login avec l'email et le mot de passe choisis.
 3. Crée un projet et des tâches, puis invite des membres depuis la page **Équipe**.
 
+## Mise en production : liste de contrôle sécurité
+
+- `DEBUG` absent ou `False`, avec `SECRET_KEY` et `ENCRYPTION_KEY` renseignées (le serveur refuse de démarrer sans). Garder `ENCRYPTION_KEY` en lieu sûr : elle chiffre les clés Mailjet des organisations.
+- `BILLING_PROVIDER=cinetpay` (le paiement simulé est refusé hors `DEBUG`).
+- Supabase → Authentication :
+  - **Sign In / Providers → Email** : désactiver « Allow new users to sign up » (les comptes sont créés par le backend). Ne pas désactiver le fournisseur Email lui-même : il sert à la connexion.
+  - **Password** : longueur minimale 8, avec lettres et chiffres.
+  - **URL Configuration → Redirect URLs** : ajouter `https://*.deep-technologies.com/**`.
+- Cloudflare Turnstile : créer un widget et renseigner `TURNSTILE_SITE_KEY` et `TURNSTILE_SECRET_KEY` (les deux ensemble).
+- HTTPS : Nginx n'écoute qu'en HTTP. Si le TLS est terminé en amont (Cloudflare, load balancer), adapter `X-Forwarded-Proto` dans `nginx/teamproject.conf` (il vaut aujourd'hui `$scheme`), sinon Django redirige en boucle vers HTTPS.
+- Next.js : passer en 15.5.28 ou plus, puis retirer `images: { unoptimized: true }` de `web-frontend/next.config.ts`.
+
 ## Tout tester en local, sans compte ni argent réel
 
 Supabase peut tourner sur ta machine, et les paiements peuvent être simulés.
@@ -111,6 +124,7 @@ npx supabase status         # affiche l'URL, la clé anon, la clé service_role 
 Dans `.env` :
 
 ```env
+DEBUG=True
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<ANON_KEY>
 # Le backend tourne dans Docker : il joint Supabase via l'hôte, mais les jetons sont émis pour 127.0.0.1

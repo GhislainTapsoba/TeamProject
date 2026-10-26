@@ -57,8 +57,8 @@ services:
         gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3 --timeout 120
       "
     environment:
-      DEBUG: ${DEBUG:-True}
-      SECRET_KEY: ${SECRET_KEY:-django-insecure-dev-teamproject-local-secret-key-32chars}
+      DEBUG: ${DEBUG:-False}
+      SECRET_KEY: ${SECRET_KEY:-}
       POSTGRES_DB: ${POSTGRES_DB:-teamproject}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -72,7 +72,7 @@ services:
       BILLING_TRIAL_DAYS: ${BILLING_TRIAL_DAYS:-14}
       CINETPAY_API_KEY: ${CINETPAY_API_KEY:-}
       CINETPAY_SITE_ID: ${CINETPAY_SITE_ID:-}
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-v1rZk5g7qHk_7D4B6T9u8-v2h1j3k4l5m6n7o8p9q0r=}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
       FRONTEND_URL: ${FRONTEND_URL:-https://teamproject.deep-technologies.com}
       PLATFORM_DOMAIN: ${PLATFORM_DOMAIN:-deep-technologies.com}
       SUPABASE_URL: ${SUPABASE_URL:-${NEXT_PUBLIC_SUPABASE_URL:-}}
@@ -82,6 +82,7 @@ services:
       SUPABASE_JWT_ISSUER: ${SUPABASE_JWT_ISSUER:-}
       PLATFORM_IP_ALLOWLIST: ${PLATFORM_IP_ALLOWLIST:-}
       SENTRY_DSN: ${SENTRY_DSN:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
     # Permet de joindre un Supabase local (supabase start) depuis le conteneur
     extra_hosts:
       - "host.docker.internal:host-gateway"
@@ -103,8 +104,8 @@ services:
     command: celery -A config worker -l info
     environment:
       BILLING_GRACE_DAYS: ${BILLING_GRACE_DAYS:-7}
-      DEBUG: ${DEBUG:-True}                                                  # AJOUTÉ
-      SECRET_KEY: ${SECRET_KEY:-django-insecure-dev-teamproject-local-secret-key-32chars}  # AJOUTÉ
+      DEBUG: ${DEBUG:-False}
+      SECRET_KEY: ${SECRET_KEY:-}
       POSTGRES_DB: ${POSTGRES_DB:-teamproject}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -112,7 +113,7 @@ services:
       POSTGRES_PORT: 5432
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-v1rZk5g7qHk_7D4B6T9u8-v2h1j3k4l5m6n7o8p9q0r=}  # CORRIGÉ : valeur par défaut alignée sur backend
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
     depends_on:
       backend:
         condition: service_started
@@ -129,8 +130,8 @@ services:
     command: celery -A config beat -l info
     environment:
       BILLING_GRACE_DAYS: ${BILLING_GRACE_DAYS:-7}
-      DEBUG: ${DEBUG:-True}                                                  # AJOUTÉ
-      SECRET_KEY: ${SECRET_KEY:-django-insecure-dev-teamproject-local-secret-key-32chars}  # AJOUTÉ
+      DEBUG: ${DEBUG:-False}
+      SECRET_KEY: ${SECRET_KEY:-}
       POSTGRES_DB: ${POSTGRES_DB:-teamproject}
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
@@ -138,7 +139,7 @@ services:
       POSTGRES_PORT: 5432
       CELERY_BROKER_URL: redis://redis:6379/0
       CELERY_RESULT_BACKEND: redis://redis:6379/0
-      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-v1rZk5g7qHk_7D4B6T9u8-v2h1j3k4l5m6n7o8p9q0r=}  # AJOUTÉ
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-}
     depends_on:
       backend:
         condition: service_started
@@ -155,6 +156,7 @@ services:
         - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://teamproject.deep-technologies.com/api}
         - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL:-}
         - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY:-}
+        - NEXT_PUBLIC_TURNSTILE_SITE_KEY=${TURNSTILE_SITE_KEY:-}
     container_name: teamproject-frontend
     environment:
       NODE_ENV: production

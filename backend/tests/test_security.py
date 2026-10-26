@@ -19,6 +19,25 @@ class SecurityPolicyTestCase(TestCase):
         self.assertIn("auth", settings.REST_FRAMEWORK.get("DEFAULT_THROTTLE_RATES", {}))
         self.assertIn("registration", settings.REST_FRAMEWORK.get("DEFAULT_THROTTLE_RATES", {}))
 
+    def test_production_refuses_to_start_without_secrets(self):
+        """En production (DEBUG=False), le serveur refuse de démarrer sans SECRET_KEY."""
+        import subprocess
+        import sys
+
+        # Valeurs explicites : le .env local (DEBUG=True) ne les écrase pas
+        env = {**os.environ, "DEBUG": "False", "SECRET_KEY": "", "ENCRYPTION_KEY": ""}
+        env["DJANGO_SETTINGS_MODULE"] = "config.settings"
+        result = subprocess.run(
+            [sys.executable, "-c", "import django; django.setup()"],
+            cwd=settings.BASE_DIR,
+            env=env,
+            capture_output=True,
+            text=True,
+        )
+
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("SECRET_KEY environment variable is required in production", result.stderr)
+
     def test_user_create_rejects_weak_password(self):
         """Verify that UserCreateSerializer rejects weak passwords."""
         serializer = UserCreateSerializer(
