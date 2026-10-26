@@ -13,13 +13,23 @@ import { Input, PasswordInput } from '@/components/ui/field';
 import { Notice } from '@/components/ui/kit';
 import Turnstile, { turnstileEnabled } from '@/components/Turnstile';
 
+// Les organisations ont chacune leur sous-domaine ; l'application principale a le sien
+// (deep-technologies.com tout court est le site vitrine de l'entreprise, pas l'application)
 const PLATFORM_DOMAIN = 'deep-technologies.com';
+const MAIN_APP_HOST = 'teamproject.deep-technologies.com';
 
-// La création d'organisation n'est possible que depuis le domaine principal
+const isLocal = () => window.location.hostname === 'localhost' || window.location.hostname.endsWith('.localhost');
+
+// La création d'organisation n'est possible que depuis le site principal de l'application
 function isTenantHost() {
     const host = window.location.hostname;
-    if (host === 'localhost' || host === PLATFORM_DOMAIN || host === 'www.' + PLATFORM_DOMAIN) return false;
+    if (host === 'localhost' || host === MAIN_APP_HOST) return false;
     return host.endsWith('.localhost') || host.endsWith('.' + PLATFORM_DOMAIN);
+}
+
+function mainRegisterUrl() {
+    const { protocol, port } = window.location;
+    return isLocal() ? `${protocol}//localhost${port ? `:${port}` : ''}/register` : `https://${MAIN_APP_HOST}/register`;
 }
 
 const toSubdomain = (value: string) =>
@@ -68,7 +78,7 @@ export default function RegisterPage() {
             <AuthShell title="Vous êtes dans une organisation" subtitle="Pour en créer une nouvelle, rendez-vous sur le site principal.">
                 <div className="space-y-3">
                     <a
-                        href={`https://${PLATFORM_DOMAIN}/register`}
+                        href={mainRegisterUrl()}
                         className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-brand-600 font-medium text-white transition hover:bg-brand-500"
                     >
                         Aller au site principal <ArrowRight className="h-4 w-4" />
@@ -144,7 +154,7 @@ export default function RegisterPage() {
                             placeholder="acme"
                             className="min-w-0 flex-1 bg-transparent px-3.5 text-sm text-ink placeholder:text-ink-soft focus:outline-none"
                         />
-                        <span className="pr-3.5 text-sm text-ink-soft">.{PLATFORM_DOMAIN}</span>
+                        <span className="pr-3.5 text-sm text-ink-soft">.{isLocal() ? 'localhost' : PLATFORM_DOMAIN}</span>
                     </span>
                 </label>
                 <Input label="Votre nom" icon={User} required autoComplete="name" value={form.adminName} onChange={(e) => setForm({ ...form, adminName: e.target.value })} placeholder="Awa Ouédraogo" />

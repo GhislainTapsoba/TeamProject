@@ -104,6 +104,8 @@ Passe toujours par Nginx (port 80) : c'est lui qui transmet le sous-domaine de l
 
 - `DEBUG` absent ou `False`, avec `SECRET_KEY` et `ENCRYPTION_KEY` renseignées (le serveur refuse de démarrer sans). Garder `ENCRYPTION_KEY` en lieu sûr : elle chiffre les clés Mailjet des organisations.
 - `BILLING_PROVIDER=cinetpay` (le paiement simulé est refusé hors `DEBUG`).
+- Le site principal de l'application est `teamproject.deep-technologies.com` (`deep-technologies.com` seul est le site vitrine). Il doit être rattaché au schéma public, sinon il répond 404 :
+  `python manage.py shell -c "from apps.tenants.models import Client, Domain; Domain.objects.get_or_create(domain='teamproject.deep-technologies.com', tenant=Client.objects.get(schema_name='public'), defaults={'is_primary': True})"`
 - Supabase → Authentication :
   - **Sign In / Providers → Email** : désactiver « Allow new users to sign up » (les comptes sont créés par le backend). Ne pas désactiver le fournisseur Email lui-même : il sert à la connexion.
   - **Password** : longueur minimale 8, avec lettres et chiffres.
