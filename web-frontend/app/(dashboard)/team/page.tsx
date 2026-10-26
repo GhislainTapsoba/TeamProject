@@ -116,27 +116,27 @@ export default function TeamPage() {
                                     <div className="flex items-center gap-3">
                                         <Avatar name={m.full_name} size="lg" />
                                         <div className="min-w-0 flex-1">
-                                            <p className="truncate text-base font-medium text-white">
+                                            <p className="truncate text-base font-medium text-ink">
                                                 {m.full_name}
-                                                {isMe && <span className="ml-1.5 text-sm font-normal text-zinc-400">(vous)</span>}
+                                                {isMe && <span className="ml-1.5 text-sm font-normal text-ink-soft">(vous)</span>}
                                             </p>
                                             <Badge tone={ROLES[m.role]?.tone} className="mt-1">
                                                 {ROLES[m.role]?.label || m.role}
                                             </Badge>
                                         </div>
                                     </div>
-                                    <div className="mt-4 flex-1 space-y-1.5 border-t border-white/[0.06] pt-4 text-sm text-zinc-300">
-                                        <a href={`mailto:${m.email}`} className="flex items-center gap-2 truncate transition hover:text-brand-300">
-                                            <Mail className="h-4 w-4 shrink-0 text-zinc-400" />
+                                    <div className="mt-4 flex-1 space-y-1.5 border-t border-line pt-4 text-sm text-ink-muted">
+                                        <a href={`mailto:${m.email}`} className="flex items-center gap-2 truncate transition hover:text-brand-600">
+                                            <Mail className="h-4 w-4 shrink-0 text-ink-soft" />
                                             {m.email}
                                         </a>
                                         {m.phone && (
                                             <p className="flex items-center gap-2">
-                                                <Phone className="h-4 w-4 text-zinc-400" />
+                                                <Phone className="h-4 w-4 text-ink-soft" />
                                                 {m.phone}
                                             </p>
                                         )}
-                                        <p className="pt-1 text-zinc-400">Arrivé·e le {formatDate(m.date_joined, { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                        <p className="pt-1 text-ink-soft">Arrivé·e le {formatDate(m.date_joined, { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                                     </div>
                                     {isAdmin && !isMe && (
                                         <div className="mt-4 flex gap-2">

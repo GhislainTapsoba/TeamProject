@@ -88,9 +88,9 @@ export default function RegisterPage() {
                         transition={{ ...spring, delay: 0.2 }}
                         className="flex h-16 w-16 items-center justify-center rounded-2xl bg-emerald-400/15 ring-1 ring-emerald-400/30"
                     >
-                        <Check className="h-8 w-8 text-emerald-300" strokeWidth={2.5} />
+                        <Check className="h-8 w-8 text-emerald-600" strokeWidth={2.5} />
                     </motion.div>
-                    <p className="rounded-xl border border-white/[0.06] bg-black/30 px-4 py-3 font-mono text-sm text-brand-200">{created.tenant?.domain}</p>
+                    <p className="rounded-xl border border-line bg-white px-4 py-3 font-mono text-sm text-brand-800">{created.tenant?.domain}</p>
                     <a
                         href={created.login_url || `https://${created.tenant?.domain}/login`}
                         className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-b from-brand-500 to-brand-600 font-medium text-white shadow-glow transition hover:from-brand-400"
@@ -109,7 +109,7 @@ export default function RegisterPage() {
             footer={
                 <>
                     Déjà une organisation ?{' '}
-                    <Link href="/login" className="font-medium text-brand-300 hover:text-brand-200">
+                    <Link href="/login" className="font-medium text-brand-600 hover:text-brand-800">
                         Se connecter
                     </Link>
                 </>
@@ -129,8 +129,8 @@ export default function RegisterPage() {
                     placeholder="Acme"
                 />
                 <label className="block space-y-1.5">
-                    <span className="block text-[13px] font-medium text-zinc-400">Adresse de votre espace</span>
-                    <span className="flex h-11 items-center overflow-hidden rounded-xl border border-white/[0.08] bg-black/30 transition focus-within:border-brand-400/60 focus-within:ring-4 focus-within:ring-brand-500/10">
+                    <span className="block text-[13px] font-medium text-ink-soft">Adresse de votre espace</span>
+                    <span className="flex h-11 items-center overflow-hidden rounded-xl border border-line bg-white transition focus-within:border-brand-400/60 focus-within:ring-4 focus-within:ring-brand-500/10">
                         <input
                             required
                             value={form.subdomain}
@@ -139,9 +139,9 @@ export default function RegisterPage() {
                                 setForm({ ...form, subdomain: toSubdomain(e.target.value) });
                             }}
                             placeholder="acme"
-                            className="min-w-0 flex-1 bg-transparent px-3.5 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none"
+                            className="min-w-0 flex-1 bg-transparent px-3.5 text-sm text-ink placeholder:text-ink-soft focus:outline-none"
                         />
-                        <span className="pr-3.5 text-sm text-zinc-400">.{PLATFORM_DOMAIN}</span>
+                        <span className="pr-3.5 text-sm text-ink-soft">.{PLATFORM_DOMAIN}</span>
                     </span>
                 </label>
                 <Input label="Votre nom" icon={User} required autoComplete="name" value={form.adminName} onChange={(e) => setForm({ ...form, adminName: e.target.value })} placeholder="Awa Ouédraogo" />

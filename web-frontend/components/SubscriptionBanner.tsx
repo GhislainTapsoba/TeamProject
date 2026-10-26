@@ -57,7 +57,7 @@ export default function SubscriptionBanner({ isAdmin }: { isAdmin: boolean }) {
             animate={{ opacity: 1, y: 0 }}
             className={cn(
                 'mx-auto mb-6 flex w-full max-w-6xl flex-wrap items-center justify-between gap-3 rounded-2xl border px-4 py-2.5 text-sm',
-                tone === 'danger' ? 'border-rose-400/20 bg-rose-500/10 text-rose-100' : 'border-amber-400/20 bg-amber-500/[0.08] text-amber-100'
+                tone === 'danger' ? 'border-rose-400/20 bg-rose-500/10 text-rose-800' : 'border-amber-400/20 bg-amber-500/[0.08] text-amber-800'
             )}
         >
             <span className="flex items-center gap-2.5">
@@ -66,7 +66,7 @@ export default function SubscriptionBanner({ isAdmin }: { isAdmin: boolean }) {
             </span>
             {subscription.status !== 'cancelled' &&
                 (isAdmin ? (
-                    <Link href="/settings/billing" className="rounded-lg bg-white/10 px-3 py-1 text-xs font-semibold transition hover:bg-white/20">
+                    <Link href="/settings/billing" className="rounded-lg bg-ink/[0.05] px-3 py-1 text-xs font-semibold transition hover:bg-ink/[0.06]">
                         {subscription.status === 'trial' ? 'Choisir un plan' : 'Renouveler'}
                     </Link>
                 ) : (

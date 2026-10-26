@@ -32,7 +32,7 @@ export default function ForgotPasswordPage() {
     };
 
     const back = (
-        <Link href="/login" className="inline-flex items-center gap-2 font-medium text-brand-300 hover:text-brand-200">
+        <Link href="/login" className="inline-flex items-center gap-2 font-medium text-brand-600 hover:text-brand-800">
             <ArrowLeft className="h-4 w-4" /> Retour à la connexion
         </Link>
     );
@@ -47,14 +47,14 @@ export default function ForgotPasswordPage() {
                         transition={spring}
                         className="flex h-16 w-16 items-center justify-center rounded-2xl bg-brand-500/15 ring-1 ring-brand-400/30"
                     >
-                        <MailCheck className="h-8 w-8 text-brand-300" />
+                        <MailCheck className="h-8 w-8 text-brand-600" />
                     </motion.div>
-                    <ol className="space-y-3 text-base text-zinc-200">
+                    <ol className="space-y-3 text-base text-ink">
                         <li>1. Ouvrez l&apos;email que nous venons de vous envoyer.</li>
                         <li>2. Cliquez sur le lien qu&apos;il contient.</li>
                         <li>3. Choisissez votre nouveau mot de passe.</li>
                     </ol>
-                    <p className="text-[15px] text-zinc-400">Rien reçu après quelques minutes ? Regardez dans les courriers indésirables (spam).</p>
+                    <p className="text-[15px] text-ink-soft">Rien reçu après quelques minutes ? Regardez dans les courriers indésirables (spam).</p>
                 </div>
             </AuthShell>
         );

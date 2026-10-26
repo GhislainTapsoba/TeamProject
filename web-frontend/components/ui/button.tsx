@@ -6,15 +6,17 @@ import { motion } from 'motion/react';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
-type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type Variant = 'primary' | 'accent' | 'secondary' | 'ghost' | 'danger';
 type Size = 'sm' | 'md' | 'lg';
 
 const variants: Record<Variant, string> = {
     primary:
         'text-white bg-gradient-to-b from-brand-500 to-brand-600 shadow-[0_1px_0_0_rgba(255,255,255,0.2)_inset,0_8px_24px_-8px_rgba(8,32,216,0.8)] hover:brightness-110',
-    secondary: 'text-zinc-100 bg-white/[0.06] border border-white/[0.08] hover:bg-white/[0.1]',
-    ghost: 'text-zinc-300 hover:text-white hover:bg-white/[0.06]',
-    danger: 'text-rose-300 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20',
+    // Orange du logo, assez foncé pour que le texte blanc reste lisible
+    accent: 'text-white bg-gradient-to-b from-flame-600 to-flame-700 shadow-[0_8px_24px_-8px_rgba(255,104,0,0.7)] hover:brightness-110',
+    secondary: 'text-ink bg-white border border-line shadow-sm hover:border-brand-300 hover:bg-brand-50',
+    ghost: 'text-ink-muted hover:text-ink hover:bg-ink/[0.05]',
+    danger: 'text-rose-700 bg-rose-50 border border-rose-200 hover:bg-rose-100',
 };
 
 const sizes: Record<Size, string> = {

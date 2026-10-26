@@ -115,7 +115,7 @@ export default function PlatformConsole() {
     if (phase === 'checking') {
         return (
             <div className="grid min-h-screen place-items-center">
-                <Loader2 className="h-7 w-7 animate-spin text-brand-400" />
+                <Loader2 className="h-7 w-7 animate-spin text-brand-600" />
             </div>
         );
     }
@@ -140,7 +140,7 @@ export default function PlatformConsole() {
 
     return (
         <div className="min-h-screen">
-            <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-canvas/70 backdrop-blur-xl">
+            <header className="sticky top-0 z-30 border-b border-line bg-white/80 backdrop-blur-xl">
                 <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-8">
                     <div className="flex items-center gap-3">
                         <Logo />
@@ -160,7 +160,7 @@ export default function PlatformConsole() {
                         <h1 className="text-3xl font-semibold tracking-tight">
                             <span className="text-gradient">Vue d’ensemble</span>
                         </h1>
-                        <p className="mt-2 text-base text-zinc-300">Toutes les organisations clientes et leurs abonnements.</p>
+                        <p className="mt-2 text-base text-ink-muted">Toutes les organisations clientes et leurs abonnements.</p>
                     </motion.div>
 
                     {stats && (
@@ -174,10 +174,10 @@ export default function PlatformConsole() {
                                 { label: 'Revenu mensuel (XOF)', value: Number(stats.mrr_xof), money: true },
                             ].map((s) => (
                                 <Card key={s.label} className="p-4">
-                                    <p className={s.alert ? 'text-2xl font-semibold text-flame-300' : 'text-2xl font-semibold text-white'}>
+                                    <p className={s.alert ? 'text-2xl font-semibold text-flame-600' : 'text-2xl font-semibold text-ink'}>
                                         {s.money ? fmtMoney(s.value) : <AnimatedNumber value={s.value || 0} />}
                                     </p>
-                                    <p className="mt-1 text-sm text-zinc-300">{s.label}</p>
+                                    <p className="mt-1 text-sm text-ink-muted">{s.label}</p>
                                 </Card>
                             ))}
                         </motion.div>
@@ -216,12 +216,12 @@ function Table({ head, children, empty }: { head: React.ReactNode; children: Rea
     return (
         <div className="glass overflow-x-auto rounded-2xl">
             <table className="w-full text-[15px]">
-                <thead className="text-xs uppercase tracking-wider text-zinc-400">
-                    <tr className="border-b border-white/[0.06]">{head}</tr>
+                <thead className="text-xs uppercase tracking-wider text-ink-soft">
+                    <tr className="border-b border-line">{head}</tr>
                 </thead>
-                <tbody className="divide-y divide-white/[0.05]">{children}</tbody>
+                <tbody className="divide-y divide-line">{children}</tbody>
             </table>
-            {empty && <p className="py-12 text-center text-[15px] text-zinc-400">{empty}</p>}
+            {empty && <p className="py-12 text-center text-[15px] text-ink-soft">{empty}</p>}
         </div>
     );
 }
@@ -244,23 +244,23 @@ function TenantsTable({ tenants, onOpen }: { tenants: any[]; onOpen: (schema: st
             {tenants.map((t, i) => {
                 const st = SUBSCRIPTION_STATUSES[t.subscription?.status] || SUBSCRIPTION_STATUSES.active;
                 return (
-                    <motion.tr key={t.schema_name} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="text-zinc-200 transition hover:bg-white/[0.02]">
+                    <motion.tr key={t.schema_name} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="text-ink transition hover:bg-ink/[0.02]">
                         <td className={td}>
-                            <p className="font-medium text-white">{t.name}</p>
-                            <p className="text-sm text-zinc-400">{t.primary_domain}</p>
+                            <p className="font-medium text-ink">{t.name}</p>
+                            <p className="text-sm text-ink-soft">{t.primary_domain}</p>
                         </td>
                         <td className={td}>{t.subscription?.plan_name || '—'}</td>
                         <td className={td}>
                             <Badge tone={st.tone}>{st.label}</Badge>
                         </td>
                         <td className={`${td} whitespace-nowrap`}>{formatDate(t.subscription?.current_period_end)}</td>
-                        <td className={`${td} whitespace-nowrap text-sm text-zinc-300`}>
+                        <td className={`${td} whitespace-nowrap text-sm text-ink-muted`}>
                             <span className="inline-flex items-center gap-1.5">
-                                <Users className="h-4 w-4 text-zinc-400" />
+                                <Users className="h-4 w-4 text-ink-soft" />
                                 {t.usage.users_count}/{t.usage.max_users ?? '—'}
                             </span>
                             <span className="ml-3 inline-flex items-center gap-1.5">
-                                <FolderKanban className="h-4 w-4 text-zinc-400" />
+                                <FolderKanban className="h-4 w-4 text-ink-soft" />
                                 {t.usage.projects_count}/{t.usage.max_projects ?? '—'}
                             </span>
                         </td>
@@ -294,7 +294,7 @@ function PaymentsTable({ payments }: { payments: any[] }) {
             {payments.map((p) => {
                 const ps = PAYMENT_STATUSES[p.status] || PAYMENT_STATUSES.pending;
                 return (
-                    <tr key={p.transaction_id} className="text-zinc-200">
+                    <tr key={p.transaction_id} className="text-ink">
                         <td className={`${td} whitespace-nowrap`}>{formatDate(p.created_at)}</td>
                         <td className={td}>{p.tenant_name}</td>
                         <td className={td}>{p.plan_name}</td>
@@ -304,7 +304,7 @@ function PaymentsTable({ payments }: { payments: any[] }) {
                         <td className={td}>
                             <Badge tone={ps.tone}>{ps.label}</Badge>
                         </td>
-                        <td className={`${td} font-mono text-sm text-zinc-400`}>{p.transaction_id}</td>
+                        <td className={`${td} font-mono text-sm text-ink-soft`}>{p.transaction_id}</td>
                     </tr>
                 );
             })}
@@ -327,12 +327,12 @@ function AuditTable({ logs }: { logs: any[] }) {
             }
         >
             {logs.map((l) => (
-                <tr key={l.id} className="text-zinc-200">
+                <tr key={l.id} className="text-ink">
                     <td className={`${td} whitespace-nowrap`}>{new Date(l.created_at).toLocaleString('fr-FR')}</td>
                     <td className={td}>{l.actor_email}</td>
-                    <td className={`${td} font-mono text-sm text-brand-300`}>{l.action}</td>
+                    <td className={`${td} font-mono text-sm text-brand-600`}>{l.action}</td>
                     <td className={td}>{l.target}</td>
-                    <td className={`${td} text-zinc-400`}>{l.ip_address || '—'}</td>
+                    <td className={`${td} text-ink-soft`}>{l.ip_address || '—'}</td>
                 </tr>
             ))}
         </Table>
@@ -383,33 +383,33 @@ function TenantPanel({ tenant, onClose, onChanged }: { tenant: any; onClose: () 
         <AnimatePresence>
             {tenant && (
                 <div key="panel" className="fixed inset-0 z-40 flex justify-end">
-                    <motion.div className="absolute inset-0 bg-black/60 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
+                    <motion.div className="absolute inset-0 bg-ink/40 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
                     <motion.aside
                         initial={{ x: '100%' }}
                         animate={{ x: 0 }}
                         exit={{ x: '100%', transition: { duration: 0.2 } }}
                         transition={spring}
-                        className="relative h-full w-full max-w-md overflow-y-auto border-l border-white/[0.08] bg-canvas p-6"
+                        className="relative h-full w-full max-w-md overflow-y-auto border-l border-line bg-white p-6"
                     >
                         <div className="flex items-start justify-between gap-4">
                             <div>
-                                <h2 className="text-xl font-semibold text-white">{tenant.name}</h2>
-                                <p className="mt-0.5 text-sm text-zinc-400">{tenant.primary_domain}</p>
+                                <h2 className="text-xl font-semibold text-ink">{tenant.name}</h2>
+                                <p className="mt-0.5 text-sm text-ink-soft">{tenant.primary_domain}</p>
                             </div>
-                            <button onClick={onClose} aria-label="Fermer" className="-mr-2 rounded-lg p-2 text-zinc-400 transition hover:bg-white/[0.06] hover:text-white">
+                            <button onClick={onClose} aria-label="Fermer" className="-mr-2 rounded-lg p-2 text-ink-soft transition hover:bg-ink/[0.06] hover:text-ink">
                                 <X className="h-5 w-5" />
                             </button>
                         </div>
 
                         <Card className="mt-6 space-y-2 p-4 text-[15px]">
-                            <p className="flex items-center justify-between text-zinc-300">
-                                Plan <span className="font-medium text-white">{tenant.subscription?.plan_name || '—'}</span>
+                            <p className="flex items-center justify-between text-ink-muted">
+                                Plan <span className="font-medium text-ink">{tenant.subscription?.plan_name || '—'}</span>
                             </p>
-                            <p className="flex items-center justify-between text-zinc-300">
+                            <p className="flex items-center justify-between text-ink-muted">
                                 Statut <Badge tone={st.tone}>{st.label}</Badge>
                             </p>
-                            <p className="flex items-center justify-between text-zinc-300">
-                                Fin de période <span className="font-medium text-white">{formatDate(tenant.subscription?.current_period_end)}</span>
+                            <p className="flex items-center justify-between text-ink-muted">
+                                Fin de période <span className="font-medium text-ink">{formatDate(tenant.subscription?.current_period_end)}</span>
                             </p>
                         </Card>
 
@@ -436,7 +436,7 @@ function TenantPanel({ tenant, onClose, onChanged }: { tenant: any; onClose: () 
                             </Button>
                         </div>
 
-                        <div className="mt-6 border-t border-white/[0.08] pt-6">
+                        <div className="mt-6 border-t border-line pt-6">
                             <Button variant={suspended ? 'secondary' : 'danger'} icon={suspended ? CheckCircle2 : Ban} disabled={busy} className="w-full" onClick={toggleSuspend}>
                                 {suspended ? 'Réactiver l’organisation' : 'Suspendre (lecture seule)'}
                             </Button>
@@ -444,14 +444,14 @@ function TenantPanel({ tenant, onClose, onChanged }: { tenant: any; onClose: () 
 
                         {tenant.members && (
                             <div className="mt-6">
-                                <p className="mb-3 flex items-center gap-2 text-sm font-medium text-zinc-200">
-                                    <Users className="h-4 w-4 text-zinc-400" /> Membres ({tenant.members.length})
+                                <p className="mb-3 flex items-center gap-2 text-sm font-medium text-ink">
+                                    <Users className="h-4 w-4 text-ink-soft" /> Membres ({tenant.members.length})
                                 </p>
                                 <ul className="space-y-1">
                                     {tenant.members.map((m: any) => (
                                         <li key={m.email} className="flex items-center gap-3 rounded-xl px-2 py-2">
                                             <Avatar name={m.full_name} size="sm" />
-                                            <span className="min-w-0 flex-1 truncate text-[15px] text-zinc-200">{m.full_name}</span>
+                                            <span className="min-w-0 flex-1 truncate text-[15px] text-ink">{m.full_name}</span>
                                             <Badge tone={ROLES[m.role]?.tone}>{ROLES[m.role]?.label || m.role}</Badge>
                                         </li>
                                     ))}
@@ -459,7 +459,7 @@ function TenantPanel({ tenant, onClose, onChanged }: { tenant: any; onClose: () 
                             </div>
                         )}
 
-                        <p className="mt-8 flex items-center gap-2 text-sm text-zinc-500">
+                        <p className="mt-8 flex items-center gap-2 text-sm text-ink-soft">
                             <CreditCard className="h-4 w-4" /> Les paiements de cette organisation sont dans l’onglet « Paiements ».
                         </p>
                     </motion.aside>

@@ -48,7 +48,7 @@ export default function Notifications() {
                 whileTap={{ scale: 0.92 }}
                 onClick={toggle}
                 aria-label="Notifications"
-                className="relative flex h-10 items-center gap-2 rounded-xl px-2.5 text-zinc-300 transition hover:bg-white/[0.06] hover:text-white"
+                className="relative flex h-10 items-center gap-2 rounded-xl px-2.5 text-ink-muted transition hover:bg-ink/[0.06] hover:text-ink"
             >
                 <motion.span animate={unread > 0 ? { rotate: [0, -14, 12, -8, 0] } : {}} transition={{ duration: 0.6, delay: 0.4 }}>
                     <Bell className="h-5 w-5" />
@@ -60,7 +60,7 @@ export default function Notifications() {
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             exit={{ scale: 0 }}
-                            className="absolute left-6 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-xs font-semibold text-white ring-2 ring-canvas"
+                            className="absolute left-6 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-xs font-semibold text-white ring-2 ring-white"
                         >
                             {unread > 9 ? '9+' : unread}
                         </motion.span>
@@ -76,19 +76,19 @@ export default function Notifications() {
                         exit={{ opacity: 0, y: -8, scale: 0.96, transition: { duration: 0.15 } }}
                         transition={spring}
                         style={{ transformOrigin: 'top right' }}
-                        className="absolute right-0 z-40 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-white/[0.08] bg-zinc-950/95 shadow-2xl backdrop-blur-2xl"
+                        className="absolute right-0 z-40 mt-2 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-line bg-white shadow-2xl backdrop-blur-2xl"
                     >
-                        <div className="flex items-center justify-between border-b border-white/[0.06] px-4 py-3">
-                            <span className="text-sm font-semibold text-white">Notifications</span>
+                        <div className="flex items-center justify-between border-b border-line px-4 py-3">
+                            <span className="text-sm font-semibold text-ink">Notifications</span>
                             {unread > 0 && (
-                                <button onClick={markAllRead} className="flex items-center gap-1 text-xs text-brand-300 hover:text-brand-200">
+                                <button onClick={markAllRead} className="flex items-center gap-1 text-xs text-brand-600 hover:text-brand-800">
                                     <CheckCheck className="h-3.5 w-3.5" /> Tout lire
                                 </button>
                             )}
                         </div>
                         <div className="max-h-80 overflow-y-auto p-2">
                             {items.length === 0 ? (
-                                <p className="py-10 text-center text-sm text-zinc-400">Vous êtes à jour.</p>
+                                <p className="py-10 text-center text-sm text-ink-soft">Vous êtes à jour.</p>
                             ) : (
                                 items.map((n, i) => (
                                     <motion.div
@@ -100,8 +100,8 @@ export default function Notifications() {
                                     >
                                         <span className={cn('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', n.read ? 'bg-transparent' : 'bg-brand-400')} />
                                         <div className="min-w-0">
-                                            <p className={cn('text-[15px]', n.read ? 'text-zinc-400' : 'text-zinc-50')}>{n.message}</p>
-                                            <p className="mt-0.5 text-xs text-zinc-400">
+                                            <p className={cn('text-[15px]', n.read ? 'text-ink-soft' : 'text-ink')}>{n.message}</p>
+                                            <p className="mt-0.5 text-xs text-ink-soft">
                                                 {formatDate(n.created_at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                             </p>
                                         </div>
@@ -111,7 +111,7 @@ export default function Notifications() {
                         </div>
                         <button
                             onClick={() => setOpen(false)}
-                            className="w-full border-t border-white/[0.06] py-3 text-[15px] font-medium text-zinc-300 transition hover:bg-white/[0.04] hover:text-white"
+                            className="w-full border-t border-line py-3 text-[15px] font-medium text-ink-muted transition hover:bg-ink/[0.04] hover:text-ink"
                         >
                             Fermer
                         </button>

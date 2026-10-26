@@ -57,16 +57,16 @@ export default function HomePage() {
     const greeting = hour < 5 || hour >= 18 ? 'Bonsoir' : 'Bonjour';
 
     const kpis = [
-        { label: 'Tâches à faire pour moi', value: stats?.my_pending_tasks, icon: Clock, iconClass: 'text-amber-300', glow: 'from-amber-500/20' },
-        { label: 'Projets en cours', value: stats?.active_projects, icon: FolderKanban, iconClass: 'text-brand-300', glow: 'from-brand-500/20' },
-        { label: 'Tâches terminées par l’équipe', value: stats?.completed_tasks, icon: CheckCircle2, iconClass: 'text-emerald-300', glow: 'from-emerald-500/20' },
+        { label: 'Tâches à faire pour moi', value: stats?.my_pending_tasks, icon: Clock, iconClass: 'text-amber-600', glow: 'from-amber-500/20' },
+        { label: 'Projets en cours', value: stats?.active_projects, icon: FolderKanban, iconClass: 'text-brand-600', glow: 'from-brand-500/20' },
+        { label: 'Tâches terminées par l’équipe', value: stats?.completed_tasks, icon: CheckCircle2, iconClass: 'text-emerald-600', glow: 'from-emerald-500/20' },
     ];
 
     return (
         <Page>
             <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <div>
-                    <p className="text-[15px] text-zinc-400 first-letter:uppercase">
+                    <p className="text-[15px] text-ink-soft first-letter:uppercase">
                         {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                     </p>
                     <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">
@@ -74,7 +74,7 @@ export default function HomePage() {
                             {greeting} {user?.first_name || user?.full_name}
                         </span>
                     </h1>
-                    <p className="mt-2 text-base text-zinc-300">
+                    <p className="mt-2 text-base text-ink-muted">
                         {loading
                             ? 'Chargement…'
                             : open.length === 0
@@ -98,10 +98,10 @@ export default function HomePage() {
                         <div className={`absolute -right-6 -top-6 h-24 w-24 rounded-full bg-gradient-to-br ${k.glow} to-transparent blur-2xl`} />
                         <k.icon className={`relative h-6 w-6 ${k.iconClass}`} />
                         <div className="relative mt-4">
-                            <div className="text-3xl font-semibold tracking-tight text-white">
+                            <div className="text-3xl font-semibold tracking-tight text-ink">
                                 {loading ? <Skeleton className="h-9 w-14" /> : <AnimatedNumber value={k.value || 0} />}
                             </div>
-                            <p className="mt-1 text-[15px] text-zinc-300">{k.label}</p>
+                            <p className="mt-1 text-[15px] text-ink-muted">{k.label}</p>
                         </div>
                     </Card>
                 ))}
@@ -110,7 +110,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
                 <motion.section variants={fadeUp} className="space-y-4 lg:col-span-2">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                        <h2 className="text-xl font-semibold tracking-tight text-white">Mes tâches</h2>
+                        <h2 className="text-xl font-semibold tracking-tight text-ink">Mes tâches</h2>
                         <Segmented
                             id="my-tasks"
                             value={filter}
@@ -151,8 +151,8 @@ export default function HomePage() {
 
                 <motion.section variants={fadeUp} className="space-y-4">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-xl font-semibold tracking-tight text-white">Projets</h2>
-                        <Link href="/projects" className="flex items-center gap-1 text-[15px] font-medium text-brand-300 transition hover:text-brand-200">
+                        <h2 className="text-xl font-semibold tracking-tight text-ink">Projets</h2>
+                        <Link href="/projects" className="flex items-center gap-1 text-[15px] font-medium text-brand-600 transition hover:text-brand-800">
                             Voir tous les projets <ArrowRight className="h-4 w-4" />
                         </Link>
                     </div>
@@ -164,14 +164,14 @@ export default function HomePage() {
                         <div className="space-y-3">
                             {projects.map((p, i) => (
                                 <motion.div key={p.id} initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 + i * 0.06 }}>
-                                    <Link href={`/projects/${p.id}`} className="glass group block rounded-2xl p-4 transition hover:-translate-y-0.5 hover:border-white/[0.16]">
+                                    <Link href={`/projects/${p.id}`} className="glass group block rounded-2xl p-4 transition hover:-translate-y-0.5 hover:border-brand-300">
                                         <div className="flex items-start justify-between gap-3">
-                                            <p className="truncate text-base font-medium text-white">{p.name}</p>
+                                            <p className="truncate text-base font-medium text-ink">{p.name}</p>
                                             <Badge tone={PROJECT_STATUSES[p.status]?.tone}>{PROJECT_STATUSES[p.status]?.label || p.status}</Badge>
                                         </div>
                                         <div className="mt-4 flex items-center gap-3">
                                             <Progress value={p.progress_percentage || 0} />
-                                            <span className="whitespace-nowrap text-sm tabular-nums text-zinc-300">{p.progress_percentage || 0}% fait</span>
+                                            <span className="whitespace-nowrap text-sm tabular-nums text-ink-muted">{p.progress_percentage || 0}% fait</span>
                                         </div>
                                     </Link>
                                 </motion.div>
@@ -199,10 +199,10 @@ function GettingStarted({ stats, organisation }: { stats: any; organisation?: st
         <Card className="overflow-hidden p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-xl font-semibold text-white">Pour bien démarrer</h2>
-                    <p className="mt-1 text-[15px] text-zinc-300">Trois étapes pour lancer {organisation || 'votre équipe'}.</p>
+                    <h2 className="text-xl font-semibold text-ink">Pour bien démarrer</h2>
+                    <p className="mt-1 text-[15px] text-ink-muted">Trois étapes pour lancer {organisation || 'votre équipe'}.</p>
                 </div>
-                <span className="text-[15px] font-medium text-zinc-300">
+                <span className="text-[15px] font-medium text-ink-muted">
                     {doneCount} sur {steps.length} fait{doneCount > 1 ? 'es' : 'e'}
                 </span>
             </div>
@@ -210,7 +210,7 @@ function GettingStarted({ stats, organisation }: { stats: any; organisation?: st
                 {steps.map((s, i) => (
                     <li
                         key={s.title}
-                        className={cn('flex flex-col rounded-2xl border p-4', i === current ? 'border-brand-400/50 bg-brand-500/10' : 'border-white/[0.08] bg-white/[0.02]')}
+                        className={cn('flex flex-col rounded-2xl border p-4', i === current ? 'border-brand-400/50 bg-brand-500/10' : 'border-line bg-ink/[0.02]')}
                     >
                         <div className="flex items-center gap-3">
                             <motion.span
@@ -219,14 +219,14 @@ function GettingStarted({ stats, organisation }: { stats: any; organisation?: st
                                 transition={spring}
                                 className={cn(
                                     'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[15px] font-semibold',
-                                    s.done ? 'bg-emerald-400 text-zinc-950' : i === current ? 'bg-brand-500 text-white' : 'bg-white/[0.08] text-zinc-300'
+                                    s.done ? 'bg-emerald-500 text-white' : i === current ? 'bg-brand-500 text-white' : 'bg-ink/[0.08] text-ink-muted'
                                 )}
                             >
                                 {s.done ? <Check className="h-4 w-4" strokeWidth={3} /> : i + 1}
                             </motion.span>
-                            <p className={cn('text-base font-medium', s.done ? 'text-zinc-400 line-through' : 'text-white')}>{s.title}</p>
+                            <p className={cn('text-base font-medium', s.done ? 'text-ink-soft line-through' : 'text-ink')}>{s.title}</p>
                         </div>
-                        <p className="mt-2 flex-1 text-sm text-zinc-300">{s.text}</p>
+                        <p className="mt-2 flex-1 text-sm text-ink-muted">{s.text}</p>
                         {i === current && (
                             <ButtonLink href={s.href} className="mt-4 w-full">
                                 {s.action} <ArrowRight className="h-4 w-4" />

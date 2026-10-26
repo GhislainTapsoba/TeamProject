@@ -31,7 +31,7 @@ export function Choice<T extends string>({
     const grid = { 1: 'grid-cols-1', 2: 'grid-cols-2', 3: 'grid-cols-3' }[columns];
     return (
         <fieldset className="space-y-2">
-            <legend className="mb-2 text-sm font-medium text-zinc-200">{label}</legend>
+            <legend className="mb-2 text-sm font-medium text-ink">{label}</legend>
             <div role="radiogroup" className={cn('grid gap-2', grid)}>
                 {options.map((o) => {
                     const active = o.value === value;
@@ -46,14 +46,14 @@ export function Choice<T extends string>({
                             className={cn(
                                 'relative flex min-h-12 items-center gap-2.5 rounded-xl border px-3.5 py-2.5 text-left text-[15px] transition-colors',
                                 active
-                                    ? o.activeClass || 'border-brand-400/70 bg-brand-500/15 text-white'
-                                    : 'border-white/[0.1] bg-white/[0.02] text-zinc-300 hover:border-white/[0.2] hover:bg-white/[0.05]'
+                                    ? o.activeClass || 'border-brand-400/70 bg-brand-500/15 text-ink'
+                                    : 'border-line bg-ink/[0.02] text-ink-muted hover:border-brand-300 hover:bg-ink/[0.05]'
                             )}
                         >
                             {o.icon}
                             <span className="min-w-0 flex-1">
                                 <span className="block truncate font-medium">{o.label}</span>
-                                {o.description && <span className="mt-0.5 block text-sm text-zinc-400">{o.description}</span>}
+                                {o.description && <span className="mt-0.5 block text-sm text-ink-soft">{o.description}</span>}
                             </span>
                             {active && (
                                 <motion.span initial={{ scale: 0 }} animate={{ scale: 1 }} transition={spring} className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-brand-500">
@@ -104,10 +104,10 @@ export function DateChoice({ label, value, onChange }: { label: string; value: s
                     autoFocus
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    className="h-12 w-full rounded-xl border border-brand-400/70 bg-black/30 px-4 text-base text-zinc-50 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
+                    className="h-12 w-full rounded-xl border border-brand-400/70 bg-white px-4 text-base text-ink focus:outline-none focus:ring-4 focus:ring-brand-500/15"
                 />
             ) : (
-                <button type="button" onClick={() => setCustom(true)} className="text-sm font-medium text-brand-300 underline-offset-4 hover:underline">
+                <button type="button" onClick={() => setCustom(true)} className="text-sm font-medium text-brand-600 underline-offset-4 hover:underline">
                     Choisir une autre date dans le calendrier
                 </button>
             )}

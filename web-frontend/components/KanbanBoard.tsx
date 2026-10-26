@@ -46,23 +46,23 @@ export default function KanbanBoard({ tasks, onMove, onQuickAdd, onDelete }: Boa
                             onDrop={() => drop(column.id)}
                             className={cn(
                                 'flex flex-col rounded-3xl border p-3 transition-colors duration-200 md:min-h-[420px]',
-                                over === column.id && dragged?.state !== column.id ? 'border-brand-400/50 bg-brand-500/[0.07]' : 'border-white/[0.07] bg-white/[0.015]'
+                                over === column.id && dragged?.state !== column.id ? 'border-brand-400/50 bg-brand-500/[0.07]' : 'border-line bg-ink/[0.015]'
                             )}
                         >
                             <header className="px-2 pb-3 pt-1">
                                 <div className="flex items-center gap-2.5">
                                     <span className={cn('h-2.5 w-2.5 rounded-full', column.dot)} />
-                                    <h3 className="text-lg font-semibold text-white">{column.label}</h3>
+                                    <h3 className="text-lg font-semibold text-ink">{column.label}</h3>
                                     <motion.span
                                         key={items.length}
                                         initial={{ scale: 1.4, opacity: 0 }}
                                         animate={{ scale: 1, opacity: 1 }}
-                                        className="rounded-full bg-white/[0.08] px-2 py-0.5 text-sm tabular-nums text-zinc-200"
+                                        className="rounded-full bg-ink/[0.08] px-2 py-0.5 text-sm tabular-nums text-ink"
                                     >
                                         {items.length}
                                     </motion.span>
                                 </div>
-                                <p className="mt-0.5 pl-5 text-sm text-zinc-400">{column.help}</p>
+                                <p className="mt-0.5 pl-5 text-sm text-ink-soft">{column.help}</p>
                             </header>
 
                             <div className="flex-1 space-y-3">
@@ -83,7 +83,7 @@ export default function KanbanBoard({ tasks, onMove, onQuickAdd, onDelete }: Boa
                                     ))}
                                 </AnimatePresence>
                                 {items.length === 0 && (
-                                    <p className="rounded-2xl border border-dashed border-white/[0.1] px-4 py-6 text-center text-[15px] text-zinc-400">
+                                    <p className="rounded-2xl border border-dashed border-line px-4 py-6 text-center text-[15px] text-ink-soft">
                                         {dragged ? 'Lâchez la tâche ici' : 'Aucune tâche ici'}
                                     </p>
                                 )}
@@ -129,18 +129,18 @@ const TaskCard = React.forwardRef<HTMLDivElement, CardProps>(function TaskCard({
                     onDragStart();
                 }}
                 onDragEnd={onDragEnd}
-                className="rounded-2xl border border-white/[0.08] bg-zinc-900/80 p-4 shadow-card transition-colors hover:border-white/[0.16] md:cursor-grab md:active:cursor-grabbing"
+                className="rounded-2xl border border-line bg-white p-4 shadow-card transition-colors hover:border-brand-300 md:cursor-grab md:active:cursor-grabbing"
             >
                 {!done && task.priority === 'high' && (
                     <Badge tone="danger" className="mb-2">
                         Urgent
                     </Badge>
                 )}
-                <p className={cn('text-base font-medium leading-snug', done ? 'text-zinc-400 line-through' : 'text-white')}>{task.title}</p>
-                {task.description && !done && <p className="mt-1.5 line-clamp-3 text-sm text-zinc-300">{task.description}</p>}
+                <p className={cn('text-base font-medium leading-snug', done ? 'text-ink-soft line-through' : 'text-ink')}>{task.title}</p>
+                {task.description && !done && <p className="mt-1.5 line-clamp-3 text-sm text-ink-muted">{task.description}</p>}
 
                 {(due || task.assignee_details) && (
-                    <div className="mt-3 space-y-1.5 text-sm text-zinc-300">
+                    <div className="mt-3 space-y-1.5 text-sm text-ink-muted">
                         {task.assignee_details && (
                             <p className="flex items-center gap-2">
                                 <Avatar name={task.assignee_details.full_name} size="sm" />
@@ -148,7 +148,7 @@ const TaskCard = React.forwardRef<HTMLDivElement, CardProps>(function TaskCard({
                             </p>
                         )}
                         {due && (
-                            <p className={cn('flex items-center gap-2', due.late && 'font-medium text-rose-300')}>
+                            <p className={cn('flex items-center gap-2', due.late && 'font-medium text-rose-600')}>
                                 <Calendar className="h-4 w-4" />
                                 {due.text}
                             </p>
@@ -161,7 +161,7 @@ const TaskCard = React.forwardRef<HTMLDivElement, CardProps>(function TaskCard({
                     {onDelete && (
                         <button
                             onClick={onDelete}
-                            className="flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm text-zinc-400 transition hover:bg-rose-500/10 hover:text-rose-300"
+                            className="flex h-10 items-center gap-1.5 rounded-xl px-3 text-sm text-ink-soft transition hover:bg-rose-500/10 hover:text-rose-600"
                         >
                             <Trash2 className="h-4 w-4" />
                             Supprimer
@@ -194,7 +194,7 @@ function QuickAdd({ onAdd }: { onAdd: (title: string) => Promise<void> }) {
         return (
             <button
                 onClick={() => setEditing(true)}
-                className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-white/[0.14] text-[15px] font-medium text-zinc-300 transition hover:border-brand-400/50 hover:bg-brand-500/[0.06] hover:text-white"
+                className="mt-3 flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-dashed border-line text-[15px] font-medium text-ink-muted transition hover:border-brand-400/50 hover:bg-brand-500/[0.06] hover:text-ink"
             >
                 <Plus className="h-5 w-5" /> Ajouter une tâche
             </button>
@@ -211,7 +211,7 @@ function QuickAdd({ onAdd }: { onAdd: (title: string) => Promise<void> }) {
                 onKeyDown={(e) => e.key === 'Escape' && (setTitle(''), setEditing(false))}
                 placeholder="Que faut-il faire ?"
                 aria-label="Titre de la nouvelle tâche"
-                className="h-12 w-full rounded-xl border border-brand-400/60 bg-black/40 px-4 text-base text-white placeholder:text-zinc-500 focus:outline-none focus:ring-4 focus:ring-brand-500/15"
+                className="h-12 w-full rounded-xl border border-brand-400/60 bg-white px-4 text-base text-ink placeholder:text-ink-soft focus:outline-none focus:ring-4 focus:ring-brand-500/15"
             />
             <div className="flex gap-2">
                 <Button type="submit" loading={saving} disabled={!title.trim()} className="flex-1">

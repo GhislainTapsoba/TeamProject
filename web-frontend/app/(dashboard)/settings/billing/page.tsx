@@ -127,12 +127,12 @@ export default function BillingPage() {
                     <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-brand-600/20 blur-3xl" />
                     <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
                         <div>
-                            <p className="text-xs font-medium uppercase tracking-widest text-brand-300">Plan actuel</p>
+                            <p className="text-xs font-medium uppercase tracking-widest text-brand-600">Plan actuel</p>
                             <div className="mt-2 flex items-center gap-3">
-                                <h2 className="text-3xl font-semibold tracking-tight text-white">{current?.display_name || current?.name}</h2>
+                                <h2 className="text-3xl font-semibold tracking-tight text-ink">{current?.display_name || current?.name}</h2>
                                 <Badge tone={status.tone}>{status.label}</Badge>
                             </div>
-                            <p className="mt-2 text-sm text-zinc-400">
+                            <p className="mt-2 text-sm text-ink-soft">
                                 {isFree(current)
                                     ? 'Gratuit, sans date de fin.'
                                     : subscription.status === 'past_due'
@@ -140,27 +140,27 @@ export default function BillingPage() {
                                       : `${subscription.status === 'trial' ? 'Essai jusqu’au' : 'Valide jusqu’au'} ${formatDate(subscription.current_period_end)} · ${subscription.days_left} jours restants`}
                             </p>
                         </div>
-                        <div className="flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-black/20 px-4 py-3 text-sm">
-                            <CreditCard className="h-5 w-5 text-brand-300" />
+                        <div className="flex items-center gap-3 rounded-2xl border border-line bg-white px-4 py-3 text-sm">
+                            <CreditCard className="h-5 w-5 text-brand-600" />
                             <div>
-                                <p className="font-medium text-white">Mobile Money et carte</p>
-                                <p className="text-xs text-zinc-400">Orange Money, Moov, Wave, Visa, Mastercard</p>
+                                <p className="font-medium text-ink">Mobile Money et carte</p>
+                                <p className="text-xs text-ink-soft">Orange Money, Moov, Wave, Visa, Mastercard</p>
                             </div>
                         </div>
                     </div>
 
                     {subscription.usage && (
-                        <div className="relative mt-8 grid grid-cols-1 gap-6 border-t border-white/[0.06] pt-6 sm:grid-cols-2">
+                        <div className="relative mt-8 grid grid-cols-1 gap-6 border-t border-line pt-6 sm:grid-cols-2">
                             {[
                                 { icon: Users, label: 'Membres', used: subscription.usage.users_count, max: subscription.usage.max_users },
                                 { icon: FolderKanban, label: 'Projets', used: subscription.usage.projects_count, max: subscription.usage.max_projects },
                             ].map(({ icon: Icon, label, used, max }) => (
                                 <div key={label} className="space-y-2">
                                     <div className="flex justify-between text-sm">
-                                        <span className="flex items-center gap-2 text-zinc-300">
-                                            <Icon className="h-4 w-4 text-zinc-400" /> {label}
+                                        <span className="flex items-center gap-2 text-ink-muted">
+                                            <Icon className="h-4 w-4 text-ink-soft" /> {label}
                                         </span>
-                                        <span className={cn('tabular-nums', used >= max ? 'text-amber-300' : 'text-zinc-400')}>
+                                        <span className={cn('tabular-nums', used >= max ? 'text-amber-600' : 'text-ink-soft')}>
                                             {used} / {max}
                                         </span>
                                     </div>
@@ -185,23 +185,23 @@ export default function BillingPage() {
                             transition={spring}
                             className={cn(
                                 'relative flex flex-col rounded-3xl p-6',
-                                featured ? 'bg-gradient-to-b from-brand-500/20 via-zinc-900/80 to-zinc-900/80 shadow-glow' : 'glass',
+                                featured ? 'bg-gradient-to-b from-brand-50 via-white to-white ring-2 ring-brand-500 shadow-glow' : 'glass',
                                 isCurrent && !featured && 'ring-1 ring-emerald-400/30'
                             )}
                         >
                             <div className="flex items-center justify-between">
-                                <h3 className="font-semibold text-white">{plan.display_name || plan.name}</h3>
+                                <h3 className="font-semibold text-ink">{plan.display_name || plan.name}</h3>
                                 {isCurrent ? <Badge tone="success">Votre plan</Badge> : featured && <Badge tone="accent">Populaire</Badge>}
                             </div>
                             <p className="mt-5 flex items-baseline gap-1.5">
-                                <span className="text-4xl font-semibold tracking-tight text-white">{formatAmount(plan.price_monthly)}</span>
-                                <span className="text-sm text-zinc-400">XOF / mois</span>
+                                <span className="text-4xl font-semibold tracking-tight text-ink">{formatAmount(plan.price_monthly)}</span>
+                                <span className="text-sm text-ink-soft">XOF / mois</span>
                             </p>
-                            <ul className="mt-6 flex-1 space-y-3 text-sm text-zinc-300">
+                            <ul className="mt-6 flex-1 space-y-3 text-sm text-ink-muted">
                                 {[`Jusqu'à ${plan.max_users} membres`, `Jusqu'à ${plan.max_projects} projets`, ...(plan.features || [])].map((f: string) => (
                                     <li key={f} className="flex items-start gap-2.5">
                                         <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-400/15">
-                                            <Check className="h-2.5 w-2.5 text-emerald-300" strokeWidth={3} />
+                                            <Check className="h-2.5 w-2.5 text-emerald-600" strokeWidth={3} />
                                         </span>
                                         {f}
                                     </li>
@@ -209,9 +209,9 @@ export default function BillingPage() {
                             </ul>
                             <div className="mt-8">
                                 {!isAdmin ? (
-                                    <p className="text-center text-xs text-zinc-400">Seul un administrateur peut changer de plan.</p>
+                                    <p className="text-center text-xs text-ink-soft">Seul un administrateur peut changer de plan.</p>
                                 ) : action.disabled ? (
-                                    <p className="py-2.5 text-center text-xs text-zinc-400">{action.label}</p>
+                                    <p className="py-2.5 text-center text-xs text-ink-soft">{action.label}</p>
                                 ) : (
                                     <Button
                                         className="w-full"
@@ -233,16 +233,16 @@ export default function BillingPage() {
 
             {isAdmin && (
                 <motion.section variants={fadeUp} className="space-y-4">
-                    <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
-                        <Receipt className="h-4 w-4 text-zinc-400" /> Historique des paiements
+                    <h2 className="flex items-center gap-2 text-lg font-semibold text-ink">
+                        <Receipt className="h-4 w-4 text-ink-soft" /> Historique des paiements
                     </h2>
                     {payments.length === 0 ? (
-                        <p className="rounded-2xl border border-dashed border-white/[0.08] py-10 text-center text-sm text-zinc-400">Aucun paiement pour le moment.</p>
+                        <p className="rounded-2xl border border-dashed border-line py-10 text-center text-sm text-ink-soft">Aucun paiement pour le moment.</p>
                     ) : (
                         <div className="glass overflow-x-auto rounded-2xl">
                             <table className="w-full text-sm">
-                                <thead className="text-left text-xs uppercase tracking-wider text-zinc-400">
-                                    <tr className="border-b border-white/[0.06]">
+                                <thead className="text-left text-xs uppercase tracking-wider text-ink-soft">
+                                    <tr className="border-b border-line">
                                         <th className="px-5 py-3 font-medium">Date</th>
                                         <th className="px-5 py-3 font-medium">Plan</th>
                                         <th className="px-5 py-3 text-right font-medium">Montant</th>
@@ -250,11 +250,11 @@ export default function BillingPage() {
                                         <th className="px-5 py-3 font-medium">Jusqu&apos;au</th>
                                     </tr>
                                 </thead>
-                                <tbody className="divide-y divide-white/[0.04]">
+                                <tbody className="divide-y divide-line">
                                     {payments.map((p) => {
                                         const ps = PAYMENT_STATUSES[p.status] || PAYMENT_STATUSES.pending;
                                         return (
-                                            <tr key={p.transaction_id} className="text-zinc-300" title={p.transaction_id}>
+                                            <tr key={p.transaction_id} className="text-ink-muted" title={p.transaction_id}>
                                                 <td className="whitespace-nowrap px-5 py-3">{formatDate(p.created_at)}</td>
                                                 <td className="px-5 py-3">{p.plan_name}</td>
                                                 <td className="whitespace-nowrap px-5 py-3 text-right tabular-nums">

@@ -39,12 +39,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                             exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
                             transition={spring}
                             role="status"
-                            className="pointer-events-auto flex max-w-md items-center gap-3 rounded-2xl border border-white/[0.1] bg-zinc-900/95 px-5 py-4 text-[15px] font-medium text-zinc-50 shadow-2xl backdrop-blur-xl"
+                            className="pointer-events-auto flex max-w-md items-center gap-3 rounded-2xl border border-line bg-white px-5 py-4 text-[15px] font-medium text-ink shadow-2xl backdrop-blur-xl"
                         >
                             {t.tone === 'success' ? (
-                                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" />
+                                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600" />
                             ) : (
-                                <AlertCircle className="h-5 w-5 shrink-0 text-rose-400" />
+                                <AlertCircle className="h-5 w-5 shrink-0 text-rose-600" />
                             )}
                             {t.message}
                         </motion.div>

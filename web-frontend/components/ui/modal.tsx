@@ -38,7 +38,7 @@ export function Modal({ open, onClose, title, description, children }: ModalProp
             {open && (
                 <div key="modal" className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-6">
                     <motion.div
-                        className="absolute inset-0 bg-black/60 backdrop-blur-md"
+                        className="absolute inset-0 bg-ink/40 backdrop-blur-md"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
@@ -48,7 +48,7 @@ export function Modal({ open, onClose, title, description, children }: ModalProp
                         role="dialog"
                         aria-modal="true"
                         aria-label={title}
-                        className="relative w-full max-w-lg overflow-hidden rounded-t-3xl border border-white/[0.08] bg-zinc-950/90 shadow-2xl backdrop-blur-2xl sm:rounded-3xl"
+                        className="relative w-full max-w-lg overflow-hidden rounded-t-3xl border border-line bg-white shadow-2xl backdrop-blur-2xl sm:rounded-3xl"
                         initial={{ opacity: 0, y: 40, scale: 0.96 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 24, scale: 0.97, transition: { duration: 0.18 } }}
@@ -57,13 +57,13 @@ export function Modal({ open, onClose, title, description, children }: ModalProp
                         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-brand-400/50 to-transparent" />
                         <div className="flex items-start justify-between gap-4 px-6 pt-6">
                             <div>
-                                <h2 className="text-xl font-semibold tracking-tight text-white">{title}</h2>
-                                {description && <p className="mt-1.5 text-[15px] text-zinc-300">{description}</p>}
+                                <h2 className="text-xl font-semibold tracking-tight text-ink">{title}</h2>
+                                {description && <p className="mt-1.5 text-[15px] text-ink-muted">{description}</p>}
                             </div>
                             <button
                                 onClick={onClose}
                                 aria-label="Fermer"
-                                className="-mr-2 rounded-lg p-2 text-zinc-400 transition hover:bg-white/[0.06] hover:text-white"
+                                className="-mr-2 rounded-lg p-2 text-ink-soft transition hover:bg-ink/[0.06] hover:text-ink"
                             >
                                 <X className="h-4 w-4" />
                             </button>

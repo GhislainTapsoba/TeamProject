@@ -8,9 +8,16 @@ const config: Config = {
                 sans: ['var(--font-sans)', 'system-ui', 'sans-serif'],
                 mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
             },
-            // Couleurs du logo Deep Technologies : bleu outremer #0820d8 et orange #ff6800
+            // Thème clair aux couleurs du logo Deep Technologies : bleu outremer #0820d8 et orange #ff6800
             colors: {
-                canvas: '#05071a',
+                canvas: '#f5f7fd',
+                // Textes : bleu nuit tiré du logo, en trois niveaux d'importance
+                ink: {
+                    DEFAULT: '#0b1033',
+                    muted: '#3d4466',
+                    soft: '#5f6688',
+                },
+                line: '#e2e6f3',
                 brand: {
                     50: '#eef0ff',
                     100: '#dfe3ff',
@@ -25,6 +32,7 @@ const config: Config = {
                     950: '#070d42',
                 },
                 flame: {
+                    50: '#fff5ec',
                     100: '#ffecdc',
                     200: '#ffd0a8',
                     300: '#ffac6e',
@@ -32,11 +40,12 @@ const config: Config = {
                     500: '#ff6800',
                     600: '#e05a00',
                     700: '#b84800',
+                    800: '#933a00',
                 },
             },
             boxShadow: {
-                glow: '0 0 0 1px rgba(8, 32, 216, 0.5), 0 8px 32px -8px rgba(8, 32, 216, 0.7)',
-                card: '0 1px 0 0 rgba(255, 255, 255, 0.04) inset, 0 12px 32px -16px rgba(0, 0, 0, 0.7)',
+                glow: '0 0 0 1px rgba(8, 32, 216, 0.25), 0 12px 32px -12px rgba(8, 32, 216, 0.45)',
+                card: '0 1px 2px rgba(11, 16, 51, 0.04), 0 8px 24px -12px rgba(11, 16, 51, 0.12)',
             },
             keyframes: {
                 shimmer: {

@@ -59,8 +59,8 @@ export default function ProfilePage() {
             <Card className="flex items-center gap-4 p-6">
                 <Avatar name={user?.full_name} size="lg" />
                 <div className="min-w-0">
-                    <p className="truncate text-lg font-semibold text-white">{user?.full_name}</p>
-                    <p className="truncate text-sm text-zinc-400">{user?.email}</p>
+                    <p className="truncate text-lg font-semibold text-ink">{user?.full_name}</p>
+                    <p className="truncate text-sm text-ink-soft">{user?.email}</p>
                 </div>
                 {user && (
                     <Badge tone={ROLES[user.role]?.tone} className="ml-auto">
@@ -70,8 +70,8 @@ export default function ProfilePage() {
             </Card>
 
             <Card className="p-6">
-                <h2 className="flex items-center gap-2 font-semibold text-white">
-                    <UserCircle className="h-4 w-4 text-brand-300" /> Informations
+                <h2 className="flex items-center gap-2 font-semibold text-ink">
+                    <UserCircle className="h-4 w-4 text-brand-600" /> Informations
                 </h2>
                 <form onSubmit={saveProfile} className="mt-5 space-y-4">
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -88,8 +88,8 @@ export default function ProfilePage() {
             </Card>
 
             <Card className="p-6">
-                <h2 className="flex items-center gap-2 font-semibold text-white">
-                    <KeyRound className="h-4 w-4 text-brand-300" /> Mot de passe
+                <h2 className="flex items-center gap-2 font-semibold text-ink">
+                    <KeyRound className="h-4 w-4 text-brand-600" /> Mot de passe
                 </h2>
                 <form onSubmit={savePassword} className="mt-5 space-y-4">
                     <PasswordInput label="Mot de passe actuel" required value={passwords.old} onChange={(e) => setPasswords({ ...passwords, old: e.target.value })} />

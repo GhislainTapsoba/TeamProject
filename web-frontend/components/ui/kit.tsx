@@ -8,12 +8,12 @@ import { ease, fadeUp, spring } from '@/lib/motion';
 import type { Tone } from '@/lib/labels';
 
 const toneClasses: Record<Tone, string> = {
-    neutral: 'bg-white/[0.06] text-zinc-300 ring-white/[0.08]',
-    accent: 'bg-brand-500/15 text-brand-200 ring-brand-400/25',
-    flame: 'bg-flame-500/15 text-flame-200 ring-flame-400/30',
-    success: 'bg-emerald-500/15 text-emerald-200 ring-emerald-400/25',
-    warning: 'bg-amber-500/15 text-amber-200 ring-amber-400/25',
-    danger: 'bg-rose-500/15 text-rose-200 ring-rose-400/25',
+    neutral: 'bg-ink/[0.05] text-ink-muted ring-line',
+    accent: 'bg-brand-500/15 text-brand-800 ring-brand-400/25',
+    flame: 'bg-flame-500/15 text-flame-800 ring-flame-400/30',
+    success: 'bg-emerald-500/15 text-emerald-800 ring-emerald-400/25',
+    warning: 'bg-amber-500/15 text-amber-800 ring-amber-400/25',
+    danger: 'bg-rose-500/15 text-rose-800 ring-rose-400/25',
 };
 
 export function Badge({ tone = 'neutral', children, className }: { tone?: Tone; children: React.ReactNode; className?: string }) {
@@ -30,7 +30,7 @@ export function Card({ className, children, interactive, ...props }: React.Compo
             variants={fadeUp}
             whileHover={interactive ? { y: -3 } : undefined}
             transition={spring}
-            className={cn('glass rounded-2xl', interactive && 'transition-colors hover:border-white/[0.14] hover:bg-white/[0.04]', className)}
+            className={cn('glass rounded-2xl', interactive && 'transition-colors hover:border-brand-300 hover:bg-ink/[0.04]', className)}
             {...props}
         >
             {children}
@@ -42,8 +42,8 @@ export function PageHeader({ title, subtitle, action }: { title: string; subtitl
     return (
         <motion.div variants={fadeUp} className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <div>
-                <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-[28px]">{title}</h1>
-                {subtitle && <p className="mt-1.5 text-sm text-zinc-400">{subtitle}</p>}
+                <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-[28px]">{title}</h1>
+                {subtitle && <p className="mt-1.5 text-sm text-ink-soft">{subtitle}</p>}
             </div>
             {action}
         </motion.div>
@@ -52,17 +52,17 @@ export function PageHeader({ title, subtitle, action }: { title: string; subtitl
 
 export function EmptyState({ icon: Icon, title, text, action }: { icon: React.ElementType; title: string; text?: string; action?: React.ReactNode }) {
     return (
-        <motion.div variants={fadeUp} className="flex flex-col items-center rounded-3xl border border-dashed border-white/[0.08] px-6 py-16 text-center">
+        <motion.div variants={fadeUp} className="flex flex-col items-center rounded-3xl border border-dashed border-line px-6 py-16 text-center">
             <motion.div
                 initial={{ scale: 0.6, opacity: 0, rotate: -8 }}
                 animate={{ scale: 1, opacity: 1, rotate: 0 }}
                 transition={{ ...spring, delay: 0.1 }}
-                className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/20 to-flame-500/15 ring-1 ring-white/[0.08]"
+                className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-brand-500/20 to-flame-500/15 ring-1 ring-line"
             >
-                <Icon className="h-6 w-6 text-brand-300" />
+                <Icon className="h-6 w-6 text-brand-600" />
             </motion.div>
-            <p className="font-medium text-zinc-100">{title}</p>
-            {text && <p className="mt-1 max-w-sm text-sm text-zinc-400">{text}</p>}
+            <p className="font-medium text-ink">{title}</p>
+            {text && <p className="mt-1 max-w-sm text-sm text-ink-soft">{text}</p>}
             {action && <div className="mt-6">{action}</div>}
         </motion.div>
     );
@@ -78,7 +78,7 @@ export function Avatar({ name, size = 'md', className }: { name?: string; size?:
         <span
             title={name}
             className={cn(
-                'inline-flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500/40 to-flame-500/30 font-semibold text-white ring-1 ring-white/10',
+                'inline-flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-100 to-flame-100 font-semibold text-brand-800 ring-1 ring-brand-200',
                 sizes[size],
                 className
             )}
@@ -101,17 +101,17 @@ export function Segmented<T extends string>({
     id: string;
 }) {
     return (
-        <div className="inline-flex max-w-full overflow-x-auto rounded-xl border border-white/[0.06] bg-black/20 p-1">
+        <div className="inline-flex max-w-full overflow-x-auto rounded-xl border border-line bg-white p-1">
             {options.map((o) => (
                 <button
                     key={o.id}
                     onClick={() => onChange(o.id)}
-                    className={cn('relative whitespace-nowrap rounded-lg px-3.5 py-1.5 text-[13px] font-medium transition-colors', value === o.id ? 'text-white' : 'text-zinc-400 hover:text-zinc-200')}
+                    className={cn('relative whitespace-nowrap rounded-lg px-3.5 py-1.5 text-[13px] font-medium transition-colors', value === o.id ? 'text-ink' : 'text-ink-soft hover:text-ink')}
                 >
-                    {value === o.id && <motion.span layoutId={`seg-${id}`} transition={spring} className="absolute inset-0 rounded-lg bg-white/[0.08] ring-1 ring-white/[0.08]" />}
+                    {value === o.id && <motion.span layoutId={`seg-${id}`} transition={spring} className="absolute inset-0 rounded-lg bg-ink/[0.08] ring-1 ring-line" />}
                     <span className="relative flex items-center gap-1.5">
                         {o.label}
-                        {o.count !== undefined && <span className="text-xs tabular-nums text-zinc-400">{o.count}</span>}
+                        {o.count !== undefined && <span className="text-xs tabular-nums text-ink-soft">{o.count}</span>}
                     </span>
                 </button>
             ))}
@@ -143,7 +143,7 @@ export function AnimatedNumber({ value, suffix = '' }: { value: number; suffix?:
 
 export function Progress({ value, className, tone = 'accent' }: { value: number; className?: string; tone?: 'accent' | 'warning' }) {
     return (
-        <div className={cn('h-1.5 w-full overflow-hidden rounded-full bg-white/[0.06]', className)}>
+        <div className={cn('h-1.5 w-full overflow-hidden rounded-full bg-ink/[0.06]', className)}>
             <motion.div
                 className={cn('h-full rounded-full', tone === 'warning' ? 'bg-amber-400' : 'bg-gradient-to-r from-brand-500 to-flame-400')}
                 initial={{ width: 0 }}
@@ -156,9 +156,9 @@ export function Progress({ value, className, tone = 'accent' }: { value: number;
 
 export function Notice({ tone, children }: { tone: 'success' | 'error' | 'info'; children: React.ReactNode }) {
     const styles = {
-        success: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-100',
-        error: 'border-rose-400/20 bg-rose-500/10 text-rose-100',
-        info: 'border-sky-400/20 bg-sky-500/10 text-sky-100',
+        success: 'border-emerald-400/20 bg-emerald-500/10 text-emerald-800',
+        error: 'border-rose-400/20 bg-rose-500/10 text-rose-800',
+        info: 'border-sky-400/20 bg-sky-500/10 text-sky-800',
     };
     const Icon = tone === 'success' ? CheckCircle2 : tone === 'error' ? AlertCircle : Info;
     return (

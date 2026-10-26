@@ -158,20 +158,20 @@ export default function ProjectPage() {
     return (
         <Page>
             <motion.div variants={fadeUp} className="space-y-5">
-                <Link href="/projects" className="inline-flex items-center gap-2 rounded-lg py-1 text-[15px] font-medium text-zinc-300 transition hover:text-white">
+                <Link href="/projects" className="inline-flex items-center gap-2 rounded-lg py-1 text-[15px] font-medium text-ink-muted transition hover:text-ink">
                     <ArrowLeft className="h-5 w-5" /> Retour aux projets
                 </Link>
 
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div className="min-w-0 space-y-2">
                         <div className="flex flex-wrap items-center gap-3">
-                            <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">{project.name}</h1>
+                            <h1 className="text-2xl font-semibold tracking-tight text-ink sm:text-3xl">{project.name}</h1>
                             <Badge tone={PROJECT_STATUSES[project.status]?.tone}>{PROJECT_STATUSES[project.status]?.label || project.status}</Badge>
                         </div>
-                        {project.description && <p className="max-w-2xl text-base text-zinc-300">{project.description}</p>}
+                        {project.description && <p className="max-w-2xl text-base text-ink-muted">{project.description}</p>}
                         <div className="flex max-w-md items-center gap-3 pt-1">
                             <Progress value={progress} />
-                            <span className="whitespace-nowrap text-sm tabular-nums text-zinc-300">
+                            <span className="whitespace-nowrap text-sm tabular-nums text-ink-muted">
                                 {doneCount} terminée{doneCount > 1 ? 's' : ''} sur {tasks.length}
                             </span>
                         </div>
@@ -205,7 +205,7 @@ export default function ProjectPage() {
                         animate={{ opacity: 1, y: 0 }}
                         className="flex flex-col gap-3 rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-4 sm:flex-row sm:items-center sm:justify-between"
                     >
-                        <p className="flex items-center gap-2.5 text-base font-medium text-emerald-100">
+                        <p className="flex items-center gap-2.5 text-base font-medium text-emerald-800">
                             <CheckCircle2 className="h-5 w-5 shrink-0" /> Ce projet est terminé.
                         </p>
                         {canLead && (
@@ -225,7 +225,7 @@ export default function ProjectPage() {
                             animate={{ opacity: 1, scale: 1 }}
                             className="flex flex-col gap-3 rounded-2xl border border-flame-400/30 bg-flame-500/10 p-4 sm:flex-row sm:items-center sm:justify-between"
                         >
-                            <p className="text-base font-medium text-flame-100">Toutes les tâches sont terminées. Le projet est-il fini ?</p>
+                            <p className="text-base font-medium text-flame-800">Toutes les tâches sont terminées. Le projet est-il fini ?</p>
                             <Button icon={CheckCircle2} onClick={() => setStatus('completed')}>
                                 Oui, terminer le projet
                             </Button>
@@ -233,9 +233,9 @@ export default function ProjectPage() {
                     )
                 )}
 
-                <p className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-[15px] text-zinc-300">
-                    Quand vous vous mettez sur une tâche, appuyez sur <strong className="text-white">Commencer</strong>. Une fois finie, appuyez sur{' '}
-                    <strong className="text-white">J&apos;ai terminé</strong>.
+                <p className="rounded-2xl border border-line bg-ink/[0.02] px-4 py-3 text-[15px] text-ink-muted">
+                    Quand vous vous mettez sur une tâche, appuyez sur <strong className="text-ink">Commencer</strong>. Une fois finie, appuyez sur{' '}
+                    <strong className="text-ink">J&apos;ai terminé</strong>.
                 </p>
             </motion.div>
 
@@ -315,7 +315,7 @@ function EditProjectModal({ open, onClose, project, onSaved, onDelete }: EditPro
                     </Button>
                 </ModalActions>
             </form>
-            <div className="mt-8 border-t border-white/[0.08] pt-5">
+            <div className="mt-8 border-t border-line pt-5">
                 <Button
                     variant="danger"
                     icon={Trash2}
@@ -372,7 +372,7 @@ function TaskModal({ open, onClose, team, me, onCreate }: TaskModalProps) {
                 {details ? (
                     <Textarea label="Détails" value={form.description} onChange={(e) => set('description')(e.target.value)} placeholder="Ce qu'il faut savoir pour la faire" />
                 ) : (
-                    <button type="button" onClick={() => setDetails(true)} className="-mt-2 text-[15px] font-medium text-brand-300 hover:text-brand-200">
+                    <button type="button" onClick={() => setDetails(true)} className="-mt-2 text-[15px] font-medium text-brand-600 hover:text-brand-800">
                         + Ajouter des détails
                     </button>
                 )}
@@ -385,7 +385,7 @@ function TaskModal({ open, onClose, team, me, onCreate }: TaskModalProps) {
                     options={[
                         { value: 'low', label: 'Pas pressé' },
                         { value: 'medium', label: 'Normal' },
-                        { value: 'high', label: 'Urgent', activeClass: 'border-rose-400/70 bg-rose-500/15 text-white' },
+                        { value: 'high', label: 'Urgent', activeClass: 'border-rose-400/70 bg-rose-500/15 text-ink' },
                     ]}
                 />
                 <ModalActions>
@@ -441,8 +441,8 @@ function MembersModal({ open, onClose, projectId, managerId, members, team, canM
         <motion.div key={key} layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 rounded-xl px-2 py-2.5">
             <Avatar name={name} />
             <div className="min-w-0 flex-1">
-                <p className="truncate text-base font-medium text-white">{name}</p>
-                <p className="truncate text-sm text-zinc-400">{email}</p>
+                <p className="truncate text-base font-medium text-ink">{name}</p>
+                <p className="truncate text-sm text-ink-soft">{email}</p>
             </div>
             {action}
         </motion.div>
@@ -451,7 +451,7 @@ function MembersModal({ open, onClose, projectId, managerId, members, team, canM
     return (
         <Modal open={open} onClose={onClose} title="Membres du projet" description="Les membres voient le projet et peuvent recevoir des tâches.">
             <div className="space-y-1">
-                {members.length === 0 && <p className="py-4 text-center text-[15px] text-zinc-400">Personne pour l&apos;instant.</p>}
+                {members.length === 0 && <p className="py-4 text-center text-[15px] text-ink-soft">Personne pour l&apos;instant.</p>}
                 {members.map((m) =>
                     row(
                         m.id,
@@ -471,8 +471,8 @@ function MembersModal({ open, onClose, projectId, managerId, members, team, canM
             </div>
 
             {canManage && candidates.length > 0 && (
-                <div className="mt-6 border-t border-white/[0.08] pt-5">
-                    <p className="mb-2 text-sm font-medium text-zinc-200">Ajouter au projet</p>
+                <div className="mt-6 border-t border-line pt-5">
+                    <p className="mb-2 text-sm font-medium text-ink">Ajouter au projet</p>
                     {candidates.map((u) =>
                         row(
                             u.id,

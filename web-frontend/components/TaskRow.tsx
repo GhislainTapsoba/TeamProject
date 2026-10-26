@@ -23,21 +23,21 @@ export default function TaskRow({ task, onStep }: { task: any; onStep: (task: an
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, x: -16, transition: { duration: 0.2 } }}
             transition={spring}
-            className="flex flex-col gap-4 rounded-2xl border border-white/[0.08] bg-white/[0.025] p-4 sm:flex-row sm:items-center"
+            className="flex flex-col gap-4 rounded-2xl border border-line bg-ink/[0.025] p-4 sm:flex-row sm:items-center"
         >
             <div className="min-w-0 flex-1 space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                     {state && <Badge tone={state.tone}>{state.label}</Badge>}
                     {!done && task.priority === 'high' && <Badge tone="danger">Urgent</Badge>}
                 </div>
-                <p className={cn('text-base font-medium', done ? 'text-zinc-400 line-through' : 'text-white')}>{task.title}</p>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-zinc-400">
-                    <Link href={`/projects/${task.project}`} className="flex items-center gap-1.5 hover:text-brand-300">
+                <p className={cn('text-base font-medium', done ? 'text-ink-soft line-through' : 'text-ink')}>{task.title}</p>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-soft">
+                    <Link href={`/projects/${task.project}`} className="flex items-center gap-1.5 hover:text-brand-600">
                         <FolderKanban className="h-4 w-4" />
                         {task.project_name}
                     </Link>
                     {due && (
-                        <span className={cn('flex items-center gap-1.5', due.late && 'font-medium text-rose-300')}>
+                        <span className={cn('flex items-center gap-1.5', due.late && 'font-medium text-rose-600')}>
                             <Calendar className="h-4 w-4" />
                             {due.text}
                         </span>

@@ -61,7 +61,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Link
                 key={item.href}
                 href={item.href}
-                className={cn('relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors', active ? 'text-white' : 'text-zinc-300 hover:text-white')}
+                className={cn('relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors', active ? 'text-ink' : 'text-ink-muted hover:text-ink')}
             >
                 {active && (
                     <motion.span
@@ -70,7 +70,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         className="absolute inset-0 rounded-xl bg-gradient-to-r from-brand-500/20 to-brand-500/[0.04] ring-1 ring-inset ring-brand-400/20"
                     />
                 )}
-                <item.icon className={cn('relative h-5 w-5', active ? 'text-brand-300' : 'text-zinc-400')} />
+                <item.icon className={cn('relative h-5 w-5', active ? 'text-brand-600' : 'text-ink-soft')} />
                 <span className="relative">{item.name}</span>
             </Link>
         );
@@ -79,18 +79,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     return (
         <div className="flex min-h-screen">
             {/* Barre latérale (bureau) */}
-            <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-white/[0.06] bg-black/20 px-3 py-5 backdrop-blur-xl md:flex">
+            <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-line bg-white px-3 py-5 backdrop-blur-xl md:flex">
                 <div className="px-3">
                     <Logo />
                 </div>
 
-                <div className="mx-1 mt-6 flex items-center gap-3 rounded-2xl border border-white/[0.06] bg-white/[0.03] p-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-zinc-700 to-zinc-800 text-xs font-bold text-white ring-1 ring-white/10">
+                <div className="mx-1 mt-6 flex items-center gap-3 rounded-2xl border border-line bg-ink/[0.03] p-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-brand-600 to-brand-800 text-xs font-bold text-white ring-1 ring-line">
                         {(tenant?.name || 'TP').slice(0, 2).toUpperCase()}
                     </div>
                     <div className="min-w-0">
-                        <p className="truncate text-sm font-medium text-white">{tenant?.name || 'Mon organisation'}</p>
-                        <p className="text-xs uppercase tracking-wider text-zinc-400">Plan {tenant?.plan || 'free'}</p>
+                        <p className="truncate text-sm font-medium text-ink">{tenant?.name || 'Mon organisation'}</p>
+                        <p className="text-xs uppercase tracking-wider text-ink-soft">Plan {tenant?.plan || 'free'}</p>
                     </div>
                 </div>
 
@@ -98,7 +98,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {MAIN_NAV.map(navLink)}
                 </nav>
 
-                <p className="mb-2 mt-8 px-3 text-xs font-medium uppercase tracking-wider text-zinc-400">Réglages</p>
+                <p className="mb-2 mt-8 px-3 text-xs font-medium uppercase tracking-wider text-ink-soft">Réglages</p>
                 <nav className="space-y-1">
                     {settingsNav.map(navLink)}
                 </nav>
@@ -109,22 +109,22 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             href="/settings/billing"
                             className="group relative block overflow-hidden rounded-2xl border border-brand-400/20 bg-gradient-to-br from-brand-500/15 to-transparent p-4"
                         >
-                            <Sparkles className="h-4 w-4 text-brand-300" />
-                            <p className="mt-2 text-sm font-medium text-white">Passer au plan Pro</p>
-                            <p className="text-xs text-zinc-400">Plus de membres et de projets.</p>
-                            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.06] to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                            <Sparkles className="h-4 w-4 text-brand-600" />
+                            <p className="mt-2 text-sm font-medium text-ink">Passer au plan Pro</p>
+                            <p className="text-xs text-ink-soft">Plus de membres et de projets.</p>
+                            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/60 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                         </Link>
                     )}
                     <div className="flex items-center gap-3 rounded-2xl px-2 py-2">
                         <Avatar name={user.full_name} />
                         <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-zinc-100">{user.full_name}</p>
-                            <p className="text-sm text-zinc-400">{ROLES[user.role]?.label}</p>
+                            <p className="truncate text-sm font-medium text-ink">{user.full_name}</p>
+                            <p className="text-sm text-ink-soft">{ROLES[user.role]?.label}</p>
                         </div>
                     </div>
                     <button
                         onClick={askLogout}
-                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium text-zinc-300 transition hover:bg-rose-500/10 hover:text-rose-200"
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium text-ink-muted transition hover:bg-rose-500/10 hover:text-rose-800"
                     >
                         <LogOut className="h-5 w-5" /> Se déconnecter
                     </button>
@@ -133,13 +133,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
             <div className="flex min-w-0 flex-1 flex-col">
                 {/* Barre du haut */}
-                <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-white/[0.04] bg-canvas/60 px-4 backdrop-blur-xl sm:px-8 md:justify-end">
+                <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b border-line bg-white/80 px-4 backdrop-blur-xl sm:px-8 md:justify-end">
                     <Link href="/dashboard" className="md:hidden">
                         <Logo />
                     </Link>
                     <div className="flex items-center gap-1">
                         <Notifications />
-                        <button onClick={askLogout} className="flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-sm text-zinc-300 transition hover:text-white md:hidden">
+                        <button onClick={askLogout} className="flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-sm text-ink-muted transition hover:text-ink md:hidden">
                             <LogOut className="h-5 w-5" /> Quitter
                         </button>
                     </div>
@@ -154,14 +154,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
 
             {/* Barre d'onglets (mobile) */}
-            <nav className="fixed inset-x-3 bottom-3 z-40 flex items-center justify-around rounded-2xl border border-white/[0.08] bg-zinc-950/80 p-1.5 shadow-2xl backdrop-blur-2xl md:hidden">
+            <nav className="fixed inset-x-3 bottom-3 z-40 flex items-center justify-around rounded-2xl border border-line bg-white p-1.5 shadow-2xl backdrop-blur-2xl md:hidden">
                 {[...MAIN_NAV, settingsNav[0]].map((item) => {
                     const active = isActive(item.href);
                     return (
                         <Link key={item.href} href={item.href} className="relative flex flex-1 flex-col items-center gap-1 rounded-xl py-2.5 text-[13px] font-medium">
-                            {active && <motion.span layoutId="tab-active" transition={spring} className="absolute inset-0 rounded-xl bg-white/[0.07]" />}
-                            <item.icon className={cn('relative h-6 w-6', active ? 'text-brand-300' : 'text-zinc-400')} />
-                            <span className={cn('relative', active ? 'text-white' : 'text-zinc-300')}>{item.short ?? item.name}</span>
+                            {active && <motion.span layoutId="tab-active" transition={spring} className="absolute inset-0 rounded-xl bg-ink/[0.07]" />}
+                            <item.icon className={cn('relative h-6 w-6', active ? 'text-brand-600' : 'text-ink-soft')} />
+                            <span className={cn('relative', active ? 'text-ink' : 'text-ink-muted')}>{item.short ?? item.name}</span>
                         </Link>
                     );
                 })}

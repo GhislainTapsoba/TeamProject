@@ -113,19 +113,19 @@ export default function ProjectsPage() {
                             >
                                 <Link
                                     href={`/projects/${p.id}`}
-                                    className="glass group relative flex h-full flex-col overflow-hidden rounded-2xl p-5 transition-colors hover:border-white/[0.14]"
+                                    className="glass group relative flex h-full flex-col overflow-hidden rounded-2xl p-5 transition-colors hover:border-brand-300"
                                 >
                                     <span className="pointer-events-none absolute -right-10 -top-10 h-32 w-32 rounded-full bg-brand-500/10 opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-100" />
                                     <div className="flex items-start justify-between gap-3">
-                                        <h3 className="font-semibold tracking-tight text-white">{p.name}</h3>
+                                        <h3 className="font-semibold tracking-tight text-ink">{p.name}</h3>
                                         <Badge tone={PROJECT_STATUSES[p.status]?.tone}>{PROJECT_STATUSES[p.status]?.label || p.status}</Badge>
                                     </div>
-                                    <p className="mt-2 line-clamp-2 flex-1 text-sm text-zinc-400">{p.description || 'Pas de description.'}</p>
+                                    <p className="mt-2 line-clamp-2 flex-1 text-sm text-ink-soft">{p.description || 'Pas de description.'}</p>
                                     <div className="mt-5 flex items-center gap-3">
                                         <Progress value={p.progress_percentage || 0} />
-                                        <span className="text-xs tabular-nums text-zinc-400">{p.progress_percentage || 0}%</span>
+                                        <span className="text-xs tabular-nums text-ink-soft">{p.progress_percentage || 0}%</span>
                                     </div>
-                                    <div className="mt-4 flex items-center justify-between border-t border-white/[0.05] pt-4 text-xs text-zinc-400">
+                                    <div className="mt-4 flex items-center justify-between border-t border-line pt-4 text-xs text-ink-soft">
                                         <span className="flex items-center gap-2">
                                             <Avatar name={p.manager_details?.full_name} size="sm" />
                                             <span className="truncate">{p.manager_details?.full_name}</span>

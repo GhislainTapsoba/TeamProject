@@ -24,11 +24,11 @@ export default function LandingPage() {
 
     return (
         <div className="relative overflow-hidden">
-            <header className="fixed inset-x-0 top-0 z-30 border-b border-white/[0.04] bg-canvas/60 backdrop-blur-xl">
+            <header className="fixed inset-x-0 top-0 z-30 border-b border-line bg-white/80 backdrop-blur-xl">
                 <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
                     <Logo />
                     <nav className="flex items-center gap-2">
-                        <Link href="/login" className="rounded-lg px-3 py-2 text-sm text-zinc-400 transition hover:text-white">
+                        <Link href="/login" className="rounded-lg px-3 py-2 text-sm text-ink-soft transition hover:text-ink">
                             Connexion
                         </Link>
                         <ButtonLink href="/register" size="sm">
@@ -47,17 +47,17 @@ export default function LandingPage() {
                 >
                     <motion.p
                         variants={fadeUp}
-                        className="mx-auto inline-flex items-center gap-2 rounded-full border border-white/[0.08] bg-white/[0.03] px-3.5 py-1 text-xs text-zinc-300"
+                        className="mx-auto inline-flex items-center gap-2 rounded-full border border-line bg-ink/[0.03] px-3.5 py-1 text-xs text-ink-muted"
                     >
                         <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-400" />
                         Gestion de projets en équipe
                     </motion.p>
-                    <motion.h1 variants={fadeUp} className="mt-8 text-5xl font-semibold leading-[1.05] tracking-tighter text-white sm:text-7xl">
+                    <motion.h1 variants={fadeUp} className="mt-8 text-5xl font-semibold leading-[1.05] tracking-tighter text-ink sm:text-7xl">
                         Votre équipe,
                         <br />
-                        <span className="bg-gradient-to-r from-brand-300 via-brand-200 to-flame-400 bg-clip-text text-transparent">enfin alignée.</span>
+                        <span className="bg-gradient-to-r from-brand-600 via-brand-500 to-flame-500 bg-clip-text text-transparent">enfin alignée.</span>
                     </motion.h1>
-                    <motion.p variants={fadeUp} className="mx-auto mt-6 max-w-xl text-lg text-zinc-400">
+                    <motion.p variants={fadeUp} className="mx-auto mt-6 max-w-xl text-lg text-ink-soft">
                         Projets, tâches et collègues au même endroit. Simple dès la première minute, agréable tous les jours.
                     </motion.p>
                     <motion.div variants={fadeUp} className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
@@ -79,12 +79,12 @@ export default function LandingPage() {
                         style={{ y: previewY, rotateX: previewRotate }}
                         className="glass relative rounded-3xl p-2 shadow-[0_40px_120px_-40px_rgba(8,32,216,0.5)]"
                     >
-                        <div className="rounded-[20px] border border-white/[0.05] bg-zinc-950/80 p-5">
+                        <div className="rounded-[20px] border border-line bg-white p-5">
                             <div className="mb-5 flex items-center gap-2">
-                                <span className="h-2.5 w-2.5 rounded-full bg-white/10" />
-                                <span className="h-2.5 w-2.5 rounded-full bg-white/10" />
-                                <span className="h-2.5 w-2.5 rounded-full bg-white/10" />
-                                <span className="ml-3 text-xs text-zinc-400">acme.deep-technologies.com</span>
+                                <span className="h-2.5 w-2.5 rounded-full bg-ink/[0.05]" />
+                                <span className="h-2.5 w-2.5 rounded-full bg-ink/[0.05]" />
+                                <span className="h-2.5 w-2.5 rounded-full bg-ink/[0.05]" />
+                                <span className="ml-3 text-xs text-ink-soft">acme.deep-technologies.com</span>
                             </div>
                             <div className="grid grid-cols-3 gap-3 text-left">
                                 {[
@@ -92,8 +92,8 @@ export default function LandingPage() {
                                     { title: 'En cours', dot: 'bg-brand-400', cards: ['Intégration Mobile Money', 'Campagne de lancement'] },
                                     { title: 'Terminé', dot: 'bg-emerald-400', cards: ['Choix du logo'] },
                                 ].map((col, c) => (
-                                    <div key={col.title} className="space-y-2 rounded-2xl bg-white/[0.02] p-2.5">
-                                        <p className="flex items-center gap-2 px-1 pb-1 text-xs font-medium text-zinc-300">
+                                    <div key={col.title} className="space-y-2 rounded-2xl bg-ink/[0.02] p-2.5">
+                                        <p className="flex items-center gap-2 px-1 pb-1 text-xs font-medium text-ink-muted">
                                             <span className={`h-1.5 w-1.5 rounded-full ${col.dot}`} />
                                             {col.title}
                                         </p>
@@ -103,11 +103,11 @@ export default function LandingPage() {
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: 1 + (c * 3 + i) * 0.08, ease }}
-                                                className="rounded-xl border border-white/[0.06] bg-zinc-900 p-3 text-xs text-zinc-300 sm:text-xs"
+                                                className="rounded-xl border border-line bg-white p-3 text-xs text-ink-muted sm:text-xs"
                                             >
                                                 {card}
                                                 <div className="mt-2.5 flex items-center justify-between">
-                                                    <span className="h-1 w-10 rounded-full bg-white/[0.07]" />
+                                                    <span className="h-1 w-10 rounded-full bg-ink/[0.07]" />
                                                     <span className="h-4 w-4 rounded-full bg-gradient-to-br from-brand-400/50 to-flame-400/50" />
                                                 </div>
                                             </motion.div>
@@ -126,7 +126,7 @@ export default function LandingPage() {
                         viewport={{ once: true, margin: '-80px' }}
                         variants={{ show: { transition: { staggerChildren: 0.08 } } }}
                     >
-                        <motion.h2 variants={fadeUp} className="text-center text-3xl font-semibold tracking-tight text-white sm:text-4xl">
+                        <motion.h2 variants={fadeUp} className="text-center text-3xl font-semibold tracking-tight text-ink sm:text-4xl">
                             Tout ce qu&apos;il faut, rien de plus.
                         </motion.h2>
                         <div className="mt-14 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -135,13 +135,13 @@ export default function LandingPage() {
                                     key={f.title}
                                     variants={fadeUp}
                                     whileHover={{ y: -4 }}
-                                    className="glass group rounded-2xl p-6 transition-colors hover:border-white/[0.12]"
+                                    className="glass group rounded-2xl p-6 transition-colors hover:border-brand-300"
                                 >
                                     <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-500/10 ring-1 ring-brand-400/20 transition group-hover:bg-brand-500/20">
-                                        <f.icon className="h-5 w-5 text-brand-300" />
+                                        <f.icon className="h-5 w-5 text-brand-600" />
                                     </span>
-                                    <h3 className="mt-5 font-semibold text-white">{f.title}</h3>
-                                    <p className="mt-1.5 text-sm leading-relaxed text-zinc-400">{f.text}</p>
+                                    <h3 className="mt-5 font-semibold text-ink">{f.title}</h3>
+                                    <p className="mt-1.5 text-sm leading-relaxed text-ink-soft">{f.text}</p>
                                 </motion.div>
                             ))}
                         </div>
@@ -154,19 +154,19 @@ export default function LandingPage() {
                         whileInView={{ opacity: 1, scale: 1 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.8, ease }}
-                        className="relative overflow-hidden rounded-3xl border border-brand-400/20 bg-gradient-to-br from-brand-600/25 via-zinc-950 to-flame-600/15 px-8 py-16 text-center"
+                        className="relative overflow-hidden rounded-3xl border border-brand-400/20 bg-gradient-to-br from-brand-600 via-brand-700 to-brand-900 px-8 py-16 text-center"
                     >
                         <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">Lancez votre équipe aujourd&apos;hui.</h2>
-                        <p className="mx-auto mt-4 max-w-md text-zinc-400">Gratuit pour démarrer, sans carte bancaire.</p>
-                        <ButtonLink href="/register" size="lg" className="mt-8">
+                        <p className="mx-auto mt-4 max-w-md text-brand-100">Gratuit pour démarrer, sans carte bancaire.</p>
+                        <ButtonLink href="/register" size="lg" variant="accent" className="mt-8">
                             Créer mon espace <ArrowRight className="h-4 w-4" />
                         </ButtonLink>
                     </motion.div>
                 </section>
             </main>
 
-            <footer className="border-t border-white/[0.05] py-8">
-                <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 text-sm text-zinc-400 sm:flex-row">
+            <footer className="border-t border-line py-8">
+                <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 text-sm text-ink-soft sm:flex-row">
                     <Logo className="opacity-70" />
                     <p>© {new Date().getFullYear()} Deep Technologies</p>
                 </div>
