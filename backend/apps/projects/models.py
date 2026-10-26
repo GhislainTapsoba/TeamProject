@@ -24,11 +24,14 @@ class Project(models.Model):
 
     @property
     def total_tasks_count(self):
-        return self.tasks.count()
+        # Valeur annotée par la liste des projets (une requête pour tous), sinon comptée ici
+        annotated = getattr(self, "annotated_total_tasks", None)
+        return annotated if annotated is not None else self.tasks.count()
 
     @property
     def completed_tasks_count(self):
-        return self.tasks.filter(state="done").count()
+        annotated = getattr(self, "annotated_done_tasks", None)
+        return annotated if annotated is not None else self.tasks.filter(state="done").count()
 
     @property
     def progress_percentage(self):
