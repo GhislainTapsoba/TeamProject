@@ -10,7 +10,8 @@ import { errorMessage, formatDate, listOf } from '@/lib/utils';
 import { spring } from '@/lib/motion';
 import { Avatar, Badge, EmptyState, Page, PageHeader, Skeleton } from '@/components/ui/kit';
 import { Button } from '@/components/ui/button';
-import { Input, Select } from '@/components/ui/field';
+import { Input, PasswordInput } from '@/components/ui/field';
+import { Choice } from '@/components/ui/choice';
 import { Modal, ModalActions } from '@/components/ui/modal';
 import { useToast } from '@/components/ui/toast';
 
@@ -32,6 +33,11 @@ export default function TeamPage() {
 
     useEffect(() => {
         load();
+        // Lien « Inviter quelqu'un » du guide de l'accueil
+        if (new URLSearchParams(window.location.search).has('invite')) {
+            setInviteOpen(true);
+            window.history.replaceState(null, '', '/team');
+        }
     }, []);
 
     const query = search.trim().toLowerCase();
@@ -41,7 +47,7 @@ export default function TeamPage() {
         <Page>
             <PageHeader
                 title="Équipe"
-                subtitle={`${team.length} membre${team.length > 1 ? 's' : ''} chez ${tenant?.name ?? 'votre organisation'}.`}
+                subtitle={`Les ${team.length} personne${team.length > 1 ? 's' : ''} qui travaillent avec vous chez ${tenant?.name ?? 'votre organisation'}.`}
                 action={
                     isAdmin && (
                         <Button icon={UserPlus} onClick={() => setInviteOpen(true)}>
@@ -86,7 +92,7 @@ export default function TeamPage() {
                                     <div className="min-w-0 flex-1">
                                         <p className="truncate font-medium text-white">
                                             {m.full_name}
-                                            {m.id === user?.id && <span className="ml-1.5 text-xs font-normal text-zinc-500">(vous)</span>}
+                                            {m.id === user?.id && <span className="ml-1.5 text-xs font-normal text-zinc-400">(vous)</span>}
                                         </p>
                                         <Badge tone={ROLES[m.role]?.tone} className="mt-1">
                                             {ROLES[m.role]?.label || m.role}
@@ -95,16 +101,16 @@ export default function TeamPage() {
                                 </div>
                                 <div className="mt-4 space-y-1.5 border-t border-white/[0.05] pt-4 text-sm text-zinc-400">
                                     <a href={`mailto:${m.email}`} className="flex items-center gap-2 truncate transition hover:text-violet-300">
-                                        <Mail className="h-3.5 w-3.5 shrink-0 text-zinc-500" />
+                                        <Mail className="h-3.5 w-3.5 shrink-0 text-zinc-400" />
                                         {m.email}
                                     </a>
                                     {m.phone && (
                                         <p className="flex items-center gap-2">
-                                            <Phone className="h-3.5 w-3.5 text-zinc-500" />
+                                            <Phone className="h-3.5 w-3.5 text-zinc-400" />
                                             {m.phone}
                                         </p>
                                     )}
-                                    <p className="pt-1 text-xs text-zinc-600">Arrivé·e le {formatDate(m.date_joined, { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                                    <p className="pt-1 text-xs text-zinc-400">Arrivé·e le {formatDate(m.date_joined, { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                                 </div>
                             </motion.div>
                         ))}
@@ -129,7 +135,7 @@ function InviteModal({ open, onClose, onInvited }: { open: boolean; onClose: () 
     const empty = { first_name: '', last_name: '', email: '', role: 'employee', phone: '', password: '' };
     const [form, setForm] = useState(empty);
     const [saving, setSaving] = useState(false);
-    const set = (key: keyof typeof empty) => (e: React.ChangeEvent<any>) => setForm({ ...form, [key]: e.target.value });
+    const set = (key: keyof typeof empty) => (e: React.ChangeEvent<HTMLInputElement>) => setForm({ ...form, [key]: e.target.value });
 
     const submit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -147,33 +153,38 @@ function InviteModal({ open, onClose, onInvited }: { open: boolean; onClose: () 
     };
 
     return (
-        <Modal open={open} onClose={onClose} title="Ajouter un membre" description="La personne pourra se connecter avec son email.">
-            <form onSubmit={submit} className="space-y-4">
+        <Modal open={open} onClose={onClose} title="Ajouter un membre" description="Donnez-lui ensuite son email et le mot de passe choisi ici : elle pourra se connecter.">
+            <form onSubmit={submit} className="space-y-5">
                 <div className="grid grid-cols-2 gap-4">
                     <Input label="Prénom" required autoFocus value={form.first_name} onChange={set('first_name')} />
                     <Input label="Nom" required value={form.last_name} onChange={set('last_name')} />
                 </div>
                 <Input label="Email" type="email" required value={form.email} onChange={set('email')} placeholder="prenom@entreprise.com" />
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <Select label="Rôle" value={form.role} onChange={set('role')}>
-                        <option value="employee">Membre</option>
-                        <option value="manager">Manager</option>
-                        <option value="admin">Administrateur</option>
-                    </Select>
-                    <Input label="Téléphone (facultatif)" type="tel" value={form.phone} onChange={set('phone')} placeholder="+226 70 00 00 00" />
-                </div>
-                <Input
-                    label="Mot de passe provisoire"
+                <Input label="Téléphone (facultatif)" type="tel" value={form.phone} onChange={set('phone')} placeholder="+226 70 00 00 00" />
+                <Choice
+                    label="Que pourra-t-elle faire ?"
+                    columns={1}
+                    value={form.role}
+                    onChange={(role) => setForm({ ...form, role })}
+                    options={[
+                        { value: 'employee', label: 'Membre', description: 'Voit les projets et s’occupe de ses tâches.' },
+                        { value: 'manager', label: 'Manager', description: 'Crée des projets et répartit les tâches.' },
+                        { value: 'admin', label: 'Administrateur', description: 'Peut tout faire, y compris gérer l’équipe et l’abonnement.' },
+                    ]}
+                />
+                <PasswordInput
+                    label="Mot de passe pour sa première connexion"
                     value={form.password}
                     onChange={set('password')}
-                    hint="Inutile si la personne a déjà un compte Team Project : elle sera simplement ajoutée."
+                    minLength={8}
+                    hint="8 caractères minimum. Inutile si la personne a déjà un compte Team Project."
                 />
                 <ModalActions>
-                    <Button type="button" variant="ghost" onClick={onClose}>
+                    <Button type="button" variant="secondary" size="lg" onClick={onClose}>
                         Annuler
                     </Button>
-                    <Button type="submit" loading={saving}>
-                        Ajouter
+                    <Button type="submit" size="lg" loading={saving}>
+                        Ajouter à l’équipe
                     </Button>
                 </ModalActions>
             </form>

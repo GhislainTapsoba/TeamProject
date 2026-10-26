@@ -112,7 +112,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const login = async (email: string, password: string) => {
         const { data, error } = await supabase.auth.signInWithPassword({ email, password });
         if (error || !data.session) {
-            throw new Error('Identifiants invalides. Veuillez vérifier votre email et mot de passe.');
+            throw new Error('Email ou mot de passe incorrect. Vérifiez-les et réessayez.');
         }
 
         try {

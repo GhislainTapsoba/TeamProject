@@ -4,16 +4,18 @@ import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useParams } from 'next/navigation';
 import { motion } from 'motion/react';
-import { ArrowLeft, Plus, UserPlus, Users, X } from 'lucide-react';
+import { ArrowLeft, Plus, UserMinus, UserPlus, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { projectsAPI, tasksAPI, usersAPI } from '@/lib/api';
-import { PROJECT_STATUSES, type TaskState } from '@/lib/labels';
+import { NEXT_STEP, PROJECT_STATUSES, TASK_STATES, type TaskState } from '@/lib/labels';
 import { errorMessage, listOf } from '@/lib/utils';
 import { fadeUp } from '@/lib/motion';
 import { Avatar, Badge, Page, Progress, Skeleton } from '@/components/ui/kit';
 import { Button } from '@/components/ui/button';
-import { Input, Select, Textarea } from '@/components/ui/field';
+import { Input, Textarea } from '@/components/ui/field';
+import { Choice, DateChoice } from '@/components/ui/choice';
 import { Modal, ModalActions } from '@/components/ui/modal';
+import { useConfirm } from '@/components/ui/confirm';
 import { useToast } from '@/components/ui/toast';
 import KanbanBoard from '@/components/KanbanBoard';
 
@@ -21,6 +23,7 @@ export default function ProjectPage() {
     const projectId = useParams()?.id as string;
     const { user } = useAuth();
     const toast = useToast();
+    const confirm = useConfirm();
     const [project, setProject] = useState<any>(null);
     const [tasks, setTasks] = useState<any[]>([]);
     const [members, setMembers] = useState<any[]>([]);
@@ -37,7 +40,7 @@ export default function ProjectPage() {
             setTasks([...todo, ...in_progress, ...done]);
             setMembers(membersRes.data || []);
         } catch {
-            toast.error('Impossible de charger le projet.');
+            toast.error("Le projet n'a pas pu se charger. Vérifiez votre connexion internet.");
         }
     };
 
@@ -53,9 +56,12 @@ export default function ProjectPage() {
         setTasks((list) => list.map((t) => (t.id === task.id ? { ...t, state } : t)));
         try {
             await tasksAPI.updateState(task.id, state);
+            // Message du bouton « étape suivante », ou nom de la colonne après un glisser-déposer
+            const step = NEXT_STEP[task.state as TaskState];
+            toast.success(step.to === state ? step.done : `Tâche déplacée dans « ${TASK_STATES.find((s) => s.id === state)?.label} ».`);
         } catch (err) {
             setTasks((list) => list.map((t) => (t.id === task.id ? task : t)));
-            toast.error(errorMessage(err, "Vous ne pouvez pas déplacer cette tâche."));
+            toast.error(errorMessage(err, "Seule la personne chargée de cette tâche, ou un responsable, peut la changer."));
         }
     };
 
@@ -63,20 +69,28 @@ export default function ProjectPage() {
         try {
             const res = await tasksAPI.create({ project: projectId, ...data });
             setTasks((list) => [...list, res.data]);
+            toast.success('Tâche ajoutée.');
         } catch (err) {
-            toast.error(errorMessage(err, 'Impossible de créer la tâche.'));
+            toast.error(errorMessage(err, "La tâche n'a pas pu être ajoutée."));
             throw err;
         }
     };
 
     const deleteTask = async (task: any) => {
-        if (!confirm(`Supprimer « ${task.title} » ?`)) return;
+        const ok = await confirm({
+            title: 'Supprimer cette tâche ?',
+            message: `« ${task.title} » sera effacée définitivement.`,
+            confirmLabel: 'Oui, supprimer',
+            danger: true,
+        });
+        if (!ok) return;
         setTasks((list) => list.filter((t) => t.id !== task.id));
         try {
             await tasksAPI.delete(task.id);
+            toast.success('Tâche supprimée.');
         } catch (err) {
             setTasks((list) => [...list, task]);
-            toast.error(errorMessage(err, 'Impossible de supprimer la tâche.'));
+            toast.error(errorMessage(err, "La tâche n'a pas pu être supprimée."));
         }
     };
 
@@ -99,8 +113,8 @@ export default function ProjectPage() {
     return (
         <Page>
             <motion.div variants={fadeUp} className="space-y-5">
-                <Link href="/projects" className="inline-flex items-center gap-1.5 text-sm text-zinc-500 transition hover:text-white">
-                    <ArrowLeft className="h-4 w-4" /> Projets
+                <Link href="/projects" className="inline-flex items-center gap-2 rounded-lg py-1 text-[15px] font-medium text-zinc-300 transition hover:text-white">
+                    <ArrowLeft className="h-5 w-5" /> Retour aux projets
                 </Link>
 
                 <div className="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
@@ -109,38 +123,29 @@ export default function ProjectPage() {
                             <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">{project.name}</h1>
                             <Badge tone={PROJECT_STATUSES[project.status]?.tone}>{PROJECT_STATUSES[project.status]?.label || project.status}</Badge>
                         </div>
-                        {project.description && <p className="max-w-2xl text-sm text-zinc-400">{project.description}</p>}
-                        <div className="flex max-w-sm items-center gap-3 pt-1">
+                        {project.description && <p className="max-w-2xl text-base text-zinc-300">{project.description}</p>}
+                        <div className="flex max-w-md items-center gap-3 pt-1">
                             <Progress value={progress} />
-                            <span className="whitespace-nowrap text-xs tabular-nums text-zinc-400">
-                                {doneCount}/{tasks.length} terminées
+                            <span className="whitespace-nowrap text-sm tabular-nums text-zinc-300">
+                                {doneCount} terminée{doneCount > 1 ? 's' : ''} sur {tasks.length}
                             </span>
                         </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setMembersModal(true)}
-                            className="flex items-center rounded-xl py-1 pl-1 pr-3 transition hover:bg-white/[0.05]"
-                            title="Membres du projet"
-                        >
-                            <span className="flex -space-x-2">
-                                {members.slice(0, 4).map((m) => (
-                                    <Avatar key={m.id} name={m.user_details?.full_name} size="sm" className="ring-2 ring-canvas" />
-                                ))}
-                                {members.length === 0 && (
-                                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-white/[0.06]">
-                                        <Users className="h-3.5 w-3.5 text-zinc-400" />
-                                    </span>
-                                )}
-                            </span>
-                            <span className="ml-2 text-sm text-zinc-400">{members.length > 4 ? `+${members.length - 4}` : 'Membres'}</span>
-                        </button>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                        <Button variant="secondary" icon={Users} onClick={() => setMembersModal(true)}>
+                            Membres ({members.length})
+                        </Button>
                         <Button icon={Plus} onClick={() => setTaskModal(true)}>
                             Nouvelle tâche
                         </Button>
                     </div>
                 </div>
+
+                <p className="rounded-2xl border border-white/[0.06] bg-white/[0.02] px-4 py-3 text-[15px] text-zinc-300">
+                    Quand vous vous mettez sur une tâche, appuyez sur <strong className="text-white">Commencer</strong>. Une fois finie, appuyez sur{' '}
+                    <strong className="text-white">J&apos;ai terminé</strong>.
+                </p>
             </motion.div>
 
             <motion.div variants={fadeUp}>
@@ -152,7 +157,7 @@ export default function ProjectPage() {
                 />
             </motion.div>
 
-            <TaskModal open={taskModal} onClose={() => setTaskModal(false)} team={team} onCreate={createTask} />
+            <TaskModal open={taskModal} onClose={() => setTaskModal(false)} team={team} me={user?.id} onCreate={createTask} />
             <MembersModal
                 open={membersModal}
                 onClose={() => setMembersModal(false)}
@@ -167,11 +172,23 @@ export default function ProjectPage() {
     );
 }
 
-function TaskModal({ open, onClose, team, onCreate }: { open: boolean; onClose: () => void; team: any[]; onCreate: (data: any) => Promise<void> }) {
+type TaskModalProps = { open: boolean; onClose: () => void; team: any[]; me?: number | string; onCreate: (data: any) => Promise<void> };
+
+function TaskModal({ open, onClose, team, me, onCreate }: TaskModalProps) {
     const empty = { title: '', description: '', priority: 'medium', assignee: '', due_date: '' };
     const [form, setForm] = useState(empty);
+    const [details, setDetails] = useState(false);
     const [saving, setSaving] = useState(false);
-    const set = (key: keyof typeof empty) => (e: React.ChangeEvent<any>) => setForm({ ...form, [key]: e.target.value });
+    const set = (key: keyof typeof empty) => (value: string) => setForm({ ...form, [key]: value });
+
+    // « Moi » en premier : c'est le choix le plus courant
+    const people = [
+        { value: '', label: 'Personne pour le moment' },
+        ...team
+            .slice()
+            .sort((a, b) => (a.id === me ? -1 : b.id === me ? 1 : 0))
+            .map((u) => ({ value: String(u.id), label: u.id === me ? 'Moi' : u.full_name, icon: <Avatar name={u.full_name} size="sm" /> })),
+    ];
 
     const submit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -179,6 +196,7 @@ function TaskModal({ open, onClose, team, onCreate }: { open: boolean; onClose: 
         try {
             await onCreate({ ...form, state: 'todo', assignee: form.assignee || null, due_date: form.due_date || null });
             setForm(empty);
+            setDetails(false);
             onClose();
         } catch {
             // l'erreur est déjà affichée
@@ -188,32 +206,34 @@ function TaskModal({ open, onClose, team, onCreate }: { open: boolean; onClose: 
     };
 
     return (
-        <Modal open={open} onClose={onClose} title="Nouvelle tâche">
-            <form onSubmit={submit} className="space-y-4">
-                <Input label="Titre" required autoFocus value={form.title} onChange={set('title')} placeholder="Rédiger le cahier des charges" />
-                <Textarea label="Description (facultatif)" value={form.description} onChange={set('description')} />
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <Select label="Assignée à" value={form.assignee} onChange={set('assignee')}>
-                        <option value="">Personne</option>
-                        {team.map((u) => (
-                            <option key={u.id} value={u.id}>
-                                {u.full_name}
-                            </option>
-                        ))}
-                    </Select>
-                    <Input label="Échéance" type="date" value={form.due_date} onChange={set('due_date')} />
-                </div>
-                <Select label="Priorité" value={form.priority} onChange={set('priority')}>
-                    <option value="low">Basse</option>
-                    <option value="medium">Moyenne</option>
-                    <option value="high">Haute</option>
-                </Select>
+        <Modal open={open} onClose={onClose} title="Nouvelle tâche" description="Seul le titre est obligatoire.">
+            <form onSubmit={submit} className="space-y-6">
+                <Input label="Que faut-il faire ?" required autoFocus value={form.title} onChange={(e) => set('title')(e.target.value)} placeholder="Ex. : Appeler le fournisseur" />
+                {details ? (
+                    <Textarea label="Détails" value={form.description} onChange={(e) => set('description')(e.target.value)} placeholder="Ce qu'il faut savoir pour la faire" />
+                ) : (
+                    <button type="button" onClick={() => setDetails(true)} className="-mt-2 text-[15px] font-medium text-violet-300 hover:text-violet-200">
+                        + Ajouter des détails
+                    </button>
+                )}
+                <Choice label="Qui s'en occupe ?" columns={2} value={form.assignee} onChange={set('assignee')} options={people} />
+                <DateChoice label="À finir pour quand ?" value={form.due_date} onChange={set('due_date')} />
+                <Choice
+                    label="Est-ce urgent ?"
+                    value={form.priority}
+                    onChange={set('priority')}
+                    options={[
+                        { value: 'low', label: 'Pas pressé' },
+                        { value: 'medium', label: 'Normal' },
+                        { value: 'high', label: 'Urgent', activeClass: 'border-rose-400/70 bg-rose-500/15 text-white' },
+                    ]}
+                />
                 <ModalActions>
-                    <Button type="button" variant="ghost" onClick={onClose}>
+                    <Button type="button" variant="secondary" size="lg" onClick={onClose}>
                         Annuler
                     </Button>
-                    <Button type="submit" loading={saving}>
-                        Créer la tâche
+                    <Button type="submit" size="lg" loading={saving}>
+                        Ajouter la tâche
                     </Button>
                 </ModalActions>
             </form>
@@ -234,7 +254,7 @@ type MembersModalProps = {
 
 function MembersModal({ open, onClose, projectId, managerId, members, team, canManage, onChange }: MembersModalProps) {
     const toast = useToast();
-    const [selected, setSelected] = useState('');
+    const confirm = useConfirm();
     const candidates = team.filter((u) => !members.some((m) => m.user === u.id));
 
     const run = async (action: Promise<any>, success: string) => {
@@ -243,62 +263,74 @@ function MembersModal({ open, onClose, projectId, managerId, members, team, canM
             await onChange();
             toast.success(success);
         } catch (err) {
-            toast.error(errorMessage(err, 'Action impossible.'));
+            toast.error(errorMessage(err, "Ça n'a pas marché. Réessayez dans un instant."));
         }
     };
 
+    const remove = async (member: any) => {
+        const ok = await confirm({
+            title: `Retirer ${member.user_details?.full_name} du projet ?`,
+            message: 'Cette personne ne verra plus ce projet. Ses tâches restent en place.',
+            confirmLabel: 'Oui, retirer',
+            danger: true,
+        });
+        if (ok) run(projectsAPI.removeMember(projectId, member.user), `${member.user_details?.full_name} a été retiré du projet.`);
+    };
+
+    const row = (key: React.Key, name: string, email: string, action: React.ReactNode) => (
+        <motion.div key={key} layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 rounded-xl px-2 py-2.5">
+            <Avatar name={name} />
+            <div className="min-w-0 flex-1">
+                <p className="truncate text-base font-medium text-white">{name}</p>
+                <p className="truncate text-sm text-zinc-400">{email}</p>
+            </div>
+            {action}
+        </motion.div>
+    );
+
     return (
         <Modal open={open} onClose={onClose} title="Membres du projet" description="Les membres voient le projet et peuvent recevoir des tâches.">
-            {canManage && candidates.length > 0 && (
-                <div className="mb-5 flex gap-2">
-                    <Select value={selected} onChange={(e) => setSelected(e.target.value)} className="flex-1">
-                        <option value="">Ajouter une personne…</option>
-                        {candidates.map((u) => (
-                            <option key={u.id} value={u.id}>
-                                {u.full_name}
-                            </option>
-                        ))}
-                    </Select>
-                    <Button
-                        icon={UserPlus}
-                        disabled={!selected}
-                        onClick={() => run(projectsAPI.addMember(projectId, selected), 'Membre ajouté.').then(() => setSelected(''))}
-                        aria-label="Ajouter"
-                        className="h-11"
-                    />
-                </div>
-            )}
             <div className="space-y-1">
-                {members.length === 0 && <p className="py-6 text-center text-sm text-zinc-500">Aucun membre pour l&apos;instant.</p>}
-                {members.map((m, i) => (
-                    <motion.div
-                        key={m.id}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.03 }}
-                        className="flex items-center gap-3 rounded-xl px-2 py-2 hover:bg-white/[0.03]"
-                    >
-                        <Avatar name={m.user_details?.full_name} />
-                        <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium text-zinc-100">{m.user_details?.full_name}</p>
-                            <p className="truncate text-xs text-zinc-500">{m.user_details?.email}</p>
-                        </div>
-                        {m.user === managerId ? (
+                {members.length === 0 && <p className="py-4 text-center text-[15px] text-zinc-400">Personne pour l&apos;instant.</p>}
+                {members.map((m) =>
+                    row(
+                        m.id,
+                        m.user_details?.full_name,
+                        m.user_details?.email,
+                        m.user === managerId ? (
                             <Badge tone="accent">Responsable</Badge>
                         ) : (
                             canManage && (
-                                <button
-                                    onClick={() => run(projectsAPI.removeMember(projectId, m.user), 'Membre retiré.')}
-                                    aria-label="Retirer du projet"
-                                    className="rounded-lg p-2 text-zinc-500 transition hover:bg-rose-500/10 hover:text-rose-300"
-                                >
-                                    <X className="h-4 w-4" />
-                                </button>
+                                <Button variant="ghost" size="sm" icon={UserMinus} onClick={() => remove(m)}>
+                                    Retirer
+                                </Button>
                             )
-                        )}
-                    </motion.div>
-                ))}
+                        )
+                    )
+                )}
             </div>
+
+            {canManage && candidates.length > 0 && (
+                <div className="mt-6 border-t border-white/[0.08] pt-5">
+                    <p className="mb-2 text-sm font-medium text-zinc-200">Ajouter au projet</p>
+                    {candidates.map((u) =>
+                        row(
+                            u.id,
+                            u.full_name,
+                            u.email,
+                            <Button size="sm" icon={UserPlus} onClick={() => run(projectsAPI.addMember(projectId, u.id), `${u.full_name} a été ajouté au projet.`)}>
+                                Ajouter
+                            </Button>
+                        )
+                    )}
+                </div>
+            )}
+
+            <ModalActions>
+                <Button variant="secondary" onClick={onClose}>
+                    Fermer
+                </Button>
+            </ModalActions>
         </Modal>
     );
 }

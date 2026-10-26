@@ -18,7 +18,7 @@ const toneClasses: Record<Tone, string> = {
 
 export function Badge({ tone = 'neutral', children, className }: { tone?: Tone; children: React.ReactNode; className?: string }) {
     return (
-        <span className={cn('inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-medium ring-1 ring-inset', toneClasses[tone], className)}>
+        <span className={cn('inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset', toneClasses[tone], className)}>
             {children}
         </span>
     );
@@ -62,7 +62,7 @@ export function EmptyState({ icon: Icon, title, text, action }: { icon: React.El
                 <Icon className="h-6 w-6 text-violet-300" />
             </motion.div>
             <p className="font-medium text-zinc-100">{title}</p>
-            {text && <p className="mt-1 max-w-sm text-sm text-zinc-500">{text}</p>}
+            {text && <p className="mt-1 max-w-sm text-sm text-zinc-400">{text}</p>}
             {action && <div className="mt-6">{action}</div>}
         </motion.div>
     );
@@ -73,7 +73,7 @@ export function Skeleton({ className }: { className?: string }) {
 }
 
 export function Avatar({ name, size = 'md', className }: { name?: string; size?: 'sm' | 'md' | 'lg'; className?: string }) {
-    const sizes = { sm: 'h-7 w-7 text-[10px]', md: 'h-9 w-9 text-xs', lg: 'h-12 w-12 text-sm' };
+    const sizes = { sm: 'h-7 w-7 text-xs', md: 'h-9 w-9 text-xs', lg: 'h-12 w-12 text-sm' };
     return (
         <span
             title={name}
@@ -106,12 +106,12 @@ export function Segmented<T extends string>({
                 <button
                     key={o.id}
                     onClick={() => onChange(o.id)}
-                    className={cn('relative whitespace-nowrap rounded-lg px-3.5 py-1.5 text-[13px] font-medium transition-colors', value === o.id ? 'text-white' : 'text-zinc-500 hover:text-zinc-200')}
+                    className={cn('relative whitespace-nowrap rounded-lg px-3.5 py-1.5 text-[13px] font-medium transition-colors', value === o.id ? 'text-white' : 'text-zinc-400 hover:text-zinc-200')}
                 >
                     {value === o.id && <motion.span layoutId={`seg-${id}`} transition={spring} className="absolute inset-0 rounded-lg bg-white/[0.08] ring-1 ring-white/[0.08]" />}
                     <span className="relative flex items-center gap-1.5">
                         {o.label}
-                        {o.count !== undefined && <span className="text-[11px] tabular-nums text-zinc-500">{o.count}</span>}
+                        {o.count !== undefined && <span className="text-xs tabular-nums text-zinc-400">{o.count}</span>}
                     </span>
                 </button>
             ))}

@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ArrowRight, Lock, Mail } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import AuthShell from '@/components/AuthShell';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/field';
+import { Input, PasswordInput } from '@/components/ui/field';
 import { Notice } from '@/components/ui/kit';
 
 export default function LoginPage() {
@@ -17,6 +17,10 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
+    const [resetDone, setResetDone] = useState(false);
+
+    // Retour de la page « nouveau mot de passe »
+    useEffect(() => setResetDone(new URLSearchParams(window.location.search).has('reset')), []);
 
     const submit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -45,13 +49,17 @@ export default function LoginPage() {
             }
         >
             <form onSubmit={submit} className="space-y-4">
+                {resetDone && !error && <Notice tone="success">Votre mot de passe a bien été changé. Connectez-vous avec le nouveau.</Notice>}
                 {error && <Notice tone="error">{error}</Notice>}
                 <Input label="Email" icon={Mail} type="email" required autoFocus autoComplete="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="vous@entreprise.com" />
-                <Input label="Mot de passe" icon={Lock} type="password" required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
+                <PasswordInput label="Mot de passe" icon={Lock} required autoComplete="current-password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" />
                 <Button type="submit" size="lg" loading={loading} className="w-full">
                     Se connecter
                     {!loading && <ArrowRight className="h-4 w-4" />}
                 </Button>
+                <Link href="/forgot-password" className="block text-center text-[15px] font-medium text-violet-300 hover:text-violet-200">
+                    J&apos;ai oublié mon mot de passe
+                </Link>
             </form>
         </AuthShell>
     );

@@ -1,17 +1,20 @@
-import React from 'react';
+'use client';
+
+import React, { useState } from 'react';
+import { Eye, EyeOff } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const control =
-    'w-full rounded-xl border border-white/[0.08] bg-black/30 px-3.5 text-sm text-zinc-100 placeholder:text-zinc-600 transition duration-200 hover:border-white/[0.14] focus:border-violet-400/60 focus:bg-black/40 focus:outline-none focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:opacity-50';
+    'w-full rounded-xl border border-white/[0.12] bg-black/30 px-4 text-base text-zinc-50 placeholder:text-zinc-500 transition duration-200 hover:border-white/[0.2] focus:border-violet-400/70 focus:bg-black/40 focus:outline-none focus:ring-4 focus:ring-violet-500/15 disabled:cursor-not-allowed disabled:opacity-50';
 
 type FieldProps = { label?: string; hint?: string; icon?: React.ElementType; className?: string };
 
 function Wrapper({ label, hint, className, children }: FieldProps & { children: React.ReactNode }) {
     return (
-        <label className={cn('block space-y-1.5', className)}>
-            {label && <span className="block text-[13px] font-medium text-zinc-400">{label}</span>}
+        <label className={cn('block space-y-2', className)}>
+            {label && <span className="block text-sm font-medium text-zinc-200">{label}</span>}
             {children}
-            {hint && <span className="block text-xs text-zinc-500">{hint}</span>}
+            {hint && <span className="block text-sm text-zinc-400">{hint}</span>}
         </label>
     );
 }
@@ -20,8 +23,29 @@ export function Input({ label, hint, icon: Icon, className, ...props }: FieldPro
     return (
         <Wrapper label={label} hint={hint} className={className}>
             <span className="relative block">
-                {Icon && <Icon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />}
-                <input className={cn(control, 'h-11', Icon && 'pl-10')} {...props} />
+                {Icon && <Icon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" />}
+                <input className={cn(control, 'h-12', Icon && 'pl-12')} {...props} />
+            </span>
+        </Wrapper>
+    );
+}
+
+// Mot de passe avec un bouton « Afficher » : on vérifie ce qu'on a tapé
+export function PasswordInput({ label, hint, icon: Icon, className, ...props }: FieldProps & React.InputHTMLAttributes<HTMLInputElement>) {
+    const [visible, setVisible] = useState(false);
+    return (
+        <Wrapper label={label} hint={hint} className={className}>
+            <span className="relative block">
+                {Icon && <Icon className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-400" />}
+                <input className={cn(control, 'h-12 pr-28', Icon && 'pl-12')} type={visible ? 'text' : 'password'} {...props} />
+                <button
+                    type="button"
+                    onClick={() => setVisible(!visible)}
+                    className="absolute right-2 top-1/2 flex -translate-y-1/2 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-sm text-zinc-300 transition hover:bg-white/[0.08] hover:text-white"
+                >
+                    {visible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {visible ? 'Masquer' : 'Afficher'}
+                </button>
             </span>
         </Wrapper>
     );
@@ -34,16 +58,3 @@ export function Textarea({ label, hint, className, ...props }: FieldProps & Reac
         </Wrapper>
     );
 }
-
-export function Select({ label, hint, className, children, ...props }: FieldProps & React.SelectHTMLAttributes<HTMLSelectElement>) {
-    return (
-        <Wrapper label={label} hint={hint} className={className}>
-            <select className={cn(control, 'h-11 cursor-pointer appearance-none bg-[length:16px] bg-[right_12px_center] bg-no-repeat pr-10')} style={{ backgroundImage: CHEVRON }} {...props}>
-                {children}
-            </select>
-        </Wrapper>
-    );
-}
-
-const CHEVRON =
-    "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2371717a' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")";

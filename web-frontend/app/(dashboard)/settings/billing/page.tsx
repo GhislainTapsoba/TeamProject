@@ -144,7 +144,7 @@ export default function BillingPage() {
                             <CreditCard className="h-5 w-5 text-violet-300" />
                             <div>
                                 <p className="font-medium text-white">Mobile Money et carte</p>
-                                <p className="text-xs text-zinc-500">Orange Money, Moov, Wave, Visa, Mastercard</p>
+                                <p className="text-xs text-zinc-400">Orange Money, Moov, Wave, Visa, Mastercard</p>
                             </div>
                         </div>
                     </div>
@@ -158,7 +158,7 @@ export default function BillingPage() {
                                 <div key={label} className="space-y-2">
                                     <div className="flex justify-between text-sm">
                                         <span className="flex items-center gap-2 text-zinc-300">
-                                            <Icon className="h-4 w-4 text-zinc-500" /> {label}
+                                            <Icon className="h-4 w-4 text-zinc-400" /> {label}
                                         </span>
                                         <span className={cn('tabular-nums', used >= max ? 'text-amber-300' : 'text-zinc-400')}>
                                             {used} / {max}
@@ -195,7 +195,7 @@ export default function BillingPage() {
                             </div>
                             <p className="mt-5 flex items-baseline gap-1.5">
                                 <span className="text-4xl font-semibold tracking-tight text-white">{formatAmount(plan.price_monthly)}</span>
-                                <span className="text-sm text-zinc-500">XOF / mois</span>
+                                <span className="text-sm text-zinc-400">XOF / mois</span>
                             </p>
                             <ul className="mt-6 flex-1 space-y-3 text-sm text-zinc-300">
                                 {[`Jusqu'à ${plan.max_users} membres`, `Jusqu'à ${plan.max_projects} projets`, ...(plan.features || [])].map((f: string) => (
@@ -209,9 +209,9 @@ export default function BillingPage() {
                             </ul>
                             <div className="mt-8">
                                 {!isAdmin ? (
-                                    <p className="text-center text-xs text-zinc-500">Seul un administrateur peut changer de plan.</p>
+                                    <p className="text-center text-xs text-zinc-400">Seul un administrateur peut changer de plan.</p>
                                 ) : action.disabled ? (
-                                    <p className="py-2.5 text-center text-xs text-zinc-500">{action.label}</p>
+                                    <p className="py-2.5 text-center text-xs text-zinc-400">{action.label}</p>
                                 ) : (
                                     <Button
                                         className="w-full"
@@ -234,14 +234,14 @@ export default function BillingPage() {
             {isAdmin && (
                 <motion.section variants={fadeUp} className="space-y-4">
                     <h2 className="flex items-center gap-2 text-lg font-semibold text-white">
-                        <Receipt className="h-4 w-4 text-zinc-500" /> Historique des paiements
+                        <Receipt className="h-4 w-4 text-zinc-400" /> Historique des paiements
                     </h2>
                     {payments.length === 0 ? (
-                        <p className="rounded-2xl border border-dashed border-white/[0.08] py-10 text-center text-sm text-zinc-500">Aucun paiement pour le moment.</p>
+                        <p className="rounded-2xl border border-dashed border-white/[0.08] py-10 text-center text-sm text-zinc-400">Aucun paiement pour le moment.</p>
                     ) : (
                         <div className="glass overflow-x-auto rounded-2xl">
                             <table className="w-full text-sm">
-                                <thead className="text-left text-xs uppercase tracking-wider text-zinc-500">
+                                <thead className="text-left text-xs uppercase tracking-wider text-zinc-400">
                                     <tr className="border-b border-white/[0.06]">
                                         <th className="px-5 py-3 font-medium">Date</th>
                                         <th className="px-5 py-3 font-medium">Plan</th>

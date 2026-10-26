@@ -68,6 +68,8 @@ Complète `.env` à la racine. Les variables indispensables :
 
 > Ne mets jamais de secret dans une variable `NEXT_PUBLIC_*` : elles sont incluses dans le code envoyé au navigateur. Le backend refuse de démarrer s'il en détecte une.
 
+Pour que le lien « mot de passe oublié » ramène sur la bonne organisation, ajoute `https://*.deep-technologies.com/**` dans Supabase → Authentication → URL Configuration → Redirect URLs. En local, `supabase/config.toml` autorise déjà `http://*.localhost/**`.
+
 Pour générer les clés :
 
 ```bash

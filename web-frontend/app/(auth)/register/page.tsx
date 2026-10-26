@@ -9,7 +9,7 @@ import { errorMessage } from '@/lib/utils';
 import { spring } from '@/lib/motion';
 import AuthShell from '@/components/AuthShell';
 import { Button, ButtonLink } from '@/components/ui/button';
-import { Input } from '@/components/ui/field';
+import { Input, PasswordInput } from '@/components/ui/field';
 import { Notice } from '@/components/ui/kit';
 
 const PLATFORM_DOMAIN = 'deep-technologies.com';
@@ -139,17 +139,16 @@ export default function RegisterPage() {
                                 setForm({ ...form, subdomain: toSubdomain(e.target.value) });
                             }}
                             placeholder="acme"
-                            className="min-w-0 flex-1 bg-transparent px-3.5 text-sm text-zinc-100 placeholder:text-zinc-600 focus:outline-none"
+                            className="min-w-0 flex-1 bg-transparent px-3.5 text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none"
                         />
-                        <span className="pr-3.5 text-sm text-zinc-500">.{PLATFORM_DOMAIN}</span>
+                        <span className="pr-3.5 text-sm text-zinc-400">.{PLATFORM_DOMAIN}</span>
                     </span>
                 </label>
                 <Input label="Votre nom" icon={User} required autoComplete="name" value={form.adminName} onChange={(e) => setForm({ ...form, adminName: e.target.value })} placeholder="Awa Ouédraogo" />
                 <Input label="Email" icon={Mail} type="email" required autoComplete="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} placeholder="vous@entreprise.com" />
-                <Input
-                    label="Mot de passe"
+                <PasswordInput
+                    label="Choisissez un mot de passe"
                     icon={Lock}
-                    type="password"
                     required
                     minLength={8}
                     autoComplete="new-password"

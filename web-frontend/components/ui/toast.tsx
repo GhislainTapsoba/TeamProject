@@ -16,7 +16,8 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
     const push = useCallback((tone: Toast['tone'], message: string) => {
         const id = Date.now() + Math.random();
         setToasts((list) => [...list.slice(-2), { id, tone, message }]);
-        setTimeout(() => setToasts((list) => list.filter((t) => t.id !== id)), 4000);
+        // Laissé assez longtemps pour être lu tranquillement
+        setTimeout(() => setToasts((list) => list.filter((t) => t.id !== id)), 6000);
     }, []);
 
     const [api] = useState<ToastApi>(() => ({
@@ -38,12 +39,12 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
                             exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.15 } }}
                             transition={spring}
                             role="status"
-                            className="pointer-events-auto flex max-w-md items-center gap-3 rounded-2xl border border-white/[0.08] bg-zinc-900/90 px-4 py-3 text-sm text-zinc-100 shadow-2xl backdrop-blur-xl"
+                            className="pointer-events-auto flex max-w-md items-center gap-3 rounded-2xl border border-white/[0.1] bg-zinc-900/95 px-5 py-4 text-[15px] font-medium text-zinc-50 shadow-2xl backdrop-blur-xl"
                         >
                             {t.tone === 'success' ? (
-                                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                                <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" />
                             ) : (
-                                <AlertCircle className="h-4 w-4 shrink-0 text-rose-400" />
+                                <AlertCircle className="h-5 w-5 shrink-0 text-rose-400" />
                             )}
                             {t.message}
                         </motion.div>

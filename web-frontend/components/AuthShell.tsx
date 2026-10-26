@@ -27,7 +27,7 @@ export default function AuthShell({ title, subtitle, children, footer }: { title
                         {children}
                     </motion.div>
                     {footer && (
-                        <motion.div variants={fadeUp} className="mt-8 text-center text-sm text-zinc-500">
+                        <motion.div variants={fadeUp} className="mt-8 text-center text-sm text-zinc-400">
                             {footer}
                         </motion.div>
                     )}
@@ -83,7 +83,7 @@ function BoardPreview() {
                                     opacity: { delay: 0.6 + (c * 2 + i) * 0.12 },
                                     y: { duration: 5 + i, repeat: Infinity, ease: 'easeInOut', delay: c * 0.8 },
                                 }}
-                                className="rounded-xl border border-white/[0.06] bg-zinc-900/80 p-3 text-[11px] leading-snug text-zinc-300 shadow-card"
+                                className="rounded-xl border border-white/[0.06] bg-zinc-900/80 p-3 text-xs leading-snug text-zinc-300 shadow-card"
                             >
                                 {card}
                                 <div className="mt-2 h-1 w-1/2 rounded-full bg-white/[0.06]" />

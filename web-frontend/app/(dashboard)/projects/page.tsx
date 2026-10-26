@@ -13,6 +13,7 @@ import { spring } from '@/lib/motion';
 import { Avatar, Badge, EmptyState, Page, PageHeader, Progress, Segmented, Skeleton } from '@/components/ui/kit';
 import { Button } from '@/components/ui/button';
 import { Input, Textarea } from '@/components/ui/field';
+import { DateChoice } from '@/components/ui/choice';
 import { Modal, ModalActions } from '@/components/ui/modal';
 import { useToast } from '@/components/ui/toast';
 
@@ -33,7 +34,7 @@ export default function ProjectsPage() {
         projectsAPI
             .getAll()
             .then((res) => setProjects(listOf(res)))
-            .catch(() => toast.error('Impossible de charger les projets.'))
+            .catch(() => toast.error("Les projets n'ont pas pu se charger. Vérifiez votre connexion internet."))
             .finally(() => setLoading(false));
         // Lien « Nouveau projet » de l'accueil
         if (new URLSearchParams(window.location.search).has('new')) {
@@ -54,7 +55,7 @@ export default function ProjectsPage() {
         <Page>
             <PageHeader
                 title="Projets"
-                subtitle="Tous les projets de votre organisation."
+                subtitle="Un projet regroupe les tâches d’un même travail. Ouvrez-en un pour voir ses tâches."
                 action={
                     canCreate && (
                         <Button icon={Plus} onClick={() => setCreateOpen(true)}>
@@ -124,7 +125,7 @@ export default function ProjectsPage() {
                                         <Progress value={p.progress_percentage || 0} />
                                         <span className="text-xs tabular-nums text-zinc-400">{p.progress_percentage || 0}%</span>
                                     </div>
-                                    <div className="mt-4 flex items-center justify-between border-t border-white/[0.05] pt-4 text-xs text-zinc-500">
+                                    <div className="mt-4 flex items-center justify-between border-t border-white/[0.05] pt-4 text-xs text-zinc-400">
                                         <span className="flex items-center gap-2">
                                             <Avatar name={p.manager_details?.full_name} size="sm" />
                                             <span className="truncate">{p.manager_details?.full_name}</span>
@@ -175,16 +176,16 @@ function CreateProjectModal({ open, onClose, onCreated }: { open: boolean; onClo
     };
 
     return (
-        <Modal open={open} onClose={onClose} title="Nouveau projet" description="Vous pourrez ajouter des tâches et des membres juste après.">
-            <form onSubmit={submit} className="space-y-4">
-                <Input label="Nom" required autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Refonte du site" />
-                <Textarea label="Description (facultatif)" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Objectif du projet" />
-                <Input label="Échéance (facultatif)" type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+        <Modal open={open} onClose={onClose} title="Nouveau projet" description="Vous ajouterez les tâches et les membres juste après.">
+            <form onSubmit={submit} className="space-y-6">
+                <Input label="Nom du projet" required autoFocus value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex. : Ouverture de la boutique" />
+                <Textarea label="En quelques mots (facultatif)" value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Le but du projet" />
+                <DateChoice label="À finir pour quand ?" value={dueDate} onChange={setDueDate} />
                 <ModalActions>
-                    <Button type="button" variant="ghost" onClick={onClose}>
+                    <Button type="button" variant="secondary" size="lg" onClick={onClose}>
                         Annuler
                     </Button>
-                    <Button type="submit" loading={saving}>
+                    <Button type="submit" size="lg" loading={saving}>
                         Créer le projet
                     </Button>
                 </ModalActions>

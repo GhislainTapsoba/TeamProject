@@ -4,16 +4,23 @@ export type Tone = 'neutral' | 'accent' | 'sky' | 'success' | 'warning' | 'dange
 
 export type TaskState = 'todo' | 'in_progress' | 'done';
 
-export const TASK_STATES: { id: TaskState; label: string; tone: Tone; dot: string }[] = [
-    { id: 'todo', label: 'À faire', tone: 'neutral', dot: 'bg-zinc-400' },
-    { id: 'in_progress', label: 'En cours', tone: 'accent', dot: 'bg-violet-400' },
-    { id: 'done', label: 'Terminé', tone: 'success', dot: 'bg-emerald-400' },
+export const TASK_STATES: { id: TaskState; label: string; help: string; tone: Tone; dot: string }[] = [
+    { id: 'todo', label: 'À faire', help: 'Pas encore commencées', tone: 'neutral', dot: 'bg-zinc-400' },
+    { id: 'in_progress', label: 'En cours', help: "Quelqu'un s'en occupe", tone: 'accent', dot: 'bg-violet-400' },
+    { id: 'done', label: 'Terminé', help: "C'est fini", tone: 'success', dot: 'bg-emerald-400' },
 ];
 
+// L'étape suivante d'une tâche, proposée par un seul gros bouton
+export const NEXT_STEP: Record<TaskState, { to: TaskState; label: string; done: string }> = {
+    todo: { to: 'in_progress', label: 'Commencer', done: 'Tâche commencée.' },
+    in_progress: { to: 'done', label: "J'ai terminé", done: 'Tâche terminée. Bravo !' },
+    done: { to: 'todo', label: 'Rouvrir', done: 'Tâche remise à faire.' },
+};
+
 export const PRIORITIES: Record<string, { label: string; tone: Tone }> = {
-    low: { label: 'Basse', tone: 'neutral' },
-    medium: { label: 'Moyenne', tone: 'warning' },
-    high: { label: 'Haute', tone: 'danger' },
+    low: { label: 'Pas pressé', tone: 'neutral' },
+    medium: { label: 'Normal', tone: 'sky' },
+    high: { label: 'Urgent', tone: 'danger' },
 };
 
 export const PROJECT_STATUSES: Record<string, { label: string; tone: Tone }> = {

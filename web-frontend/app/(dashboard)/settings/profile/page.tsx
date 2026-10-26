@@ -8,7 +8,7 @@ import { ROLES } from '@/lib/labels';
 import { errorMessage } from '@/lib/utils';
 import { Avatar, Badge, Card, Page, PageHeader } from '@/components/ui/kit';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/field';
+import { Input, PasswordInput } from '@/components/ui/field';
 import { useToast } from '@/components/ui/toast';
 
 export default function ProfilePage() {
@@ -54,7 +54,7 @@ export default function ProfilePage() {
 
     return (
         <Page className="max-w-3xl">
-            <PageHeader title="Mon profil" subtitle="Vos informations et la sécurité de votre compte." />
+            <PageHeader title="Mon profil" subtitle="Votre nom, votre téléphone et votre mot de passe." />
 
             <Card className="flex items-center gap-4 p-6">
                 <Avatar name={user?.full_name} size="lg" />
@@ -92,19 +92,17 @@ export default function ProfilePage() {
                     <KeyRound className="h-4 w-4 text-violet-300" /> Mot de passe
                 </h2>
                 <form onSubmit={savePassword} className="mt-5 space-y-4">
-                    <Input label="Mot de passe actuel" type="password" required value={passwords.old} onChange={(e) => setPasswords({ ...passwords, old: e.target.value })} />
+                    <PasswordInput label="Mot de passe actuel" required value={passwords.old} onChange={(e) => setPasswords({ ...passwords, old: e.target.value })} />
                     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                        <Input
+                        <PasswordInput
                             label="Nouveau mot de passe"
-                            type="password"
                             required
                             minLength={8}
                             value={passwords.new}
                             onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
                         />
-                        <Input
-                            label="Confirmation"
-                            type="password"
+                        <PasswordInput
+                            label="Retapez le nouveau mot de passe"
                             required
                             minLength={8}
                             value={passwords.confirm}

@@ -11,7 +11,7 @@ type ModalProps = {
     onClose: () => void;
     title: string;
     description?: string;
-    children: React.ReactNode;
+    children?: React.ReactNode;
 };
 
 export function Modal({ open, onClose, title, description, children }: ModalProps) {
@@ -57,18 +57,18 @@ export function Modal({ open, onClose, title, description, children }: ModalProp
                         <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-400/50 to-transparent" />
                         <div className="flex items-start justify-between gap-4 px-6 pt-6">
                             <div>
-                                <h2 className="text-lg font-semibold tracking-tight text-white">{title}</h2>
-                                {description && <p className="mt-1 text-sm text-zinc-400">{description}</p>}
+                                <h2 className="text-xl font-semibold tracking-tight text-white">{title}</h2>
+                                {description && <p className="mt-1.5 text-[15px] text-zinc-300">{description}</p>}
                             </div>
                             <button
                                 onClick={onClose}
                                 aria-label="Fermer"
-                                className="-mr-2 rounded-lg p-2 text-zinc-500 transition hover:bg-white/[0.06] hover:text-white"
+                                className="-mr-2 rounded-lg p-2 text-zinc-400 transition hover:bg-white/[0.06] hover:text-white"
                             >
                                 <X className="h-4 w-4" />
                             </button>
                         </div>
-                        <div className="max-h-[75vh] overflow-y-auto px-6 pb-6 pt-5">{children}</div>
+                        {children ? <div className="max-h-[75vh] overflow-y-auto px-6 pb-6 pt-5">{children}</div> : <div className="h-4" />}
                     </motion.div>
                 </div>
             )}

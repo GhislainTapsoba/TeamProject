@@ -35,7 +35,7 @@ export default function SubscriptionBanner({ isAdmin }: { isAdmin: boolean }) {
     } else if (subscription.status === 'past_due') {
         tone = 'danger';
         message = `Votre abonnement ${planName} a expiré. Renouvelez-le avant le ${formatDate(subscription.grace_until)} pour le conserver.`;
-    } else if (subscription.status === 'trial') {
+    } else if (subscription.status === 'trial' && subscription.days_left <= 5) {
         tone = 'warning';
         message =
             subscription.days_left > 0
@@ -46,7 +46,8 @@ export default function SubscriptionBanner({ isAdmin }: { isAdmin: boolean }) {
         message = `Votre abonnement ${planName} se termine le ${formatDate(subscription.current_period_end)}.`;
     }
 
-    if (!tone) return null;
+    // Un membre ne peut rien y faire : on ne l'inquiète que si l'accès est vraiment menacé
+    if (!tone || (!isAdmin && tone !== 'danger')) return null;
 
     const Icon = tone === 'danger' ? AlertTriangle : Clock;
 

@@ -13,14 +13,14 @@ const variants: Record<Variant, string> = {
     primary:
         'text-white bg-gradient-to-b from-violet-500 to-violet-600 shadow-[0_1px_0_0_rgba(255,255,255,0.25)_inset,0_8px_24px_-8px_rgba(139,92,246,0.7)] hover:from-violet-400 hover:to-violet-500',
     secondary: 'text-zinc-100 bg-white/[0.06] border border-white/[0.08] hover:bg-white/[0.1]',
-    ghost: 'text-zinc-400 hover:text-white hover:bg-white/[0.06]',
+    ghost: 'text-zinc-300 hover:text-white hover:bg-white/[0.06]',
     danger: 'text-rose-300 bg-rose-500/10 border border-rose-500/20 hover:bg-rose-500/20',
 };
 
 const sizes: Record<Size, string> = {
-    sm: 'h-8 px-3 text-xs gap-1.5 rounded-lg',
-    md: 'h-10 px-4 text-sm gap-2 rounded-xl',
-    lg: 'h-12 px-6 text-[15px] gap-2 rounded-xl',
+    sm: 'h-9 px-3.5 text-sm gap-1.5 rounded-lg',
+    md: 'h-11 px-5 text-[15px] gap-2 rounded-xl',
+    lg: 'h-12 px-6 text-base gap-2 rounded-xl',
 };
 
 type Common = {

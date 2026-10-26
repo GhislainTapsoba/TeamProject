@@ -84,7 +84,7 @@ export default function LandingPage() {
                                 <span className="h-2.5 w-2.5 rounded-full bg-white/10" />
                                 <span className="h-2.5 w-2.5 rounded-full bg-white/10" />
                                 <span className="h-2.5 w-2.5 rounded-full bg-white/10" />
-                                <span className="ml-3 text-xs text-zinc-500">acme.deep-technologies.com</span>
+                                <span className="ml-3 text-xs text-zinc-400">acme.deep-technologies.com</span>
                             </div>
                             <div className="grid grid-cols-3 gap-3 text-left">
                                 {[
@@ -103,7 +103,7 @@ export default function LandingPage() {
                                                 initial={{ opacity: 0, y: 10 }}
                                                 animate={{ opacity: 1, y: 0 }}
                                                 transition={{ delay: 1 + (c * 3 + i) * 0.08, ease }}
-                                                className="rounded-xl border border-white/[0.06] bg-zinc-900 p-3 text-[11px] text-zinc-300 sm:text-xs"
+                                                className="rounded-xl border border-white/[0.06] bg-zinc-900 p-3 text-xs text-zinc-300 sm:text-xs"
                                             >
                                                 {card}
                                                 <div className="mt-2.5 flex items-center justify-between">
@@ -166,7 +166,7 @@ export default function LandingPage() {
             </main>
 
             <footer className="border-t border-white/[0.05] py-8">
-                <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 text-sm text-zinc-500 sm:flex-row">
+                <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-6 text-sm text-zinc-400 sm:flex-row">
                     <Logo className="opacity-70" />
                     <p>© {new Date().getFullYear()} Deep Technologies</p>
                 </div>

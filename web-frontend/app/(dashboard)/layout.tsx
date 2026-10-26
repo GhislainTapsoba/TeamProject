@@ -6,6 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { motion } from 'motion/react';
 import { CreditCard, FolderKanban, Home, LogOut, Sparkles, UserCircle, Users } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useConfirm } from '@/components/ui/confirm';
 import SubscriptionBanner from '@/components/SubscriptionBanner';
 import Notifications from '@/components/Notifications';
 import Logo from '@/components/Logo';
@@ -26,6 +27,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const pathname = usePathname() || '';
     const router = useRouter();
     const { user, tenant, logout, isLoading } = useAuth();
+    const confirm = useConfirm();
+
+    // Une déconnexion par erreur est déroutante : on demande d'abord
+    const askLogout = async () => {
+        if (await confirm({ title: 'Se déconnecter ?', message: 'Vous devrez saisir à nouveau votre email et votre mot de passe.', confirmLabel: 'Oui, me déconnecter' })) logout();
+    };
 
     useEffect(() => {
         if (!isLoading && !user) router.push('/login');
@@ -54,7 +61,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Link
                 key={item.href}
                 href={item.href}
-                className={cn('relative flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors', active ? 'text-white' : 'text-zinc-400 hover:text-zinc-100')}
+                className={cn('relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors', active ? 'text-white' : 'text-zinc-300 hover:text-white')}
             >
                 {active && (
                     <motion.span
@@ -63,7 +70,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         className="absolute inset-0 rounded-xl bg-gradient-to-r from-violet-500/20 to-violet-500/[0.04] ring-1 ring-inset ring-violet-400/20"
                     />
                 )}
-                <item.icon className={cn('relative h-[18px] w-[18px]', active ? 'text-violet-300' : 'text-zinc-500')} />
+                <item.icon className={cn('relative h-5 w-5', active ? 'text-violet-300' : 'text-zinc-400')} />
                 <span className="relative">{item.name}</span>
             </Link>
         );
@@ -83,7 +90,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </div>
                     <div className="min-w-0">
                         <p className="truncate text-sm font-medium text-white">{tenant?.name || 'Mon organisation'}</p>
-                        <p className="text-[11px] uppercase tracking-wider text-zinc-500">Plan {tenant?.plan || 'free'}</p>
+                        <p className="text-xs uppercase tracking-wider text-zinc-400">Plan {tenant?.plan || 'free'}</p>
                     </div>
                 </div>
 
@@ -91,7 +98,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {MAIN_NAV.map(navLink)}
                 </nav>
 
-                <p className="mb-2 mt-8 px-3 text-[11px] font-medium uppercase tracking-wider text-zinc-600">Réglages</p>
+                <p className="mb-2 mt-8 px-3 text-xs font-medium uppercase tracking-wider text-zinc-400">Réglages</p>
                 <nav className="space-y-1">
                     {settingsNav.map(navLink)}
                 </nav>
@@ -112,12 +119,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <Avatar name={user.full_name} />
                         <div className="min-w-0 flex-1">
                             <p className="truncate text-sm font-medium text-zinc-100">{user.full_name}</p>
-                            <p className="text-xs text-zinc-500">{ROLES[user.role]?.label}</p>
+                            <p className="text-sm text-zinc-400">{ROLES[user.role]?.label}</p>
                         </div>
-                        <button onClick={logout} title="Se déconnecter" className="rounded-lg p-2 text-zinc-500 transition hover:bg-rose-500/10 hover:text-rose-300">
-                            <LogOut className="h-4 w-4" />
-                        </button>
                     </div>
+                    <button
+                        onClick={askLogout}
+                        className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium text-zinc-300 transition hover:bg-rose-500/10 hover:text-rose-200"
+                    >
+                        <LogOut className="h-5 w-5" /> Se déconnecter
+                    </button>
                 </div>
             </aside>
 
@@ -129,8 +139,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </Link>
                     <div className="flex items-center gap-1">
                         <Notifications />
-                        <button onClick={logout} title="Se déconnecter" className="rounded-xl p-2 text-zinc-500 transition hover:text-white md:hidden">
-                            <LogOut className="h-[18px] w-[18px]" />
+                        <button onClick={askLogout} className="flex items-center gap-1.5 rounded-xl px-2.5 py-2 text-sm text-zinc-300 transition hover:text-white md:hidden">
+                            <LogOut className="h-5 w-5" /> Quitter
                         </button>
                     </div>
                 </header>
@@ -148,10 +158,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 {[...MAIN_NAV, settingsNav[0]].map((item) => {
                     const active = isActive(item.href);
                     return (
-                        <Link key={item.href} href={item.href} className="relative flex flex-1 flex-col items-center gap-0.5 rounded-xl py-2 text-[11px] font-medium">
+                        <Link key={item.href} href={item.href} className="relative flex flex-1 flex-col items-center gap-1 rounded-xl py-2.5 text-[13px] font-medium">
                             {active && <motion.span layoutId="tab-active" transition={spring} className="absolute inset-0 rounded-xl bg-white/[0.07]" />}
-                            <item.icon className={cn('relative h-5 w-5', active ? 'text-violet-300' : 'text-zinc-500')} />
-                            <span className={cn('relative', active ? 'text-white' : 'text-zinc-500')}>{item.short ?? item.name}</span>
+                            <item.icon className={cn('relative h-6 w-6', active ? 'text-violet-300' : 'text-zinc-400')} />
+                            <span className={cn('relative', active ? 'text-white' : 'text-zinc-300')}>{item.short ?? item.name}</span>
                         </Link>
                     );
                 })}

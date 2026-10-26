@@ -48,18 +48,19 @@ export default function Notifications() {
                 whileTap={{ scale: 0.92 }}
                 onClick={toggle}
                 aria-label="Notifications"
-                className="relative flex h-9 w-9 items-center justify-center rounded-xl text-zinc-400 transition hover:bg-white/[0.06] hover:text-white"
+                className="relative flex h-10 items-center gap-2 rounded-xl px-2.5 text-zinc-300 transition hover:bg-white/[0.06] hover:text-white"
             >
                 <motion.span animate={unread > 0 ? { rotate: [0, -14, 12, -8, 0] } : {}} transition={{ duration: 0.6, delay: 0.4 }}>
-                    <Bell className="h-[18px] w-[18px]" />
+                    <Bell className="h-5 w-5" />
                 </motion.span>
+                <span className="hidden text-sm font-medium sm:inline">Notifications</span>
                 <AnimatePresence>
                     {unread > 0 && (
                         <motion.span
                             initial={{ scale: 0 }}
                             animate={{ scale: 1 }}
                             exit={{ scale: 0 }}
-                            className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-500 px-1 text-[10px] font-semibold text-white ring-2 ring-canvas"
+                            className="absolute left-6 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-violet-500 px-1 text-xs font-semibold text-white ring-2 ring-canvas"
                         >
                             {unread > 9 ? '9+' : unread}
                         </motion.span>
@@ -87,7 +88,7 @@ export default function Notifications() {
                         </div>
                         <div className="max-h-80 overflow-y-auto p-2">
                             {items.length === 0 ? (
-                                <p className="py-10 text-center text-sm text-zinc-500">Vous êtes à jour.</p>
+                                <p className="py-10 text-center text-sm text-zinc-400">Vous êtes à jour.</p>
                             ) : (
                                 items.map((n, i) => (
                                     <motion.div
@@ -99,8 +100,8 @@ export default function Notifications() {
                                     >
                                         <span className={cn('mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full', n.read ? 'bg-transparent' : 'bg-violet-400')} />
                                         <div className="min-w-0">
-                                            <p className={cn('text-[13px]', n.read ? 'text-zinc-400' : 'text-zinc-100')}>{n.message}</p>
-                                            <p className="mt-0.5 text-[11px] text-zinc-500">
+                                            <p className={cn('text-[15px]', n.read ? 'text-zinc-400' : 'text-zinc-50')}>{n.message}</p>
+                                            <p className="mt-0.5 text-xs text-zinc-400">
                                                 {formatDate(n.created_at, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                                             </p>
                                         </div>
@@ -108,6 +109,12 @@ export default function Notifications() {
                                 ))
                             )}
                         </div>
+                        <button
+                            onClick={() => setOpen(false)}
+                            className="w-full border-t border-white/[0.06] py-3 text-[15px] font-medium text-zinc-300 transition hover:bg-white/[0.04] hover:text-white"
+                        >
+                            Fermer
+                        </button>
                     </motion.div>
                 )}
             </AnimatePresence>

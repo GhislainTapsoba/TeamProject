@@ -12,7 +12,8 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Notification.objects.filter(user=self.request.user)
+        # Les notifications "email" sont un journal d'envoi, pas des messages pour l'utilisateur
+        return Notification.objects.filter(user=self.request.user, channel="in_app")
 
     @action(detail=True, methods=["patch"])
     def mark_read(self, request, pk=None):
@@ -23,10 +24,10 @@ class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=["post"])
     def mark_all_read(self, request):
-        Notification.objects.filter(user=request.user, read=False).update(read=True)
+        self.get_queryset().filter(read=False).update(read=True)
         return Response({"status": "all marked as read"})
 
     @action(detail=False, methods=["get"])
     def unread_count(self, request):
-        count = Notification.objects.filter(user=request.user, read=False).count()
+        count = self.get_queryset().filter(read=False).count()
         return Response({"unread_count": count})

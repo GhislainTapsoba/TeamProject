@@ -7,7 +7,9 @@
         color-scheme: dark;
     }
 
+    /* Taille de base un peu plus grande : l'application doit se lire sans effort */
     html {
+        font-size: 106.25%;
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         text-rendering: optimizeLegibility;

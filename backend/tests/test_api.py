@@ -219,6 +219,15 @@ class NotificationAPITestCase(TenantAPITestCase):
         client.post("/api/notifications/mark_all_read/")
         self.assertEqual(client.get("/api/notifications/unread_count/").data["unread_count"], 0)
 
+    def test_email_log_is_not_shown_to_the_user(self):
+        Notification.objects.create(user=self.employee, message="Visible")
+        Notification.objects.create(user=self.employee, channel="email", message="[Non envoyé] journal")
+        client = self.client_for(self.employee)
+
+        response = client.get("/api/notifications/")
+        self.assertEqual([n["message"] for n in response.data["results"]], ["Visible"])
+        self.assertEqual(client.get("/api/notifications/unread_count/").data["unread_count"], 1)
+
 
 class DashboardAPITestCase(TenantAPITestCase):
     def test_dashboard_stats_are_scoped_to_the_tenant(self):
