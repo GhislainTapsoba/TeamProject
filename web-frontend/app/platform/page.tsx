@@ -1,38 +1,30 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { AnimatePresence, motion } from 'motion/react';
+import { Ban, Building2, CalendarPlus, CheckCircle2, CreditCard, FolderKanban, Loader2, Lock, LogOut, Mail, ShieldCheck, Users, X } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { platformAPI, PlatformError } from '@/lib/platform';
-import {
-    ShieldCheck,
-    LogOut,
-    Building2,
-    CreditCard,
-    ScrollText,
-    Loader2,
-    AlertCircle,
-    Users,
-    FolderKanban,
-    Ban,
-    CheckCircle2,
-    CalendarPlus,
-    X,
-} from 'lucide-react';
+import { PAYMENT_STATUSES, ROLES, SUBSCRIPTION_STATUSES } from '@/lib/labels';
+import { formatDate } from '@/lib/utils';
+import { fadeUp, spring } from '@/lib/motion';
+import Logo from '@/components/Logo';
+import AuthShell from '@/components/AuthShell';
+import { AnimatedNumber, Avatar, Badge, Card, Notice, Page, Segmented } from '@/components/ui/kit';
+import { Button } from '@/components/ui/button';
+import { Input, PasswordInput } from '@/components/ui/field';
+import { Choice } from '@/components/ui/choice';
+import { useConfirm } from '@/components/ui/confirm';
+import { useToast } from '@/components/ui/toast';
 
-const STATUS: Record<string, { label: string; className: string }> = {
-    active: { label: 'Actif', className: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30' },
-    trial: { label: 'Essai', className: 'bg-sky-500/15 text-sky-400 border-sky-500/30' },
-    past_due: { label: 'En retard', className: 'bg-amber-500/15 text-amber-400 border-amber-500/30' },
-    cancelled: { label: 'Suspendu', className: 'bg-red-500/15 text-red-400 border-red-500/30' },
-};
-const PAYMENT: Record<string, string> = { paid: 'text-emerald-400', pending: 'text-amber-400', failed: 'text-red-400' };
-
-const fmtDate = (v?: string | null) => (v ? new Date(v).toLocaleDateString('fr-FR') : '-');
 const fmtMoney = (v: number | string) => Number(v).toLocaleString('fr-FR');
 
 type Tab = 'tenants' | 'payments' | 'audit';
 
+// Console du propriétaire du SaaS : toutes les organisations, leurs abonnements et le journal d'audit
 export default function PlatformConsole() {
+    const toast = useToast();
     const [phase, setPhase] = useState<'checking' | 'login' | 'ready'>('checking');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -44,15 +36,13 @@ export default function PlatformConsole() {
     const [payments, setPayments] = useState<any[]>([]);
     const [audit, setAudit] = useState<any[]>([]);
     const [selected, setSelected] = useState<any>(null);
-    const [banner, setBanner] = useState('');
 
     const load = useCallback(async () => {
-        const overview = await platformAPI.overview();
-        setData(overview);
+        setData(await platformAPI.overview());
         setPhase('ready');
     }, []);
 
-    // On mount, try to use an existing session; a 403 means "signed in but not a platform admin"
+    // Au chargement, on réutilise une session existante ; un 403 signifie « connecté mais pas super-admin »
     useEffect(() => {
         (async () => {
             try {
@@ -60,7 +50,7 @@ export default function PlatformConsole() {
             } catch (e) {
                 if (e instanceof PlatformError && e.status === 403) {
                     await supabase.auth.signOut();
-                    setLoginError('Ce compte n\'a pas accès à la console plateforme.');
+                    setLoginError("Ce compte n'a pas accès à la console plateforme.");
                 }
                 setPhase('login');
             }
@@ -73,12 +63,12 @@ export default function PlatformConsole() {
         setSubmitting(true);
         try {
             const { error } = await supabase.auth.signInWithPassword({ email, password });
-            if (error) throw new Error('Identifiants invalides.');
+            if (error) throw new Error('Email ou mot de passe incorrect.');
             await load();
         } catch (err: any) {
             if (err instanceof PlatformError && err.status === 403) {
                 await supabase.auth.signOut();
-                setLoginError('Ce compte n\'a pas accès à la console plateforme.');
+                setLoginError("Ce compte n'a pas accès à la console plateforme.");
             } else {
                 setLoginError(err.message || 'Connexion impossible.');
             }
@@ -93,23 +83,29 @@ export default function PlatformConsole() {
         setPhase('login');
     };
 
-    const loadTab = useCallback(async (next: Tab) => {
-        setTab(next);
-        try {
-            if (next === 'payments') setPayments(await platformAPI.payments());
-            if (next === 'audit') setAudit(await platformAPI.audit());
-        } catch {
-            /* handled by banner elsewhere */
-        }
-    }, []);
+    const loadTab = useCallback(
+        async (next: Tab) => {
+            setTab(next);
+            try {
+                if (next === 'payments') setPayments(await platformAPI.payments());
+                if (next === 'audit') setAudit(await platformAPI.audit());
+            } catch {
+                toast.error("Ces données n'ont pas pu se charger.");
+            }
+        },
+        [toast]
+    );
 
-    const openTenant = useCallback(async (schema: string) => {
-        try {
-            setSelected(await platformAPI.tenant(schema));
-        } catch {
-            setBanner('Impossible de charger cette organisation.');
-        }
-    }, []);
+    const openTenant = useCallback(
+        async (schema: string) => {
+            try {
+                setSelected(await platformAPI.tenant(schema));
+            } catch {
+                toast.error("Cette organisation n'a pas pu se charger.");
+            }
+        },
+        [toast]
+    );
 
     const refresh = useCallback(async () => {
         setData(await platformAPI.overview());
@@ -118,51 +114,24 @@ export default function PlatformConsole() {
 
     if (phase === 'checking') {
         return (
-            <div className="min-h-screen grid place-items-center bg-slate-950 text-slate-400">
-                <Loader2 className="h-6 w-6 animate-spin" />
+            <div className="grid min-h-screen place-items-center">
+                <Loader2 className="h-7 w-7 animate-spin text-brand-400" />
             </div>
         );
     }
 
     if (phase === 'login') {
         return (
-            <div className="min-h-screen grid place-items-center bg-slate-950 px-4">
-                <form onSubmit={handleLogin} className="w-full max-w-sm space-y-5 rounded-2xl border border-slate-800 bg-slate-900/60 p-7">
-                    <div className="flex items-center gap-2.5">
-                        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 grid place-items-center">
-                            <ShieldCheck className="h-5 w-5 text-white" />
-                        </div>
-                        <div>
-                            <h1 className="text-base font-bold text-white">Console plateforme</h1>
-                            <p className="text-[11px] text-slate-400">Accès réservé à l&apos;administration</p>
-                        </div>
-                    </div>
-                    {loginError && (
-                        <div className="flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">
-                            <AlertCircle className="h-4 w-4 shrink-0" /> <span>{loginError}</span>
-                        </div>
-                    )}
-                    <div className="space-y-3">
-                        <input
-                            type="email" required value={email} onChange={(e) => setEmail(e.target.value)}
-                            placeholder="Email super-admin"
-                            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none"
-                        />
-                        <input
-                            type="password" required value={password} onChange={(e) => setPassword(e.target.value)}
-                            placeholder="Mot de passe"
-                            className="w-full rounded-lg border border-slate-700 bg-slate-950 px-3 py-2.5 text-sm text-white placeholder-slate-500 focus:border-brand-500 focus:outline-none"
-                        />
-                    </div>
-                    <button
-                        type="submit" disabled={submitting}
-                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-brand-600 py-2.5 text-sm font-semibold text-white hover:bg-brand-500 disabled:opacity-60"
-                    >
-                        {submitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+            <AuthShell title="Console plateforme" subtitle="Accès réservé à l’administration de Team Project.">
+                <form onSubmit={handleLogin} className="space-y-4">
+                    {loginError && <Notice tone="error">{loginError}</Notice>}
+                    <Input label="Email super-admin" icon={Mail} type="email" required autoFocus value={email} onChange={(e) => setEmail(e.target.value)} />
+                    <PasswordInput label="Mot de passe" icon={Lock} required value={password} onChange={(e) => setPassword(e.target.value)} />
+                    <Button type="submit" size="lg" icon={ShieldCheck} loading={submitting} className="w-full">
                         Se connecter
-                    </button>
+                    </Button>
                 </form>
-            </div>
+            </AuthShell>
         );
     }
 
@@ -170,276 +139,333 @@ export default function PlatformConsole() {
     const tenants = data?.tenants || [];
 
     return (
-        <div className="min-h-screen bg-slate-950 text-slate-100">
-            <header className="flex items-center justify-between border-b border-slate-800 bg-slate-900/50 px-6 py-3">
-                <div className="flex items-center gap-2.5">
-                    <ShieldCheck className="h-5 w-5 text-brand-400" />
-                    <span className="font-bold text-white">Console plateforme</span>
+        <div className="min-h-screen">
+            <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-canvas/70 backdrop-blur-xl">
+                <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-8">
+                    <div className="flex items-center gap-3">
+                        <Logo />
+                        <Badge tone="flame" className="hidden sm:inline-flex">
+                            <ShieldCheck className="h-3.5 w-3.5" /> Console plateforme
+                        </Badge>
+                    </div>
+                    <Button variant="ghost" icon={LogOut} onClick={logout}>
+                        Se déconnecter
+                    </Button>
                 </div>
-                <button onClick={logout} className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs text-slate-400 hover:bg-slate-800 hover:text-red-400">
-                    <LogOut className="h-4 w-4" /> Déconnexion
-                </button>
             </header>
 
-            <main className="mx-auto max-w-6xl space-y-6 p-6">
-                {stats && (
-                    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
-                        {[
-                            { label: 'Organisations', value: stats.tenants },
-                            { label: 'Actives', value: stats.active_subscriptions },
-                            { label: 'Essais', value: stats.trials },
-                            { label: 'En retard', value: stats.past_due },
-                            { label: 'Suspendues', value: stats.suspended },
-                            { label: 'MRR (XOF)', value: fmtMoney(stats.mrr_xof) },
-                        ].map((s) => (
-                            <div key={s.label} className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-                                <p className="text-[11px] uppercase tracking-wider text-slate-500">{s.label}</p>
-                                <p className="mt-1 text-xl font-bold text-white">{s.value}</p>
-                            </div>
-                        ))}
-                    </div>
-                )}
+            <main className="px-4 py-8 sm:px-8">
+                <Page>
+                    <motion.div variants={fadeUp}>
+                        <h1 className="text-3xl font-semibold tracking-tight">
+                            <span className="text-gradient">Vue d’ensemble</span>
+                        </h1>
+                        <p className="mt-2 text-base text-zinc-300">Toutes les organisations clientes et leurs abonnements.</p>
+                    </motion.div>
 
-                <div className="flex gap-1 border-b border-slate-800">
-                    {([['tenants', 'Organisations', Building2], ['payments', 'Paiements', CreditCard], ['audit', 'Journal d\'audit', ScrollText]] as const).map(
-                        ([key, label, Icon]) => (
-                            <button
-                                key={key} onClick={() => loadTab(key)}
-                                className={`flex items-center gap-1.5 border-b-2 px-4 py-2.5 text-xs font-medium ${
-                                    tab === key ? 'border-brand-500 text-brand-400' : 'border-transparent text-slate-400 hover:text-slate-200'
-                                }`}
-                            >
-                                <Icon className="h-3.5 w-3.5" /> {label}
-                            </button>
-                        )
+                    {stats && (
+                        <motion.div variants={{ show: { transition: { staggerChildren: 0.05 } } }} className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+                            {[
+                                { label: 'Organisations', value: stats.tenants },
+                                { label: 'Abonnements actifs', value: stats.active_subscriptions },
+                                { label: 'En essai', value: stats.trials },
+                                { label: 'En retard', value: stats.past_due, alert: stats.past_due > 0 },
+                                { label: 'Suspendues', value: stats.suspended, alert: stats.suspended > 0 },
+                                { label: 'Revenu mensuel (XOF)', value: Number(stats.mrr_xof), money: true },
+                            ].map((s) => (
+                                <Card key={s.label} className="p-4">
+                                    <p className={s.alert ? 'text-2xl font-semibold text-flame-300' : 'text-2xl font-semibold text-white'}>
+                                        {s.money ? fmtMoney(s.value) : <AnimatedNumber value={s.value || 0} />}
+                                    </p>
+                                    <p className="mt-1 text-sm text-zinc-300">{s.label}</p>
+                                </Card>
+                            ))}
+                        </motion.div>
                     )}
-                </div>
 
-                {tab === 'tenants' && (
-                    <div className="overflow-x-auto rounded-xl border border-slate-800">
-                        <table className="w-full text-xs">
-                            <thead className="bg-slate-900/80 text-slate-400">
-                                <tr>
-                                    <th className="px-4 py-2.5 text-left font-medium">Organisation</th>
-                                    <th className="px-4 py-2.5 text-left font-medium">Plan</th>
-                                    <th className="px-4 py-2.5 text-left font-medium">Statut</th>
-                                    <th className="px-4 py-2.5 text-left font-medium">Fin de période</th>
-                                    <th className="px-4 py-2.5 text-left font-medium">Usage</th>
-                                    <th className="px-4 py-2.5"></th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-800/80">
-                                {tenants.map((t: any) => {
-                                    const st = STATUS[t.subscription?.status] || STATUS.active;
-                                    return (
-                                        <tr key={t.schema_name} className="text-slate-300 hover:bg-slate-900/40">
-                                            <td className="px-4 py-2.5">
-                                                <div className="font-medium text-white">{t.name}</div>
-                                                <div className="text-[11px] text-slate-500">{t.primary_domain}</div>
-                                            </td>
-                                            <td className="px-4 py-2.5">{t.subscription?.plan_name || '-'}</td>
-                                            <td className="px-4 py-2.5">
-                                                <span className={`rounded-full border px-2 py-0.5 font-semibold ${st.className}`}>{st.label}</span>
-                                            </td>
-                                            <td className="px-4 py-2.5 whitespace-nowrap">{fmtDate(t.subscription?.current_period_end)}</td>
-                                            <td className="px-4 py-2.5">
-                                                <span className="inline-flex items-center gap-1 text-slate-400"><Users className="h-3 w-3" />{t.usage.users_count}/{t.usage.max_users ?? '-'}</span>
-                                                <span className="ml-2 inline-flex items-center gap-1 text-slate-400"><FolderKanban className="h-3 w-3" />{t.usage.projects_count}/{t.usage.max_projects ?? '-'}</span>
-                                            </td>
-                                            <td className="px-4 py-2.5 text-right">
-                                                <button onClick={() => openTenant(t.schema_name)} className="rounded-md bg-slate-800 px-2.5 py-1 text-[11px] font-medium hover:bg-slate-700">Gérer</button>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
+                    <motion.div variants={fadeUp}>
+                        <Segmented
+                            id="platform-tabs"
+                            value={tab}
+                            onChange={loadTab}
+                            options={[
+                                { id: 'tenants', label: 'Organisations', count: tenants.length },
+                                { id: 'payments', label: 'Paiements' },
+                                { id: 'audit', label: 'Journal d’audit' },
+                            ]}
+                        />
+                    </motion.div>
 
-                {tab === 'payments' && (
-                    <PaymentsTable payments={payments} />
-                )}
-
-                {tab === 'audit' && (
-                    <AuditTable logs={audit} />
-                )}
+                    <motion.div variants={fadeUp}>
+                        {tab === 'tenants' && <TenantsTable tenants={tenants} onOpen={openTenant} />}
+                        {tab === 'payments' && <PaymentsTable payments={payments} />}
+                        {tab === 'audit' && <AuditTable logs={audit} />}
+                    </motion.div>
+                </Page>
             </main>
 
-            {selected && (
-                <TenantDrawer
-                    tenant={selected}
-                    onClose={() => setSelected(null)}
-                    onChanged={refresh}
-                    setBanner={setBanner}
-                />
-            )}
-            {banner && (
-                <div className="fixed bottom-4 right-4 z-50 flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-900 px-4 py-2.5 text-xs text-slate-200 shadow-xl">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-400" /> {banner}
-                    <button onClick={() => setBanner('')}><X className="h-3.5 w-3.5 text-slate-500" /></button>
-                </div>
-            )}
+            <TenantPanel tenant={selected} onClose={() => setSelected(null)} onChanged={refresh} />
         </div>
+    );
+}
+
+const th = 'px-5 py-3 text-left font-medium';
+const td = 'px-5 py-3.5';
+
+function Table({ head, children, empty }: { head: React.ReactNode; children: React.ReactNode; empty?: string }) {
+    return (
+        <div className="glass overflow-x-auto rounded-2xl">
+            <table className="w-full text-[15px]">
+                <thead className="text-xs uppercase tracking-wider text-zinc-400">
+                    <tr className="border-b border-white/[0.06]">{head}</tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.05]">{children}</tbody>
+            </table>
+            {empty && <p className="py-12 text-center text-[15px] text-zinc-400">{empty}</p>}
+        </div>
+    );
+}
+
+function TenantsTable({ tenants, onOpen }: { tenants: any[]; onOpen: (schema: string) => void }) {
+    return (
+        <Table
+            empty={tenants.length === 0 ? 'Aucune organisation pour le moment.' : undefined}
+            head={
+                <>
+                    <th className={th}>Organisation</th>
+                    <th className={th}>Plan</th>
+                    <th className={th}>Statut</th>
+                    <th className={th}>Fin de période</th>
+                    <th className={th}>Utilisation</th>
+                    <th className={th} />
+                </>
+            }
+        >
+            {tenants.map((t, i) => {
+                const st = SUBSCRIPTION_STATUSES[t.subscription?.status] || SUBSCRIPTION_STATUSES.active;
+                return (
+                    <motion.tr key={t.schema_name} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.03 }} className="text-zinc-200 transition hover:bg-white/[0.02]">
+                        <td className={td}>
+                            <p className="font-medium text-white">{t.name}</p>
+                            <p className="text-sm text-zinc-400">{t.primary_domain}</p>
+                        </td>
+                        <td className={td}>{t.subscription?.plan_name || '—'}</td>
+                        <td className={td}>
+                            <Badge tone={st.tone}>{st.label}</Badge>
+                        </td>
+                        <td className={`${td} whitespace-nowrap`}>{formatDate(t.subscription?.current_period_end)}</td>
+                        <td className={`${td} whitespace-nowrap text-sm text-zinc-300`}>
+                            <span className="inline-flex items-center gap-1.5">
+                                <Users className="h-4 w-4 text-zinc-400" />
+                                {t.usage.users_count}/{t.usage.max_users ?? '—'}
+                            </span>
+                            <span className="ml-3 inline-flex items-center gap-1.5">
+                                <FolderKanban className="h-4 w-4 text-zinc-400" />
+                                {t.usage.projects_count}/{t.usage.max_projects ?? '—'}
+                            </span>
+                        </td>
+                        <td className={`${td} text-right`}>
+                            <Button variant="secondary" size="sm" icon={Building2} onClick={() => onOpen(t.schema_name)}>
+                                Gérer
+                            </Button>
+                        </td>
+                    </motion.tr>
+                );
+            })}
+        </Table>
     );
 }
 
 function PaymentsTable({ payments }: { payments: any[] }) {
     return (
-        <div className="overflow-x-auto rounded-xl border border-slate-800">
-            <table className="w-full text-xs">
-                <thead className="bg-slate-900/80 text-slate-400">
-                    <tr>
-                        <th className="px-4 py-2.5 text-left font-medium">Date</th>
-                        <th className="px-4 py-2.5 text-left font-medium">Organisation</th>
-                        <th className="px-4 py-2.5 text-left font-medium">Plan</th>
-                        <th className="px-4 py-2.5 text-right font-medium">Montant</th>
-                        <th className="px-4 py-2.5 text-left font-medium">Statut</th>
-                        <th className="px-4 py-2.5 text-left font-medium">Référence</th>
+        <Table
+            empty={payments.length === 0 ? 'Aucun paiement.' : undefined}
+            head={
+                <>
+                    <th className={th}>Date</th>
+                    <th className={th}>Organisation</th>
+                    <th className={th}>Plan</th>
+                    <th className={`${th} text-right`}>Montant</th>
+                    <th className={th}>Statut</th>
+                    <th className={th}>Référence</th>
+                </>
+            }
+        >
+            {payments.map((p) => {
+                const ps = PAYMENT_STATUSES[p.status] || PAYMENT_STATUSES.pending;
+                return (
+                    <tr key={p.transaction_id} className="text-zinc-200">
+                        <td className={`${td} whitespace-nowrap`}>{formatDate(p.created_at)}</td>
+                        <td className={td}>{p.tenant_name}</td>
+                        <td className={td}>{p.plan_name}</td>
+                        <td className={`${td} whitespace-nowrap text-right tabular-nums`}>
+                            {fmtMoney(p.amount)} {p.currency}
+                        </td>
+                        <td className={td}>
+                            <Badge tone={ps.tone}>{ps.label}</Badge>
+                        </td>
+                        <td className={`${td} font-mono text-sm text-zinc-400`}>{p.transaction_id}</td>
                     </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/80">
-                    {payments.length === 0 ? (
-                        <tr><td colSpan={6} className="px-4 py-8 text-center text-slate-500">Aucun paiement.</td></tr>
-                    ) : payments.map((p) => (
-                        <tr key={p.transaction_id} className="text-slate-300">
-                            <td className="px-4 py-2.5 whitespace-nowrap">{fmtDate(p.created_at)}</td>
-                            <td className="px-4 py-2.5">{p.tenant_name}</td>
-                            <td className="px-4 py-2.5">{p.plan_name}</td>
-                            <td className="px-4 py-2.5 text-right whitespace-nowrap">{fmtMoney(p.amount)} {p.currency}</td>
-                            <td className={`px-4 py-2.5 font-semibold ${PAYMENT[p.status] || ''}`}>{p.status}</td>
-                            <td className="px-4 py-2.5 font-mono text-[11px] text-slate-500">{p.transaction_id}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+                );
+            })}
+        </Table>
     );
 }
 
 function AuditTable({ logs }: { logs: any[] }) {
     return (
-        <div className="overflow-x-auto rounded-xl border border-slate-800">
-            <table className="w-full text-xs">
-                <thead className="bg-slate-900/80 text-slate-400">
-                    <tr>
-                        <th className="px-4 py-2.5 text-left font-medium">Date</th>
-                        <th className="px-4 py-2.5 text-left font-medium">Administrateur</th>
-                        <th className="px-4 py-2.5 text-left font-medium">Action</th>
-                        <th className="px-4 py-2.5 text-left font-medium">Cible</th>
-                        <th className="px-4 py-2.5 text-left font-medium">IP</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-800/80">
-                    {logs.length === 0 ? (
-                        <tr><td colSpan={5} className="px-4 py-8 text-center text-slate-500">Aucune action enregistrée.</td></tr>
-                    ) : logs.map((l) => (
-                        <tr key={l.id} className="text-slate-300">
-                            <td className="px-4 py-2.5 whitespace-nowrap">{new Date(l.created_at).toLocaleString('fr-FR')}</td>
-                            <td className="px-4 py-2.5">{l.actor_email}</td>
-                            <td className="px-4 py-2.5 font-mono text-[11px] text-brand-300">{l.action}</td>
-                            <td className="px-4 py-2.5">{l.target}</td>
-                            <td className="px-4 py-2.5 text-slate-500">{l.ip_address || '-'}</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+        <Table
+            empty={logs.length === 0 ? 'Aucune action enregistrée.' : undefined}
+            head={
+                <>
+                    <th className={th}>Date</th>
+                    <th className={th}>Administrateur</th>
+                    <th className={th}>Action</th>
+                    <th className={th}>Cible</th>
+                    <th className={th}>Adresse IP</th>
+                </>
+            }
+        >
+            {logs.map((l) => (
+                <tr key={l.id} className="text-zinc-200">
+                    <td className={`${td} whitespace-nowrap`}>{new Date(l.created_at).toLocaleString('fr-FR')}</td>
+                    <td className={td}>{l.actor_email}</td>
+                    <td className={`${td} font-mono text-sm text-brand-300`}>{l.action}</td>
+                    <td className={td}>{l.target}</td>
+                    <td className={`${td} text-zinc-400`}>{l.ip_address || '—'}</td>
+                </tr>
+            ))}
+        </Table>
     );
 }
 
-function TenantDrawer({ tenant, onClose, onChanged, setBanner }: {
-    tenant: any; onClose: () => void; onChanged: () => Promise<void>; setBanner: (s: string) => void;
-}) {
+// Panneau latéral d'une organisation : prolonger, suspendre ou réactiver
+function TenantPanel({ tenant, onClose, onChanged }: { tenant: any; onClose: () => void; onChanged: () => Promise<void> }) {
+    const toast = useToast();
+    const confirm = useConfirm();
     const [busy, setBusy] = useState(false);
-    const [error, setError] = useState('');
-    const [days, setDays] = useState(30);
-    const suspended = tenant.subscription?.status === 'cancelled';
+    const [days, setDays] = useState('30');
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+
+    if (!mounted) return null;
+    const suspended = tenant?.subscription?.status === 'cancelled';
+    const st = tenant && (SUBSCRIPTION_STATUSES[tenant.subscription?.status] || SUBSCRIPTION_STATUSES.active);
 
     const act = async (fn: () => Promise<any>, message: string) => {
         setBusy(true);
-        setError('');
         try {
             await fn();
             await onChanged();
-            setBanner(message);
+            toast.success(message);
         } catch (e: any) {
-            setError(e.message || 'Action impossible.');
+            toast.error(e.message || 'Action impossible.');
         } finally {
             setBusy(false);
         }
     };
 
-    return (
-        <div className="fixed inset-0 z-40 flex justify-end bg-black/50" onClick={onClose}>
-            <div className="h-full w-full max-w-md overflow-y-auto border-l border-slate-800 bg-slate-950 p-6" onClick={(e) => e.stopPropagation()}>
-                <div className="flex items-start justify-between">
-                    <div>
-                        <h2 className="text-lg font-bold text-white">{tenant.name}</h2>
-                        <p className="text-xs text-slate-500">{tenant.primary_domain}</p>
-                    </div>
-                    <button onClick={onClose}><X className="h-5 w-5 text-slate-500 hover:text-white" /></button>
-                </div>
+    const toggleSuspend = async () => {
+        if (!suspended) {
+            const ok = await confirm({
+                title: `Suspendre ${tenant.name} ?`,
+                message: 'Ses membres pourront encore consulter leurs données, mais plus rien modifier.',
+                confirmLabel: 'Oui, suspendre',
+                danger: true,
+            });
+            if (!ok) return;
+        }
+        act(() => platformAPI.suspend(tenant.schema_name, !suspended), suspended ? 'Organisation réactivée.' : 'Organisation suspendue.');
+    };
 
-                {error && (
-                    <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-200">
-                        <AlertCircle className="h-4 w-4 shrink-0" /> <span>{error}</span>
-                    </div>
-                )}
-
-                <div className="mt-5 space-y-4">
-                    <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4 text-xs">
-                        <p className="text-slate-400">Plan <span className="font-semibold text-white">{tenant.subscription?.plan_name}</span>, statut <span className="font-semibold text-white">{tenant.subscription?.status}</span></p>
-                        <p className="mt-1 text-slate-400">Fin de période : {fmtDate(tenant.subscription?.current_period_end)}</p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <input
-                            type="number" min={1} max={3650} value={days} onChange={(e) => setDays(Number(e.target.value))}
-                            className="w-24 rounded-lg border border-slate-700 bg-slate-950 px-3 py-2 text-sm text-white focus:border-brand-500 focus:outline-none"
-                        />
-                        <button
-                            disabled={busy}
-                            onClick={() => act(() => platformAPI.extend(tenant.schema_name, days), `Période prolongée de ${days} jours.`)}
-                            className="flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-2 text-xs font-semibold text-white hover:bg-brand-500 disabled:opacity-60"
-                        >
-                            <CalendarPlus className="h-4 w-4" /> Prolonger
-                        </button>
-                    </div>
-
-                    {suspended ? (
-                        <button
-                            disabled={busy}
-                            onClick={() => act(() => platformAPI.suspend(tenant.schema_name, false), 'Organisation réactivée.')}
-                            className="flex w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 py-2.5 text-xs font-semibold text-white hover:bg-emerald-500 disabled:opacity-60"
-                        >
-                            <CheckCircle2 className="h-4 w-4" /> Réactiver l&apos;organisation
-                        </button>
-                    ) : (
-                        <button
-                            disabled={busy}
-                            onClick={() => act(() => platformAPI.suspend(tenant.schema_name, true), 'Organisation suspendue.')}
-                            className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600/90 py-2.5 text-xs font-semibold text-white hover:bg-red-600 disabled:opacity-60"
-                        >
-                            <Ban className="h-4 w-4" /> Suspendre (lecture seule)
-                        </button>
-                    )}
-
-                    {tenant.members && (
-                        <div className="rounded-xl border border-slate-800 bg-slate-900/40 p-4">
-                            <p className="mb-2 text-[11px] uppercase tracking-wider text-slate-500">Membres</p>
-                            <ul className="space-y-1.5 text-xs">
-                                {tenant.members.map((m: any) => (
-                                    <li key={m.email} className="flex justify-between">
-                                        <span className="text-slate-300">{m.full_name}</span>
-                                        <span className="text-slate-500">{m.role}</span>
-                                    </li>
-                                ))}
-                            </ul>
+    // Rendu dans <body> : la page animée décalerait sinon le « position: fixed »
+    return createPortal(
+        <AnimatePresence>
+            {tenant && (
+                <div key="panel" className="fixed inset-0 z-40 flex justify-end">
+                    <motion.div className="absolute inset-0 bg-black/60 backdrop-blur-sm" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose} />
+                    <motion.aside
+                        initial={{ x: '100%' }}
+                        animate={{ x: 0 }}
+                        exit={{ x: '100%', transition: { duration: 0.2 } }}
+                        transition={spring}
+                        className="relative h-full w-full max-w-md overflow-y-auto border-l border-white/[0.08] bg-canvas p-6"
+                    >
+                        <div className="flex items-start justify-between gap-4">
+                            <div>
+                                <h2 className="text-xl font-semibold text-white">{tenant.name}</h2>
+                                <p className="mt-0.5 text-sm text-zinc-400">{tenant.primary_domain}</p>
+                            </div>
+                            <button onClick={onClose} aria-label="Fermer" className="-mr-2 rounded-lg p-2 text-zinc-400 transition hover:bg-white/[0.06] hover:text-white">
+                                <X className="h-5 w-5" />
+                            </button>
                         </div>
-                    )}
+
+                        <Card className="mt-6 space-y-2 p-4 text-[15px]">
+                            <p className="flex items-center justify-between text-zinc-300">
+                                Plan <span className="font-medium text-white">{tenant.subscription?.plan_name || '—'}</span>
+                            </p>
+                            <p className="flex items-center justify-between text-zinc-300">
+                                Statut <Badge tone={st.tone}>{st.label}</Badge>
+                            </p>
+                            <p className="flex items-center justify-between text-zinc-300">
+                                Fin de période <span className="font-medium text-white">{formatDate(tenant.subscription?.current_period_end)}</span>
+                            </p>
+                        </Card>
+
+                        <div className="mt-6 space-y-3">
+                            <Choice
+                                label="Prolonger l’abonnement de"
+                                columns={2}
+                                value={days}
+                                onChange={setDays}
+                                options={[
+                                    { value: '7', label: '7 jours' },
+                                    { value: '30', label: '30 jours' },
+                                    { value: '90', label: '90 jours' },
+                                    { value: '365', label: '1 an' },
+                                ]}
+                            />
+                            <Button
+                                icon={CalendarPlus}
+                                loading={busy}
+                                className="w-full"
+                                onClick={() => act(() => platformAPI.extend(tenant.schema_name, Number(days)), `Abonnement prolongé de ${days} jours.`)}
+                            >
+                                Prolonger
+                            </Button>
+                        </div>
+
+                        <div className="mt-6 border-t border-white/[0.08] pt-6">
+                            <Button variant={suspended ? 'secondary' : 'danger'} icon={suspended ? CheckCircle2 : Ban} disabled={busy} className="w-full" onClick={toggleSuspend}>
+                                {suspended ? 'Réactiver l’organisation' : 'Suspendre (lecture seule)'}
+                            </Button>
+                        </div>
+
+                        {tenant.members && (
+                            <div className="mt-6">
+                                <p className="mb-3 flex items-center gap-2 text-sm font-medium text-zinc-200">
+                                    <Users className="h-4 w-4 text-zinc-400" /> Membres ({tenant.members.length})
+                                </p>
+                                <ul className="space-y-1">
+                                    {tenant.members.map((m: any) => (
+                                        <li key={m.email} className="flex items-center gap-3 rounded-xl px-2 py-2">
+                                            <Avatar name={m.full_name} size="sm" />
+                                            <span className="min-w-0 flex-1 truncate text-[15px] text-zinc-200">{m.full_name}</span>
+                                            <Badge tone={ROLES[m.role]?.tone}>{ROLES[m.role]?.label || m.role}</Badge>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+
+                        <p className="mt-8 flex items-center gap-2 text-sm text-zinc-500">
+                            <CreditCard className="h-4 w-4" /> Les paiements de cette organisation sont dans l’onglet « Paiements ».
+                        </p>
+                    </motion.aside>
                 </div>
-            </div>
-        </div>
+            )}
+        </AnimatePresence>,
+        document.body
     );
 }
